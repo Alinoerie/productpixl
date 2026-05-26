@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/toast-provider";
 import { fetchJson } from "@/lib/fetch-json";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft, saveCopyDraft } from "@/lib/copy-draft";
+import { STUDIO_ROUTES, studioCopyHref, studioImagesHref } from "@/lib/studio-routes";
 import { markProductGraded } from "@/lib/grade-session";
 import type { GraderResult } from "@/lib/listing-grader";
 import { cn } from "@/lib/utils";
@@ -147,7 +148,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
       backendKeywords: keywords,
       productId: draftProductId ?? undefined,
     });
-    router.push(draftProductId ? `/copy?productId=${draftProductId}` : "/copy");
+    router.push(draftProductId ? studioCopyHref(draftProductId) : STUDIO_ROUTES.copy);
   };
 
   const fixListingWithProductPixl = () => {
@@ -158,7 +159,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
       backendKeywords: keywords,
       productId: draftProductId ?? undefined,
     });
-    const callbackUrl = draftProductId ? `/copy?productId=${draftProductId}` : "/copy";
+    const callbackUrl = draftProductId ? studioCopyHref(draftProductId) : STUDIO_ROUTES.copy;
     router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   };
 
@@ -168,7 +169,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
     router.refresh();
   };
 
-  const generateHref = draftProductId ? `/generate?productId=${draftProductId}` : "/generate";
+  const generateHref = draftProductId ? studioImagesHref({ productId: draftProductId }) : STUDIO_ROUTES.images;
 
   const gradeClass = result ? `grade-${result.grade.toLowerCase()}` : "";
   const titleOver = title.length > AMAZON_TITLE_MAX;

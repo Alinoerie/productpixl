@@ -7,33 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckoutButton } from "@/components/pricing/checkout-button";
 import { useLiveCredits } from "@/hooks/use-live-credits";
+import {
+  CREDIT_TOP_UP_PACKS,
+  packAddsLine,
+  recommendTopUpPack,
+} from "@/lib/pricing-display";
 import { cn } from "@/lib/utils";
-
-const packs = [
-  {
-    key: "starter" as const,
-    name: "Starter",
-    credits: 10,
-    price: "€29",
-    per: "€2.90",
-    tag: null as string | null,
-  },
-  {
-    key: "growth" as const,
-    name: "Growth",
-    credits: 30,
-    price: "€79",
-    per: "€2.63",
-    tag: "Best value",
-  },
-];
-
-function recommendPack(balance: number, creditsNeeded: number) {
-  const deficit = Math.max(0, creditsNeeded - balance);
-  if (deficit === 0 && balance >= 5) return null;
-  if (deficit <= 10 || balance < 5) return "starter" as const;
-  return "growth" as const;
-}
 
 export function PricingPacks({
   initialCredits,
@@ -48,29 +27,31 @@ export function PricingPacks({
 }) {
   const [balance] = useLiveCredits(initialCredits);
   const needed = creditsNeeded ?? 0;
-  const recommended = recommendPack(balance, needed);
+  const recommended = recommendTopUpPack(balance, needed);
 
   return (
     <div className="space-y-4">
-      {recommended ? (
+      {recommended && creditsNeeded != null ? (
         <p className="rounded-xl border border-[var(--accent)]/25 bg-[var(--accent-soft)]/30 px-4 py-3 text-sm">
-          {creditsNeeded != null && creditsNeeded > balance ? (
+          {creditsNeeded > balance ? (
             <>
-              Your plan needs <strong>{creditsNeeded - balance}</strong> more credit
-              {creditsNeeded - balance === 1 ? "" : "s"} — the{" "}
-              <strong>{packs.find((p) => p.key === recommended)?.name}</strong> pack is the best fit.
+              This estimate needs about <strong>{needed.toLocaleString()}</strong> credits — you have{" "}
+              <strong>{balance.toLocaleString()}</strong>. The{" "}
+              <strong>{CREDIT_TOP_UP_PACKS.find((p) => p.key === recommended)?.name}</strong> pack covers the
+              gap.
             </>
           ) : balance < 5 ? (
             <>
               You have <strong>{balance}</strong> credit{balance === 1 ? "" : "s"} left — the{" "}
-              <strong>{packs.find((p) => p.key === recommended)?.name}</strong> pack covers your next runs.
+              <strong>{CREDIT_TOP_UP_PACKS.find((p) => p.key === recommended)?.name}</strong> pack is a good
+              fit for your next runs.
             </>
           ) : null}
         </p>
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
-        {packs.map((p) => {
+        {CREDIT_TOP_UP_PACKS.map((p) => {
           const isRecommended = recommended === p.key;
           return (
             <Card
@@ -90,13 +71,14 @@ export function PricingPacks({
               ) : null}
               <CardHeader className={isRecommended ? "pt-8" : undefined}>
                 <CardTitle className="flex items-center justify-between">
-                  <span>{p.name}</span>
+                  <span>{p.name} pack</span>
                   <CreditCard className="h-5 w-5 text-[var(--muted-fg)]" strokeWidth={1.5} />
                 </CardTitle>
                 <p className="font-serif text-4xl">{p.price}</p>
                 <p className="text-sm text-[var(--muted-fg)]">
-                  {p.credits} credits · {p.credits + balance} total after purchase
+                  {p.credits} credits · {packAddsLine(p.credits, balance)}
                 </p>
+                <p className="text-xs text-[var(--muted-fg)]">{p.perCredit} per credit</p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ul className="space-y-2 text-sm">
@@ -106,11 +88,15 @@ export function PricingPacks({
                   </li>
                   <li className="flex gap-2">
                     <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                    Use across image & copy runs (totals vary per project)
+                    Works for image studio and copy studio runs
                   </li>
                 </ul>
                 {signedIn ? (
-                  <CheckoutButton packageKey={p.key} label={`Buy ${p.name}`} checkoutEnabled={checkoutEnabled} />
+                  <CheckoutButton
+                    packageKey={p.key}
+                    label={checkoutEnabled ? `Buy ${p.name} pack` : "Payments coming soon"}
+                    checkoutEnabled={checkoutEnabled}
+                  />
                 ) : (
                   <Button asChild className="w-full">
                     <Link href="/login?callbackUrl=/pricing">Sign in — 10 free credits</Link>

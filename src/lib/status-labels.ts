@@ -33,7 +33,13 @@ export function formatPipelinePhase(phase: string) {
   return PIPELINE_PHASE[phase] ?? phase.replace(/_/g, " ").toLowerCase();
 }
 
+/** Seller-facing module name (no internal codes). */
 export function formatModuleLabel(moduleId: string) {
+  return MODULE_LABELS[moduleId] ?? moduleId;
+}
+
+/** Internal code + label — for logs or admin only. */
+export function formatModuleLabelTechnical(moduleId: string) {
   const label = MODULE_LABELS[moduleId];
   return label ? `${moduleId} · ${label}` : moduleId;
 }

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { isCheckoutEnabled } from "@/lib/checkout";
+import { isCheckoutLive } from "@/lib/checkout";
 
 export function CreditsPaywallBanner({ compact = false }: { compact?: boolean }) {
-  const checkoutLive = isCheckoutEnabled();
+  const checkoutLive = isCheckoutLive();
 
   if (compact) {
     return (

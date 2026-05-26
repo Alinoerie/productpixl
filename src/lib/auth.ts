@@ -2,9 +2,11 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
 import { authConfig } from "./auth.config";
+import { getAuthProviders } from "./auth-providers";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  providers: getAuthProviders(),
   adapter: PrismaAdapter(prisma),
   // JWT so middleware + server both read the same session cookie (DB adapter still stores users/accounts)
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },

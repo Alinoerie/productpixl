@@ -6,13 +6,17 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ResetStuckRunButton } from "@/components/products/reset-stuck-run-button";
 import { ProductLiveGallery } from "@/components/products/product-live-gallery";
+import { PipelineErrorMessage } from "@/components/ui/pipeline-error-message";
+import { PipelineProgressBar } from "@/components/ui/pipeline-progress-bar";
 import { ProductDeleteButton } from "@/components/products/product-delete-button";
 import { ProductExportActions } from "@/components/products/product-export-actions";
 import { ProductListingPanel } from "@/components/products/product-listing-panel";
 import { ProductReadiness } from "@/components/products/product-readiness";
 import { ProductMobileActions } from "@/components/products/product-mobile-actions";
 import { ProductEditProvider } from "@/components/products/product-edit-context";
+import { ProductCollapsibleSection } from "@/components/products/product-collapsible-section";
 import { ProductSectionNav } from "@/components/products/product-section-nav";
 import { ProductOnboardingCard } from "@/components/products/product-onboarding-card";
 import { ProductGradeBadge } from "@/components/products/product-grade-badge";
@@ -28,6 +32,11 @@ import {
   quoteRegenerateModule,
 } from "@/lib/credit-pricing";
 import type { ListingModuleId } from "@/pipelines/modules";
+import { NextStepGuide } from "@/components/ui/next-step-guide";
+import { getProductJourney } from "@/lib/user-journey";
+import { PIPELINE_ERROR, toSellerPipelineError } from "@/lib/pipeline-errors";
+import { isQueuedStale, type PipelineStatusShape } from "@/lib/pipeline-progress";
+import { STUDIO_ROUTES, studioCopyHref, studioImagesHref } from "@/lib/studio-routes";
 
 export default async function ProductPage({
   params,
@@ -53,6 +62,7 @@ export default async function ProductPage({
     !product.listingCopy?.title &&
     product.status !== "PROCESSING" &&
     product.status !== "QUEUED";
+  const showPublishSections = completedAssets.length > 0 || Boolean(product.listingCopy?.title);
   const galleryAssets = product.assets.map((a) => ({
     id: a.id,
     moduleId: a.moduleId,
@@ -71,15 +81,27 @@ export default async function ProductPage({
     ])
   );
 
+  const journey = getProductJourney({
+    productId: product.id,
+    status: product.status,
+    completedImages: completedAssets.length,
+    hasCopy: Boolean(product.listingCopy?.title),
+  });
+  const queuedStale = isQueuedStale(product.status, product.pipelineStatus, product.updatedAt);
+  const runInProgress = product.status === "QUEUED" || product.status === "PROCESSING";
+  const pipelineErrorMessage = toSellerPipelineError(
+    (product.pipelineStatus as PipelineStatusShape | null)?.error ?? PIPELINE_ERROR.generationFailed
+  );
+
   return (
     <ProductEditProvider>
       <div className="space-y-8 pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-0">
         <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-[var(--muted-fg)]">
-          <Link href="/dashboard" className="hover:text-[var(--foreground)]">
-            Studio
+          <Link href={STUDIO_ROUTES.home} className="hover:text-[var(--foreground)]">
+            Content studio
           </Link>
           <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
-          <Link href="/projects" className="hover:text-[var(--foreground)]">
+          <Link href={STUDIO_ROUTES.projects} className="hover:text-[var(--foreground)]">
             Projects
           </Link>
           <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
@@ -87,6 +109,8 @@ export default async function ProductPage({
             {product.name}
           </span>
         </nav>
+
+        <NextStepGuide {...journey} />
 
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -120,7 +144,7 @@ export default async function ProductPage({
           <div className="hidden flex-wrap gap-2 md:flex">
             {completedAssets.length > 0 && !product.listingCopy?.title ? (
               <Button asChild>
-                <Link href={`/copy?productId=${product.id}`}>Generate copy</Link>
+                <Link href={studioCopyHref(product.id)}>Generate copy</Link>
               </Button>
             ) : null}
             {product.listingCopy?.title ? (
@@ -137,15 +161,17 @@ export default async function ProductPage({
             ) : null}
             {product.status === "FAILED" ? (
               <Button asChild>
-                <Link href={`/generate?productId=${product.id}`}>Retry run</Link>
+                <Link href={studioImagesHref({ productId: product.id })}>Retry run</Link>
               </Button>
+            ) : runInProgress ? (
+              <ResetStuckRunButton productId={product.id} label="Reset stuck run" variant="outline" />
             ) : (
               <Button asChild variant="outline">
-                <Link href={`/generate?productId=${product.id}`}>New image run</Link>
+                <Link href={studioImagesHref({ productId: product.id })}>New image run</Link>
               </Button>
             )}
             <Button asChild variant="outline">
-              <Link href="/dashboard">Back to studio</Link>
+              <Link href={STUDIO_ROUTES.home}>Back to studio</Link>
             </Button>
           </div>
         </div>
@@ -153,67 +179,54 @@ export default async function ProductPage({
         <ProductSectionNav
           hasCopy={Boolean(product.listingCopy?.title)}
           hasGallery={hasGallery || completedAssets.length === 0}
+          compact={!showPublishSections}
         />
 
         {isNewProject ? <ProductOnboardingCard productId={product.id} /> : null}
 
+        {runInProgress ? (
+          <div className="space-y-3 rounded-xl border border-[var(--accent)]/25 bg-[var(--accent-soft)]/25 px-4 py-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-medium">Image generation in progress</p>
+                <p className="mt-1 text-sm text-[var(--muted-fg)]">
+                  {queuedStale
+                    ? PIPELINE_ERROR.queuedStale
+                    : "This usually finishes in a few minutes. You can leave this page — progress updates automatically."}
+                </p>
+              </div>
+              <ResetStuckRunButton productId={product.id} label="Reset run" variant="outline" size="sm" />
+            </div>
+            <PipelineProgressBar
+              status={product.status}
+              pipelineStatus={product.pipelineStatus as PipelineStatusShape | null}
+              queuedStale={queuedStale}
+            />
+          </div>
+        ) : null}
+
         {product.status === "FAILED" && (
           <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
-            Image generation failed. Try a new run from{" "}
-            <Link href={`/generate?productId=${product.id}`} className="font-medium underline">
-              Image studio
-            </Link>{" "}
-            or spot-edit individual modules below.
+            <PipelineErrorMessage
+              message={pipelineErrorMessage}
+              supportSubject="ProductPixl image generation issue"
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button asChild size="sm">
+                <Link href={studioImagesHref({ productId: product.id })}>Retry in Images</Link>
+              </Button>
+            </div>
           </div>
         )}
 
         {product.listingCopy?.status === "FAILED" ? (
           <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
-            <p>
-              Listing copy generation failed
-              {product.listingCopy.errorMessage ? `: ${product.listingCopy.errorMessage}` : "."}
-            </p>
+            <p>{toSellerPipelineError(product.listingCopy.errorMessage ?? PIPELINE_ERROR.copyFailed)}</p>
             <Button asChild size="sm" variant="outline" className="mt-3 border-[var(--error-border)]">
-              <Link href={`/copy?productId=${product.id}`}>Retry in Copy studio</Link>
+              <Link href={studioCopyHref(product.id)}>Retry in Copy</Link>
             </Button>
           </div>
         ) : null}
-
-        <ProductReadiness
-          productId={product.id}
-          imageCount={completedAssets.length}
-          hasCopy={Boolean(product.listingCopy?.title)}
-          grade={product.listingCopy?.grade}
-          gradeScore={product.listingCopy?.gradeScore}
-          listingCopy={
-            product.listingCopy?.title
-              ? {
-                  title: product.listingCopy.title,
-                  bullets,
-                  description: product.listingCopy.description,
-                  backendKeywords: product.listingCopy.backendKeywords,
-                }
-              : null
-          }
-          status={product.status}
-        />
-
-        <ProductExportActions
-          productId={product.id}
-          productName={product.name}
-          marketplaceId={product.marketplace as MarketplaceId}
-          assets={product.assets}
-          listingCopy={
-            product.listingCopy
-              ? {
-                  title: product.listingCopy.title,
-                  bullets: bullets,
-                  description: product.listingCopy.description,
-                  backendKeywords: product.listingCopy.backendKeywords,
-                }
-              : null
-          }
-        />
 
         <div id="gallery" className="scroll-mt-24">
           {hasGallery ? (
@@ -236,7 +249,7 @@ export default async function ProductPage({
                     : "Start in Image studio to populate this project."}
                 </p>
                 <Button asChild className="mt-6">
-                  <Link href={`/generate?productId=${product.id}`}>Run image studio</Link>
+                  <Link href={studioImagesHref({ productId: product.id })}>Run images</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -261,11 +274,94 @@ export default async function ProductPage({
                 </p>
               </div>
               <Button asChild>
-                <Link href={`/copy?productId=${product.id}`}>Generate copy</Link>
+                <Link href={studioCopyHref(product.id)}>Generate copy</Link>
               </Button>
             </CardContent>
           </Card>
         ) : null}
+
+        {showPublishSections ? (
+          <>
+            <ProductReadiness
+              productId={product.id}
+              imageCount={completedAssets.length}
+              hasCopy={Boolean(product.listingCopy?.title)}
+              grade={product.listingCopy?.grade}
+              gradeScore={product.listingCopy?.gradeScore}
+              listingCopy={
+                product.listingCopy?.title
+                  ? {
+                      title: product.listingCopy.title,
+                      bullets,
+                      description: product.listingCopy.description,
+                      backendKeywords: product.listingCopy.backendKeywords,
+                    }
+                  : null
+              }
+              status={product.status}
+            />
+
+            <ProductExportActions
+              productId={product.id}
+              productName={product.name}
+              marketplaceId={product.marketplace as MarketplaceId}
+              assets={product.assets}
+              listingCopy={
+                product.listingCopy
+                  ? {
+                      title: product.listingCopy.title,
+                      bullets: bullets,
+                      description: product.listingCopy.description,
+                      backendKeywords: product.listingCopy.backendKeywords,
+                    }
+                  : null
+              }
+            />
+          </>
+        ) : (
+          <ProductCollapsibleSection
+            id="publish-tools"
+            title="Export & readiness"
+            description="Opens when you have gallery images or listing copy to publish."
+            defaultOpen={false}
+          >
+            <ProductReadiness
+              sectionId={false}
+              productId={product.id}
+              imageCount={completedAssets.length}
+              hasCopy={Boolean(product.listingCopy?.title)}
+              grade={product.listingCopy?.grade}
+              gradeScore={product.listingCopy?.gradeScore}
+              listingCopy={
+                product.listingCopy?.title
+                  ? {
+                      title: product.listingCopy.title,
+                      bullets,
+                      description: product.listingCopy.description,
+                      backendKeywords: product.listingCopy.backendKeywords,
+                    }
+                  : null
+              }
+              status={product.status}
+            />
+            <ProductExportActions
+              productId={product.id}
+              productName={product.name}
+              marketplaceId={product.marketplace as MarketplaceId}
+              assets={product.assets}
+              listingCopy={
+                product.listingCopy
+                  ? {
+                      title: product.listingCopy.title,
+                      bullets: bullets,
+                      description: product.listingCopy.description,
+                      backendKeywords: product.listingCopy.backendKeywords,
+                    }
+                  : null
+              }
+            />
+          </ProductCollapsibleSection>
+        )}
 
         <div className="border-t border-[var(--border)] pt-6">
           <ProductDeleteButton productId={product.id} productName={product.name} />

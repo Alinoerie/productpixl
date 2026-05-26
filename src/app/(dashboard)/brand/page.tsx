@@ -1,15 +1,25 @@
-import { PageHeader } from "@/components/ui/page-header";
+import { auth } from "@/lib/auth";
 import { BrandProfileForm } from "@/components/brand/brand-profile-form";
+import { StudioPageShell } from "@/components/layout/studio-page-shell";
+import { isBrandOnboardingComplete } from "@/lib/brand-profile";
+import { getBrandJourney } from "@/lib/user-journey";
 
-export default function BrandPage() {
+export default async function BrandPage() {
+  const session = await auth();
+  const onboardingComplete = session?.user?.id
+    ? await isBrandOnboardingComplete(session.user.id)
+    : false;
+  const journey = getBrandJourney(onboardingComplete);
+
   return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow="Brand system"
-        title="Brand profile"
-        description="Colors, tone, and guidelines flow into every generation — consistent output across your catalog without re-explaining your brand each run."
-      />
+    <StudioPageShell
+      eyebrow="Brand"
+      title="Listing brand kit"
+      description="Set colors, voice, and rules once per brand. Every image and copy run pulls from the active brand in your sidebar."
+      guide={journey}
+      className="max-w-6xl"
+    >
       <BrandProfileForm />
-    </div>
+    </StudioPageShell>
   );
 }

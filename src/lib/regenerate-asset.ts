@@ -8,6 +8,7 @@ import { buildListingPrompt } from "@/pipelines/prompt-builder";
 import { FIDELITY_RETRY_PREFIX, generateListingImage } from "@/pipelines/image-gen";
 import type { ResearchSummary } from "@/pipelines/prompt-builder";
 import type { ProductAnalysis } from "@/lib/ai";
+import { PIPELINE_ERROR } from "@/lib/pipeline-errors";
 
 export async function regenerateAsset(params: {
   productId: string;
@@ -95,7 +96,7 @@ export async function regenerateAsset(params: {
       status: qaScore >= 7 ? "COMPLETE" : "FAILED",
       qaScore,
       retryCount: { increment: 1 },
-      errorMessage: qaScore >= 7 ? null : "Quality check below threshold after retry",
+      errorMessage: qaScore >= 7 ? null : PIPELINE_ERROR.assetQaFailed,
     },
   });
 

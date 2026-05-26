@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-provider";
@@ -21,7 +22,7 @@ export function ProductDeleteButton({ productId, productName }: { productId: str
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Delete failed");
       toast("Project deleted");
-      router.push("/dashboard");
+      router.push(STUDIO_ROUTES.home);
       router.refresh();
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not delete project", "error");

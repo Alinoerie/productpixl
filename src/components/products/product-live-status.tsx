@@ -2,12 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatPipelinePhase } from "@/lib/status-labels";
-import { Loader2 } from "lucide-react";
+import { PipelineProgressBar } from "@/components/ui/pipeline-progress-bar";
+import type { PipelineStatusShape } from "@/lib/pipeline-progress";
 
-export function ProductLiveStatus({ productId }: { productId: string }) {
+export function ProductLiveStatus({
+  productId,
+  initialStatus = "PROCESSING",
+}: {
+  productId: string;
+  initialStatus?: string;
+}) {
   const router = useRouter();
-  const [phase, setPhase] = useState("…");
+  const [status, setStatus] = useState(initialStatus);
+  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatusShape | null>(null);
+  const [queuedStale, setQueuedStale] = useState(false);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
@@ -19,8 +27,9 @@ export function ProductLiveStatus({ productId }: { productId: string }) {
       const data = await res.json();
       if (!active || !res.ok) return;
 
-      const ps = data.pipelineStatus as { phase?: string } | null;
-      setPhase(ps?.phase ?? data.status);
+      setStatus(data.status as string);
+      setPipelineStatus((data.pipelineStatus as PipelineStatusShape | null) ?? null);
+      setQueuedStale(Boolean(data.queuedStale));
 
       if (data.status === "COMPLETE" || data.status === "FAILED") {
         setDone(true);
@@ -40,14 +49,15 @@ export function ProductLiveStatus({ productId }: { productId: string }) {
 
   return (
     <div
-      className="flex items-center gap-3 rounded-lg border border-[var(--accent)]/20 bg-[var(--accent-soft)]/40 px-4 py-3 text-sm"
+      className="rounded-lg border border-[var(--accent)]/20 bg-[var(--accent-soft)]/40 px-4 py-3"
       role="status"
       aria-live="polite"
     >
-      <Loader2 className="h-4 w-4 animate-spin text-[var(--accent)]" />
-      <span>
-        Generating your gallery — <strong>{formatPipelinePhase(phase)}</strong>
-      </span>
+      <PipelineProgressBar
+        status={status}
+        pipelineStatus={pipelineStatus}
+        queuedStale={queuedStale}
+      />
     </div>
   );
 }

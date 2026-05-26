@@ -2,12 +2,19 @@
 export const CREDIT_EXEMPT_PATH_PREFIXES = [
   "/onboarding",
   "/brand",
+  "/brands",
   "/account",
   "/pricing",
+  "/playbooks",
+  "/my-playbooks",
+  "/templates",
+  "/batch",
+  "/products",
+  "/projects",
 ] as const;
 
 /** Paid studio routes — redirect to pricing when balance is 0. */
-export const CREDIT_LOCKED_PATH_PREFIXES = ["/generate", "/copy"] as const;
+export const CREDIT_LOCKED_PATH_PREFIXES = ["/studio/images", "/studio/copy", "/generate", "/copy"] as const;
 
 export function hasPaidCredits(credits: number): boolean {
   return credits >= 1;

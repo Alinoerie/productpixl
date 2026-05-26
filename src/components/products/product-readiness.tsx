@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { studioCopyHref, studioImagesHref } from "@/lib/studio-routes";
 import { Check, Circle } from "lucide-react";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { isProductGraded, getProductGrade, GRADE_UPDATED_EVENT } from "@/lib/grade-session";
@@ -15,6 +16,7 @@ export function ProductReadiness({
   status,
   grade,
   gradeScore,
+  sectionId = "readiness",
 }: {
   productId: string;
   imageCount: number;
@@ -28,6 +30,7 @@ export function ProductReadiness({
   status: string;
   grade?: string | null;
   gradeScore?: number | null;
+  sectionId?: string | false;
 }) {
   const hasImages = imageCount > 0;
   const readyToExport = hasImages && hasCopy;
@@ -84,14 +87,14 @@ export function ProductReadiness({
       label: "Gallery images",
       done: hasImages && status !== "FAILED",
       pending: status === "PROCESSING",
-      href: status === "FAILED" || !hasImages ? `/generate?productId=${productId}` : undefined,
+      href: status === "FAILED" || !hasImages ? studioImagesHref({ productId }) : undefined,
       cta: status === "FAILED" ? "Retry" : hasImages ? undefined : "Generate",
     },
     {
       key: "copy",
       label: "Listing copy",
       done: hasCopy,
-      href: hasCopy ? undefined : `/copy?productId=${productId}`,
+      href: hasCopy ? undefined : studioCopyHref(productId),
       cta: hasCopy ? undefined : "Write copy",
     },
     {
@@ -112,7 +115,7 @@ export function ProductReadiness({
 
   return (
     <section
-      id="readiness"
+      {...(sectionId ? { id: sectionId } : {})}
       aria-label="Listing readiness"
       className="scroll-mt-24 rounded-2xl border border-[var(--border)] bg-[var(--muted)]/30 p-4 md:p-5"
     >

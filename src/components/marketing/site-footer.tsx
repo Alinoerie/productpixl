@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MARKETING_FOOTER_LINKS } from "@/lib/marketing-links";
+import { USP_ONE_LINER, USP_TAGLINE } from "@/lib/marketing-usp";
 
 export function SiteFooter() {
   return (
@@ -13,7 +14,9 @@ export function SiteFooter() {
             <span className="font-serif text-xl">ProductPixl</span>
           </Link>
           <p className="mt-3 max-w-xs text-sm text-[var(--muted-fg)]">
-            Listing studio for Amazon and EU marketplace sellers — one photo to gallery images and copy.
+            <span className="font-medium text-[var(--foreground)]">{USP_TAGLINE}</span>
+            <br />
+            {USP_ONE_LINER}
           </p>
         </div>
         <nav className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-3">

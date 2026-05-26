@@ -4,10 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const packs = [
-  { name: "Starter", credits: 10, price: "€29", per: "€2.90", tag: null },
-  { name: "Growth", credits: 30, price: "€79", per: "€2.63", tag: "Best value" },
-];
+import { CREDIT_TOP_UP_PACKS } from "@/lib/pricing-display";
+
+const packs = CREDIT_TOP_UP_PACKS.map((p) => ({
+  name: p.name,
+  credits: p.credits,
+  price: p.price,
+  tag: p.tag,
+}));
 
 export function LandingPricing() {
   return (
@@ -34,7 +38,7 @@ export function LandingPricing() {
               {p.tag ? <Badge className="absolute -top-2.5 right-4">{p.tag}</Badge> : null}
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>{p.name}</span>
+                  <span>{p.name} pack</span>
                   <CreditCard className="h-5 w-5 text-[var(--muted-fg)]" strokeWidth={1.5} />
                 </CardTitle>
                 <p className="font-serif text-4xl">{p.price}</p>

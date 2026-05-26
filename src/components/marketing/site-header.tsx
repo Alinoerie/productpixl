@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { auth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { MarketingMobileNav } from "@/components/marketing/marketing-mobile-nav";
@@ -24,7 +25,8 @@ export async function SiteHeader() {
               href={link.href}
               className={cn(
                 "hover:text-[var(--foreground)]",
-                link.highlight === "teal" && "text-[var(--teal)] hover:text-[var(--teal)]"
+                link.highlight === "teal" && "text-[var(--teal)] hover:text-[var(--teal)]",
+                link.highlight === "accent" && "text-[var(--accent)] hover:text-[var(--accent)]"
               )}
             >
               {link.label}
@@ -35,7 +37,7 @@ export async function SiteHeader() {
           <MarketingMobileNav signedIn={!!session} />
           {session ? (
             <Button asChild size="sm">
-              <Link href="/dashboard">Open studio</Link>
+              <Link href={STUDIO_ROUTES.home}>Open studio</Link>
             </Button>
           ) : (
             <>

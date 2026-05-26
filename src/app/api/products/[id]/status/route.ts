@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isQueuedStale, pipelineProgressPercent, type PipelineStatusShape } from "@/lib/pipeline-progress";
 
 export async function GET(
   _req: NextRequest,
@@ -19,6 +20,7 @@ export async function GET(
       status: true,
       pipelineStatus: true,
       pipelineType: true,
+      updatedAt: true,
       assets: true,
       listingCopy: true,
     },
@@ -28,5 +30,12 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json(product);
+  const pipelineStatus = product.pipelineStatus as PipelineStatusShape | null;
+  const queuedStale = isQueuedStale(product.status, product.pipelineStatus, product.updatedAt);
+
+  return NextResponse.json({
+    ...product,
+    queuedStale,
+    progress: pipelineProgressPercent(product.status, pipelineStatus),
+  });
 }

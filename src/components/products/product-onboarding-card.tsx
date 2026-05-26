@@ -2,13 +2,14 @@ import Link from "next/link";
 import { Camera, FileText, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { studioCopyHref, studioImagesHref } from "@/lib/studio-routes";
 
 const STEPS = [
   {
     icon: Camera,
     title: "Gallery images",
     detail: "Hero, lifestyle, and detail shots — credits scale with modules and product depth.",
-    href: (id: string) => `/generate?productId=${id}`,
+    href: (id: string) => studioImagesHref({ productId: id }),
     cta: "Start image run",
     primary: true,
   },
@@ -16,7 +17,7 @@ const STEPS = [
     icon: FileText,
     title: "Listing copy",
     detail: "RUFUS-ready title, bullets, and keywords — estimate shown in copy studio.",
-    href: (id: string) => `/copy?productId=${id}`,
+    href: (id: string) => studioCopyHref(id),
     cta: "Generate copy",
     primary: false,
   },

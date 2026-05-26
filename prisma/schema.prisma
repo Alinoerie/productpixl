@@ -14,16 +14,45 @@ model User {
   name             String?
   image            String?
   credits          Int       @default(10)
+  planTier         String    @default("free")
   stripeCustomerId String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  accounts     Account[]
-  sessions     Session[]
-  brands       Brand[]
-  brandProfile BrandProfile?
-  products     Product[]
-  orders       Order[]
+  accounts       Account[]
+  sessions       Session[]
+  brands         Brand[]
+  brandProfile   BrandProfile?
+  products       Product[]
+  orders         Order[]
+  savedPlaybooks SavedPlaybook[]
+  playbookRuns   PlaybookRun[]
+}
+
+model GuidePackLead {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String   @default("ecommerce-guide")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DemoBookingLead {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  company     String?
+  platform    String?
+  skuRange    String?
+  notes       String?  @db.Text
+  preferredAt DateTime
+  timezone    String?
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([email])
+  @@index([preferredAt])
 }
 
 model BrandProfile {
@@ -88,11 +117,29 @@ model Brand {
   logoUrl     String?
   amazonUrl   String?
   userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isDefault   Boolean  @default(false)
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products Product[]
+  language       String  @default("en")
+  tagline        String?
+  tone           String  @default("premium, trustworthy, conversion-focused")
+  targetAudience String?
+  brandValues    String? @db.Text
+  brandAesthetic String?
+  primaryColor   String  @default("#6366F1")
+  secondaryColor String  @default("#0891B2")
+  companyName        String?
+  companyDescription String? @db.Text
+  guidelines         String? @db.Text
+  brandStory         String? @db.Text
+  onboardingComplete Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products       Product[]
+  savedPlaybooks SavedPlaybook[]
+  playbookRuns   PlaybookRun[]
 }
 
 model Product {
@@ -124,13 +171,52 @@ model Product {
   status        String  @default("QUEUED")
   pipelineStatus Json?
 
+  playbookSlug  String?
+  templateSlug  String?
+  playbookRunId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  brand       Brand?       @relation(fields: [brandId], references: [id])
-  assets      Asset[]
-  listingCopy ListingCopy?
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand         Brand?       @relation(fields: [brandId], references: [id])
+  playbookRun   PlaybookRun? @relation(fields: [playbookRunId], references: [id])
+  assets        Asset[]
+  listingCopy   ListingCopy?
+}
+
+model SavedPlaybook {
+  id           String   @id @default(cuid())
+  userId       String
+  brandId      String
+  playbookSlug String
+  name         String
+  config       Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([userId, brandId])
+}
+
+model PlaybookRun {
+  id           String   @id @default(cuid())
+  userId       String
+  brandId      String
+  playbookSlug String
+  name         String?
+  status       String   @default("DRAFT")
+  config       Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand    Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@index([userId, brandId])
 }
 
 model Asset {

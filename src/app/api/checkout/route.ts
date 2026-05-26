@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { isCheckoutEnabled } from "@/lib/checkout";
+import { isCheckoutLive } from "@/lib/checkout";
 import { prisma } from "@/lib/prisma";
 import { createCheckoutSession, type CreditPackageKey } from "@/lib/stripe";
 
@@ -10,10 +10,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!isCheckoutEnabled()) {
+  if (!isCheckoutLive()) {
     return NextResponse.json(
       {
-        error: "Stripe checkout is not live yet. Credit packs are shown as placeholders until billing launches.",
+        error:
+          "Stripe checkout is not live yet. Credit packs unlock once Stripe keys and the payment webhook are configured.",
         code: "CHECKOUT_DISABLED",
       },
       { status: 503 }

@@ -22,6 +22,8 @@ import { CreditsRequiredLine } from "@/components/ui/credits-required-line";
 import type { ProductAnalysis } from "@/lib/ai";
 import { cn } from "@/lib/utils";
 import { formatPipelinePhase, formatModuleLabel } from "@/lib/status-labels";
+import { PipelineProgressBar } from "@/components/ui/pipeline-progress-bar";
+import type { PipelineStatusShape } from "@/lib/pipeline-progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import { useToast } from "@/components/ui/toast-provider";
@@ -30,8 +32,12 @@ import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { Camera, Check, Download, Loader2, Sparkles } from "lucide-react";
 import { type MarketplaceId } from "@/lib/marketplaces";
 import { getMarketplace } from "@/lib/marketplaces";
+import { getVisualTemplate } from "@/lib/templates/catalog";
+import { studioCopyHref } from "@/lib/studio-routes";
 import { UnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
-import { downloadGalleryZip } from "@/lib/download-gallery-zip";
+import { PIPELINE_ERROR, SUPPORT_EMAIL, toSellerPipelineError } from "@/lib/pipeline-errors";
+import { PipelineErrorMessage } from "@/components/ui/pipeline-error-message";
+import { downloadGalleryZip } from "@/lib/download-export-pack";
 
 interface PromptPlanItem {
   moduleId: string;
@@ -40,7 +46,7 @@ interface PromptPlanItem {
   prompt: string;
 }
 
-const STEPS = ["Upload", "Product info", "Prompt plan", "Results"];
+const STEPS = ["Product & plan", "Gallery"];
 
 type LinkedProduct = {
   id: string;
@@ -66,13 +72,17 @@ export function GenerateWizard({
   linkedProduct = null,
   missingProductId = false,
   defaultBrandName = "",
+  templateSlug,
   paymentSuccess = false,
+  hidePageHeader = false,
 }: {
   initialCredits: number;
   linkedProduct?: LinkedProduct | null;
   missingProductId?: boolean;
   defaultBrandName?: string;
+  templateSlug?: string;
   paymentSuccess?: boolean;
+  hidePageHeader?: boolean;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -94,20 +104,13 @@ export function GenerateWizard({
   const [error, setError] = useState("");
   const [planningPrompts, setPlanningPrompts] = useState(false);
   const [promptPlan, setPromptPlan] = useState<PromptPlanItem[]>([]);
-  const [pipelineStatus, setPipelineStatus] = useState<{
-    phase: string;
-    steps: {
-      id: string;
-      label: string;
-      status: string;
-      imageUrl?: string;
-      qaScore?: number;
-      prompt?: string;
-    }[];
-  } | null>(null);
+  const [promptsExpanded, setPromptsExpanded] = useState(false);
+  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatusShape | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [pipelineFailed, setPipelineFailed] = useState(false);
   const [pollTimedOut, setPollTimedOut] = useState(false);
+  const [productRunStatus, setProductRunStatus] = useState<string | null>(null);
+  const [queuedStale, setQueuedStale] = useState(false);
   const [savedAnalysis, setSavedAnalysis] = useState<ProductAnalysis | null>(null);
   const [analysisStubMode, setAnalysisStubMode] = useState(false);
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
@@ -312,11 +315,9 @@ export function GenerateWizard({
         throw new Error("INSUFFICIENT_CREDITS");
       }
       if (status === 503 && data.code === "INNGEST_NOT_CONFIGURED") {
-        throw new Error(
-          "Background jobs are not connected yet. Install Inngest from the Vercel Marketplace for productpixl, then redeploy."
-        );
+        throw new Error(PIPELINE_ERROR.notConfigured);
       }
-      if (!ok) throw new Error(data.error || "Failed to start");
+      if (!ok) throw new Error(toSellerPipelineError(data.error || PIPELINE_ERROR.generationFailed));
       setProductId(data.productId ?? linkedProductId ?? null);
       setPipelineFailed(false);
       setPollTimedOut(false);
@@ -324,8 +325,9 @@ export function GenerateWizard({
       setStep(3);
       window.dispatchEvent(new Event("credits-updated"));
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Generation failed";
-      setError(msg === "INSUFFICIENT_CREDITS" ? "INSUFFICIENT_CREDITS" : msg);
+      const raw = e instanceof Error ? e.message : PIPELINE_ERROR.generationFailed;
+      const msg = raw === "INSUFFICIENT_CREDITS" ? "INSUFFICIENT_CREDITS" : toSellerPipelineError(raw);
+      setError(msg);
     }
   };
 
@@ -342,9 +344,12 @@ export function GenerateWizard({
     const { ok, data } = await fetchJson<{
       pipelineStatus?: typeof pipelineStatus;
       status?: string;
+      queuedStale?: boolean;
     }>(`/api/products/${productId}/status`);
     if (!ok) return null;
     setPipelineStatus(data.pipelineStatus as typeof pipelineStatus);
+    setProductRunStatus(data.status ?? null);
+    setQueuedStale(Boolean(data.queuedStale));
     return data.status ?? null;
   }, [productId]);
 
@@ -360,8 +365,8 @@ export function GenerateWizard({
       if (attempts > 240) {
         stopped = true;
         setPollTimedOut(true);
-        setError("Generation timed out. Open your project page or retry your prompt plan.");
-        toast("Generation timed out", "error");
+        setError(PIPELINE_ERROR.generationTimedOut);
+        toast("Generation is taking longer than expected", "error");
         return;
       }
       const status = await pollStatus();
@@ -487,6 +492,9 @@ export function GenerateWizard({
 
   const PHASES = ["RECEIVING", "ANALYZING", "RESEARCHING", "SELECTING", "GENERATING", "QA", "COMPLETE"];
   const marketplaceLabel = getMarketplace(marketplace).label;
+  const moduleSummary = includePackaging ? "Hero · Lifestyle · Detail · Packaging" : "Hero · Lifestyle · Detail";
+  const template = templateSlug ? getVisualTemplate(templateSlug) : undefined;
+  const displayStep = step >= 3 ? 1 : 0;
 
   return (
     <div className="space-y-8">
@@ -494,8 +502,14 @@ export function GenerateWizard({
         initialCredits={credits}
         creditsRequired={imageQuote.total}
         detailLine={imageQuote.detailLine}
-        description="Review prompts before any image is generated — nothing runs until you approve."
+        description="Credits are quoted below. Nothing generates until you tap Start generation on your plan."
       />
+
+      {template ? (
+        <p className="rounded-xl border border-[var(--teal)]/30 bg-[var(--teal-soft)]/40 px-4 py-3 text-sm">
+          Visual template <strong>{template.title}</strong> selected — prompts will follow this layout with your brand palette.
+        </p>
+      ) : null}
 
       {paymentSuccess ? (
         <Suspense fallback={null}>
@@ -503,26 +517,33 @@ export function GenerateWizard({
         </Suspense>
       ) : null}
 
-      <PageHeader
-        eyebrow="Image studio"
-        title="Image studio"
-        description={
-          <>
-            L1 hero · L3 lifestyle · L4 detail
-            {includePackaging ? " · L8 packaging" : ""} —{" "}
-            <CreditsRequiredLine total={imageQuote.total} detailLine={imageQuote.detailLine} />
-          </>
-        }
-      />
+      {!hidePageHeader ? (
+        <PageHeader
+          eyebrow="Image studio"
+          title="Image studio"
+          description={
+            <>
+              {moduleSummary}
+              {includePackaging ? "" : ""} —{" "}
+              <CreditsRequiredLine total={imageQuote.total} detailLine={imageQuote.detailLine} />
+            </>
+          }
+        />
+      ) : (
+        <p className="text-sm text-[var(--muted-fg)]">
+          {moduleSummary} —{" "}
+          <CreditsRequiredLine total={imageQuote.total} detailLine={imageQuote.detailLine} />
+        </p>
+      )}
 
-      <div ref={stepperRef}>
+      <div id="studio-steps" ref={stepperRef} className="scroll-mt-24">
         <StudioStepper
           steps={STEPS}
-          currentStep={step}
+          currentStep={displayStep}
           label="Generation progress"
           sticky
           statusText={
-            step === 3 && pipelineStatus?.phase
+            displayStep === 1 && pipelineStatus?.phase
               ? formatPipelinePhase(pipelineStatus.phase)
               : analyzing
                 ? "Analyzing product photo…"
@@ -565,7 +586,12 @@ export function GenerateWizard({
       ) : null}
 
       {error && error !== "INSUFFICIENT_CREDITS" && step !== 0 && step !== 2 ? (
-        <p className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">{error}</p>
+        <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
+          <PipelineErrorMessage
+            message={toSellerPipelineError(error)}
+            supportSubject="ProductPixl image generation issue"
+          />
+        </div>
       ) : null}
 
       {step === 0 && (
@@ -601,7 +627,10 @@ export function GenerateWizard({
             />
             {error && error !== "INSUFFICIENT_CREDITS" ? (
               <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
-                <p>{error}</p>
+                <PipelineErrorMessage
+                  message={toSellerPipelineError(error)}
+                  supportSubject="ProductPixl image generation issue"
+                />
                 {imageUrl ? (
                   <Button
                     type="button"
@@ -759,9 +788,9 @@ export function GenerateWizard({
                   }}
                 />
                 <div>
-                  <p className="font-medium">Include L8 packaging module</p>
+                  <p className="font-medium">Include packaging shot</p>
                   <p className="mt-1 text-sm text-[var(--muted-fg)]">
-                    Adds unboxing / pack shot — longer generation time
+                    Adds an unboxing / pack shot module — uses a few more credits
                   </p>
                 </div>
               </label>
@@ -782,7 +811,10 @@ export function GenerateWizard({
             </ul>
             {error && error !== "INSUFFICIENT_CREDITS" ? (
               <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
-                <p>{error}</p>
+                <PipelineErrorMessage
+                  message={toSellerPipelineError(error)}
+                  supportSubject="ProductPixl image generation issue"
+                />
                 <Button
                   type="button"
                   size="sm"
@@ -799,54 +831,72 @@ export function GenerateWizard({
               </div>
             ) : null}
             <div className="space-y-3">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={buildPromptPlan}
-                disabled={planningPrompts || !imageUrl}
-              >
-                {planningPrompts ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Building prompt plan…
-                  </>
-                ) : (
-                  "Generate prompt plan"
-                )}
-              </Button>
               {planningPrompts && promptPlan.length === 0 ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-48 w-full rounded-xl" />
-                  ))}
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/30 p-4 text-sm text-[var(--muted-fg)]">
+                  <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
+                  Building your image plan from your photo and brand kit…
                 </div>
               ) : null}
-              {promptPlan.length > 0 && (
-                <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--muted)]/30 p-4">
-                  <p className="text-sm font-medium">
-                    Prompt plan ready — edit anything below before generation:
-                  </p>
-                  {promptPlan.map((item, index) => (
-                    <div key={item.moduleId} className="space-y-2 rounded-lg border bg-[var(--card)] p-3">
-                      <p className="text-sm font-semibold">
-                        {index + 1}. {formatModuleLabel(item.moduleId)}
-                        {item.label ? ` · ${item.label}` : ""} ({item.resolution})
+              {promptPlan.length > 0 ? (
+                <div className="space-y-4 rounded-xl border border-[var(--accent)]/25 bg-[var(--accent-soft)]/20 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">Ready to generate</p>
+                      <p className="mt-1 text-sm text-[var(--muted-fg)]">
+                        {promptPlan.length} images · {moduleSummary} · {marketplaceLabel} ·{" "}
+                        {imageQuote.total.toLocaleString()} credits
                       </p>
-                      <Textarea
-                        className="min-h-[220px] text-xs leading-relaxed"
-                        value={item.prompt}
-                        onChange={(e) =>
-                          setPromptPlan((prev) =>
-                            prev.map((p) =>
-                              p.moduleId === item.moduleId ? { ...p, prompt: e.target.value } : p
-                            )
-                          )
-                        }
-                      />
                     </div>
-                  ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPromptsExpanded((v) => !v)}
+                    >
+                      {promptsExpanded ? "Hide prompts" : "Review & edit prompts"}
+                    </Button>
+                  </div>
+                  {promptsExpanded ? (
+                    <div className="space-y-4 border-t border-[var(--border)] pt-4">
+                      {promptPlan.map((item, index) => (
+                        <div key={item.moduleId} className="space-y-2 rounded-lg border bg-[var(--card)] p-3">
+                          <p className="text-sm font-semibold">
+                            {index + 1}. {formatModuleLabel(item.moduleId)}
+                            {item.label ? ` · ${item.label}` : ""}
+                          </p>
+                          <Textarea
+                            className="min-h-[140px] text-xs leading-relaxed"
+                            value={item.prompt}
+                            onChange={(e) =>
+                              setPromptPlan((prev) =>
+                                prev.map((p) =>
+                                  p.moduleId === item.moduleId ? { ...p, prompt: e.target.value } : p
+                                )
+                              )
+                            }
+                          />
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setPromptPlan([]);
+                          void buildPromptPlan();
+                        }}
+                        disabled={planningPrompts}
+                      >
+                        Rebuild plan from product details
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
-              )}
+              ) : !planningPrompts ? (
+                <Button variant="outline" className="w-full" onClick={buildPromptPlan} disabled={!imageUrl}>
+                  Build image plan
+                </Button>
+              ) : null}
             </div>
             <div className={cn(mobileStickyFooter, "-mx-6 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none")}>
               <Button variant="outline" onClick={() => setStep(1)}>
@@ -879,12 +929,20 @@ export function GenerateWizard({
               className="scroll-mt-24 rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-4 text-sm text-[var(--error)]"
             >
               <p className="font-medium text-[var(--foreground)]">
-                {pollTimedOut ? "Generation timed out" : "Image generation failed"}
+                {pollTimedOut ? "Taking longer than expected" : "Generation didn't finish"}
               </p>
               <p className="mt-2 text-[var(--error)]">
                 {pollTimedOut
-                  ? "Generation took too long. Check Inngest is running locally, open your project to see partial results, or retry with the same prompt plan."
-                  : "Something went wrong during generation. Open your project for details, retry with the same prompts, or adjust your prompt plan."}
+                  ? PIPELINE_ERROR.generationTimedOut
+                  : toSellerPipelineError(pipelineStatus?.error ?? PIPELINE_ERROR.generationFailed)}
+              </p>
+              <p className="mt-2">
+                <Link
+                  href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("ProductPixl image generation issue")}`}
+                  className="font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+                >
+                  Contact support
+                </Link>
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button type="button" size="sm" disabled={!promptPlan.length || lacksCredits} onClick={() => void retryGeneration()}>
@@ -905,14 +963,15 @@ export function GenerateWizard({
             </div>
           ) : null}
           <Card className="border-[var(--accent)]/20 bg-[var(--accent-soft)]/30">
-            <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent)]">
-                  Pipeline status
-                </p>
-                <p className="font-serif text-xl">{formatPipelinePhase(pipelineStatus?.phase ?? "RECEIVING")}</p>
-              </div>
-              {!done && <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />}
+            <CardContent className="space-y-3 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent)]">
+                Generation progress
+              </p>
+              <PipelineProgressBar
+                status={productRunStatus ?? (pipelineStatus?.phase ? "PROCESSING" : "QUEUED")}
+                pipelineStatus={pipelineStatus as PipelineStatusShape | null}
+                queuedStale={queuedStale}
+              />
             </CardContent>
           </Card>
 
@@ -1005,7 +1064,7 @@ export function GenerateWizard({
                 View full project
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-xl">
-                <Link href={`/copy?productId=${productId}`}>Generate listing copy</Link>
+                <Link href={studioCopyHref(productId)}>Generate listing copy</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-xl">
                 <Link href={`/products/${productId}#export`}>Export hub</Link>

@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { auth, signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Check } from "lucide-react";
+import { auth, signIn } from "@/lib/auth";
+import { isEmailAuthConfigured } from "@/lib/email/magic-link";
 import { GoogleSignInForm } from "@/components/auth/google-sign-in-form";
+import { EmailSignInForm } from "@/components/auth/email-sign-in-form";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 import { loginDestinationLabel } from "@/lib/login-destination";
+import { USP_PILLARS, USP_SUBHEAD, USP_TAGLINE } from "@/lib/marketing-usp";
 
 function safeCallbackUrl(raw?: string) {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/studio";
   return raw;
 }
 
@@ -19,6 +22,7 @@ export default async function LoginPage({
   const session = await auth();
   const params = await searchParams;
   const callbackUrl = safeCallbackUrl(params.callbackUrl);
+  const emailEnabled = isEmailAuthConfigured();
 
   if (session?.user?.id) {
     redirect(callbackUrl);
@@ -26,13 +30,27 @@ export default async function LoginPage({
 
   const errorMessage =
     params.error === "OAuthAccountNotLinked"
-      ? "That Google account is already linked to another sign-in method."
-      : params.error
-        ? "Sign-in failed. Please try again."
-        : null;
+      ? "That email is already linked to another sign-in method. Use the same method you signed up with."
+      : params.error === "Verification"
+        ? "That sign-in link expired or was already used. Request a new one below."
+        : params.error
+          ? "Sign-in failed. Please try again."
+          : null;
 
   const destinationLabel = loginDestinationLabel(callbackUrl);
-  const showDestinationHint = callbackUrl !== "/dashboard";
+  const showDestinationHint = callbackUrl !== "/studio" && callbackUrl !== "/dashboard";
+
+  async function signInWithGoogle() {
+    "use server";
+    await signIn("google", { redirectTo: callbackUrl });
+  }
+
+  async function signInWithEmail(formData: FormData) {
+    "use server";
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    if (!email) return;
+    await signIn("email", { email, redirectTo: callbackUrl });
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -44,27 +62,30 @@ export default async function LoginPage({
           <span className="font-serif text-xl">ProductPixl</span>
         </Link>
         <div>
-          <h2 className="font-serif text-4xl leading-tight">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent-soft)]">{USP_TAGLINE}</p>
+          <h2 className="mt-3 font-serif text-4xl leading-tight">
             One photo.
             <br />
             <span className="text-[var(--accent-soft)]">Full listing studio.</span>
           </h2>
-          <ul className="mt-8 space-y-3 text-sm text-white/75">
-            {[
-              "10 free credits — no credit card",
-              "Pay per generation, not per month",
-              "Amazon gallery + listing copy",
-              "Photo in — no ASIN required",
-            ].map((item) => (
-              <li key={item} className="flex gap-2">
+          <p className="mt-4 max-w-md text-sm text-white/70">{USP_SUBHEAD}</p>
+          <ul className="mt-6 space-y-3 text-sm text-white/75">
+            {USP_PILLARS.slice(0, 4).map((pillar) => (
+              <li key={pillar.id} className="flex gap-2">
                 <Check className="h-4 w-4 shrink-0 text-[var(--accent-soft)]" />
-                {item}
+                {pillar.title}
               </li>
             ))}
           </ul>
+          <Link
+            href="/guides/ecommerce"
+            className="mt-6 inline-flex text-sm font-medium text-[var(--accent-soft)] underline-offset-2 hover:underline"
+          >
+            Free: 10-playbook ecommerce guide pack →
+          </Link>
           <ShowcaseMosaic className="mt-10 max-w-sm opacity-95" />
         </div>
-        <p className="text-xs text-white/40">Built for Amazon & EU marketplace sellers</p>
+        <p className="text-xs text-white/40">{USP_TAGLINE} · Amazon & EU marketplaces</p>
       </div>
 
       <main id="main" className="flex flex-1 flex-col items-center justify-center bg-[var(--background)] px-4 py-12">
@@ -77,7 +98,9 @@ export default async function LoginPage({
           </Link>
           <h1 className="font-serif text-3xl">Sign in</h1>
           <p className="mt-2 text-[var(--muted-fg)]">
-            Continue with Google to access your studio and credits.
+            {emailEnabled
+              ? "Continue with Google or get a one-click email link — no password."
+              : "Continue with Google to access your studio and credits."}
           </p>
 
           {showDestinationHint ? (
@@ -85,21 +108,6 @@ export default async function LoginPage({
               After sign-in you&apos;ll return to <strong>{destinationLabel}</strong>.
             </p>
           ) : null}
-
-          <ol className="mt-6 space-y-2 text-sm text-[var(--muted-fg)]">
-            {[
-              "Sign in with Google — no credit card",
-              "Get 10 free generation credits instantly",
-              "Upload one photo → gallery + listing copy",
-            ].map((item, index) => (
-              <li key={item} className="flex gap-3">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xs font-semibold text-[var(--foreground)]">
-                  {index + 1}
-                </span>
-                <span className="pt-0.5">{item}</span>
-              </li>
-            ))}
-          </ol>
 
           {errorMessage ? (
             <p
@@ -113,18 +121,51 @@ export default async function LoginPage({
 
           <GoogleSignInForm
             errorDescribedBy={errorMessage ? "login-error" : undefined}
-            action={async () => {
-              "use server";
-              await signIn("google", { redirectTo: callbackUrl });
-            }}
+            action={signInWithGoogle}
           />
+
+          {emailEnabled ? (
+            <>
+              <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-[var(--border)]" />
+                </div>
+                <p className="relative mx-auto w-fit bg-[var(--card)] px-3 text-xs uppercase tracking-wide text-[var(--muted-fg)]">
+                  Or email
+                </p>
+              </div>
+              <EmailSignInForm action={signInWithEmail} />
+            </>
+          ) : (
+            <p className="mt-6 text-xs text-[var(--muted-fg)]">
+              Email sign-in is disabled until <code className="text-[11px]">AUTH_RESEND_API_KEY</code> and{" "}
+              <code className="text-[11px]">EMAIL_FROM</code> are configured.
+            </p>
+          )}
+
           <p className="mt-6 text-center text-xs text-[var(--muted-fg)]">
-            New accounts receive 10 free generation credits.
+            New accounts receive 10 free generation credits. By signing in you agree to our{" "}
+            <Link href="/terms" className="underline-offset-2 hover:underline">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="underline-offset-2 hover:underline">
+              Privacy Policy
+            </Link>
+            .
           </p>
           <p className="mt-4 text-center text-sm">
             Not ready to sign in?{" "}
             <Link href="/grader" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
               Grade your listing free →
+            </Link>
+            {" · "}
+            <Link href="/guides/ecommerce" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
+              Get the free guide pack →
+            </Link>
+            {" · "}
+            <Link href="/demo" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
+              Book a demo →
             </Link>
           </p>
         </div>

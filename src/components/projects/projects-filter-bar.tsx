@@ -31,6 +31,7 @@ const READY_OPTIONS = [{ value: "export", label: "Export-ready" }] as const;
 
 export function buildProjectsQuery(params: Record<string, string | undefined>) {
   const q = new URLSearchParams();
+  if (params.brandId) q.set("brandId", params.brandId);
   if (params.status) q.set("status", params.status);
   if (params.copy) q.set("copy", params.copy);
   if (params.images) q.set("images", params.images);
@@ -41,16 +42,23 @@ export function buildProjectsQuery(params: Record<string, string | undefined>) {
   return s ? `?${s}` : "";
 }
 
+export type ProjectsBrandFilter = { id: string; name: string; isActive?: boolean };
+
 export function ProjectsFilterBar({
   total,
   filtered,
+  brands = [],
+  activeBrandId,
 }: {
   total: number;
   filtered: number;
+  brands?: ProjectsBrandFilter[];
+  activeBrandId?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const brandId = searchParams.get("brandId") ?? "";
   const status = searchParams.get("status") ?? "";
   const copy = searchParams.get("copy") ?? "";
   const images = searchParams.get("images") ?? "";
@@ -64,6 +72,7 @@ export function ProjectsFilterBar({
 
   const push = (next: Record<string, string>) => {
     const merged = {
+      brandId: next.brandId ?? brandId,
       status: next.status ?? status,
       copy: next.copy ?? copy,
       images: next.images ?? images,
@@ -98,7 +107,7 @@ export function ProjectsFilterBar({
             </span>
           ) : null}
         </p>
-        {(status || copy || images || ready || q) ? (
+        {(brandId || status || copy || images || ready || q) ? (
           <Link
             href="/projects"
             className="text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
@@ -107,6 +116,40 @@ export function ProjectsFilterBar({
           </Link>
         ) : null}
       </div>
+      {brands.length > 1 ? (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => push({ brandId: "" })}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+              !brandId
+                ? "bg-[var(--accent)] text-white"
+                : "bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)]"
+            )}
+            aria-pressed={!brandId}
+          >
+            All brands
+          </button>
+          {brands.map((brand) => (
+            <button
+              key={brand.id}
+              type="button"
+              onClick={() => push({ brandId: brand.id })}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                brandId === brand.id
+                  ? "bg-[var(--accent)] text-white"
+                  : "bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)]"
+              )}
+              aria-pressed={brandId === brand.id}
+            >
+              {brand.name}
+              {brand.id === activeBrandId ? " · active" : ""}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className="relative max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-fg)]" />
         <Input

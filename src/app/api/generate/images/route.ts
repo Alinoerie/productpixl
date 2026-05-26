@@ -5,7 +5,9 @@ import { inngest, IMAGE_PIPELINE_EVENT } from "@/inngest/client";
 import type { ProductIntakeData } from "@/lib/product-intake";
 import type { ProductAnalysis } from "@/lib/ai";
 import { quoteImageRun } from "@/lib/credit-pricing";
-import { isInngestConfigured, inngestNotConfiguredResponse } from "@/lib/inngest-config";
+import { isInngestConfigured, inngestNotConfiguredResponse, shouldUseInlinePipeline } from "@/lib/inngest-config";
+import { PIPELINE_ERROR } from "@/lib/pipeline-errors";
+import { scheduleInlineImagePipeline } from "@/lib/run-image-pipeline-async";
 import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
 
 export async function POST(req: NextRequest) {
@@ -46,6 +48,8 @@ export async function POST(req: NextRequest) {
   if (!isInngestConfigured()) {
     return inngestNotConfiguredResponse();
   }
+
+  const useInline = shouldUseInlinePipeline();
 
   const user = await requireCredits(session.user.id, quote.total);
   if (!user) {
@@ -102,17 +106,25 @@ export async function POST(req: NextRequest) {
   });
 
   try {
-    await inngest.send({
-      name: IMAGE_PIPELINE_EVENT,
-      data: {
-        productId,
-        includePackaging,
-        promptOverrides,
-        analysis,
-        intake: productData,
-        chargedCredits: quote.total,
-      },
-    });
+    const pipelineInput = {
+      productId,
+      includePackaging,
+      promptOverrides,
+      analysis,
+      intake: productData,
+    };
+
+    if (useInline) {
+      scheduleInlineImagePipeline(pipelineInput, session.user.id, quote.total);
+    } else {
+      await inngest.send({
+        name: IMAGE_PIPELINE_EVENT,
+        data: {
+          ...pipelineInput,
+          chargedCredits: quote.total,
+        },
+      });
+    }
   } catch (err) {
     await prisma.user.update({
       where: { id: session.user.id },
@@ -124,7 +136,7 @@ export async function POST(req: NextRequest) {
         status: "FAILED",
         pipelineStatus: {
           phase: "FAILED",
-          error: err instanceof Error ? err.message : "Failed to start background job",
+          error: err instanceof Error ? err.message : PIPELINE_ERROR.generationFailed,
           steps: [],
           currentStepIndex: 0,
           startedAt: new Date().toISOString(),

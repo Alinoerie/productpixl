@@ -38,7 +38,7 @@ export function ProductLiveGallery({
   }, [initialAssets, initialStatus]);
 
   useEffect(() => {
-    if (status !== "PROCESSING") return;
+    if (status !== "PROCESSING" && status !== "QUEUED") return;
 
     let active = true;
     const poll = async () => {
@@ -73,10 +73,10 @@ export function ProductLiveGallery({
     };
   }, [productId, status, router]);
 
-  if (assets.length === 0 && status === "PROCESSING") {
+  if (assets.length === 0 && (status === "PROCESSING" || status === "QUEUED")) {
     return (
       <div className="space-y-4">
-        <ProductLiveStatus productId={productId} />
+        <ProductLiveStatus productId={productId} initialStatus={status} />
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] py-16 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
           <p className="mt-4 font-medium">Building your gallery…</p>
@@ -90,7 +90,9 @@ export function ProductLiveGallery({
 
   return (
     <div className="space-y-4">
-      {status === "PROCESSING" ? <ProductLiveStatus productId={productId} /> : null}
+      {status === "PROCESSING" || status === "QUEUED" ? (
+        <ProductLiveStatus productId={productId} initialStatus={status} />
+      ) : null}
       <ProductImageGallery
         productId={productId}
         productName={productName}

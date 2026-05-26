@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { STUDIO_ROUTES } from "@/lib/studio-routes";
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
   apiVersion: "2025-02-24.acacia",
@@ -6,7 +7,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_place
 
 export const CREDIT_PACKAGES = {
   starter: { credits: 10, amount: 2900, label: "Starter" },
-  growth: { credits: 30, amount: 7900, label: "Growth" },
+  growth: { credits: 30, amount: 7900, label: "Catalog" },
 } as const;
 
 export type CreditPackageKey = keyof typeof CREDIT_PACKAGES;
@@ -15,7 +16,7 @@ export async function createCheckoutSession(
   userId: string,
   email: string,
   packageKey: CreditPackageKey,
-  returnTo = "/generate"
+  returnTo?: string
 ) {
   const pkg = CREDIT_PACKAGES[packageKey];
   const priceId =
@@ -25,7 +26,9 @@ export async function createCheckoutSession(
 
   const baseUrl = process.env.AUTH_URL ?? "http://localhost:3000";
   const safeReturn =
-    returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo.split("?")[0] : "/generate";
+    returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
+      ? returnTo.split("?")[0]
+      : STUDIO_ROUTES.images;
   const successUrl = `${baseUrl}${safeReturn}?success=true`;
 
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = priceId

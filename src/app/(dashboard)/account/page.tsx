@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { CreditCard, Receipt } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +10,9 @@ import { PaymentSuccessBanner } from "@/components/account/payment-success-banne
 import { CreditUsageGuide } from "@/components/account/credit-usage-guide";
 import { SignOutButton } from "@/components/account/sign-out-button";
 import { formatOrderStatus } from "@/lib/status-labels";
+import { StudioPageShell } from "@/components/layout/studio-page-shell";
+import { getAccountJourney } from "@/lib/user-journey";
+import { STUDIO_ROUTES } from "@/lib/studio-routes";
 
 function formatAmount(cents: number) {
   return new Intl.NumberFormat("en-EU", { style: "currency", currency: "EUR" }).format(cents / 100);
@@ -33,15 +35,15 @@ export default async function AccountPage({
   });
 
   const credits = user?.credits ?? 0;
+  const journey = getAccountJourney(credits);
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow="Your account"
-        title={session.user.name ?? "Account"}
-        description={session.user.email ?? undefined}
-      />
-
+    <StudioPageShell
+      eyebrow="Account"
+      title={session.user.name ?? "Account"}
+      description={session.user.email ?? undefined}
+      guide={journey}
+    >
       {params.success ? (
         <Suspense fallback={null}>
           <PaymentSuccessBanner />
@@ -80,16 +82,16 @@ export default async function AccountPage({
             <p className="text-sm font-medium">Quick links</p>
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline" size="sm">
-                <Link href="/projects">All projects</Link>
+                <Link href={STUDIO_ROUTES.projects}>All projects</Link>
               </Button>
               <Button asChild variant="outline" size="sm">
-                <Link href="/generate">Image studio</Link>
+                <Link href={STUDIO_ROUTES.images}>Images</Link>
               </Button>
               <Button asChild variant="outline" size="sm">
-                <Link href="/copy">Listing copy</Link>
+                <Link href={STUDIO_ROUTES.copy}>Copy</Link>
               </Button>
               <Button asChild variant="outline" size="sm">
-                <Link href="/brand">Brand profile</Link>
+                <Link href={STUDIO_ROUTES.brandProfile}>Brand kit</Link>
               </Button>
             </div>
           </CardContent>
@@ -121,7 +123,7 @@ export default async function AccountPage({
                   </Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link href="/generate">Use free credits</Link>
+                  <Link href={STUDIO_ROUTES.images}>Use free credits</Link>
                 </Button>
               </div>
             </div>
@@ -147,11 +149,11 @@ export default async function AccountPage({
         <div>
           <p className="text-sm font-medium">Session</p>
           <p className="mt-1 text-sm text-[var(--muted-fg)]">
-            Signed in with Google. Sign out to switch accounts on this device.
+            Signed in as {session.user.email ?? "your account"}. Sign out to switch accounts on this device.
           </p>
         </div>
         <SignOutButton />
       </div>
-    </div>
+    </StudioPageShell>
   );
 }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, X, ZoomIn } from "lucide-react";
 import { formatModuleLabel } from "@/lib/status-labels";
+import { toSellerAssetError } from "@/lib/pipeline-errors";
 import { AssetSpotEdit } from "@/components/products/asset-spot-edit";
 import { AssetModuleRetry } from "@/components/products/asset-module-retry";
 import { cn } from "@/lib/utils";
@@ -224,10 +225,10 @@ export function ProductImageGallery({
               <div className="p-4">
                 <p className="text-sm font-medium">
                   {formatModuleLabel(a.moduleId)}
-                  {a.qaScore != null ? ` · QA ${a.qaScore}/10` : ""}
+                  {a.qaScore != null && a.status === "COMPLETE" ? ` · Quality ${a.qaScore}/10` : ""}
                 </p>
                 {a.errorMessage ? (
-                  <p className="mt-2 text-xs text-[var(--error)]">{a.errorMessage}</p>
+                  <p className="mt-2 text-xs text-[var(--error)]">{toSellerAssetError(a.errorMessage)}</p>
                 ) : null}
                 {a.status === "COMPLETE" && a.imageUrl && !readOnly ? (
                   <AssetSpotEdit
@@ -310,7 +311,7 @@ export function ProductImageGallery({
             <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
               <p className="text-center text-sm text-white/80">
                 {formatModuleLabel(lightbox.moduleId)}
-                {lightbox.qaScore != null ? ` · QA ${lightbox.qaScore}/10` : ""}
+                {lightbox.qaScore != null ? ` · Quality ${lightbox.qaScore}/10` : ""}
                 {viewableAssets.length > 1 ? (
                   <> · {lightboxIndex! + 1} of {viewableAssets.length}</>
                 ) : null}

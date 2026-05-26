@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { studioCopyHref, studioImagesHref } from "@/lib/studio-routes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Circle, Copy, Download, ImageIcon, Loader2, FileText } from "lucide-react";
 import { useToast } from "@/components/ui/toast-provider";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
-import { downloadGalleryZip } from "@/lib/download-gallery-zip";
+import { downloadExportPack as buildExportPack, downloadGalleryZip } from "@/lib/download-export-pack";
 import {
   formatListingCsv,
   formatListingPlain,
@@ -40,12 +41,31 @@ export function ProductExportActions({
   const marketplace = getMarketplace(marketplaceId);
   const [copied, setCopied] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [packDownloading, setPackDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<string | null>(null);
   const completedImages = assets.filter((a): a is { moduleId: string; imageUrl: string } => Boolean(a.imageUrl));
   const hasCopy = Boolean(listingCopy?.title);
   const hasImages = completedImages.length > 0;
   const exportReady = hasCopy && hasImages;
   const slug = productName.replace(/\s+/g, "-").toLowerCase() || "product";
+  const listingTxtLabel =
+    marketplaceId === "BOL_NL"
+      ? "Bol.com .txt"
+      : marketplaceId === "SHOPIFY"
+        ? "Shopify .txt"
+        : "Download .txt";
+  const listingCsvLabel =
+    marketplaceId === "BOL_NL"
+      ? "Bol.com CSV"
+      : marketplaceId === "SHOPIFY"
+        ? "Shopify CSV"
+        : "Download .csv";
+  const exportPackLabel =
+    marketplaceId === "BOL_NL"
+      ? "Bol.com export pack"
+      : marketplaceId === "SHOPIFY"
+        ? "Shopify export pack"
+        : `${marketplace.label} export pack`;
 
   const checklist = (
     <ul className="mt-4 space-y-2 text-sm">
@@ -160,6 +180,36 @@ export function ProductExportActions({
     }
   };
 
+  const downloadFullExportPack = async () => {
+    if (!listingCopy?.title || completedImages.length === 0) return;
+    setPackDownloading(true);
+    setDownloadProgress(null);
+    try {
+      const payload: ListingExportPayload = {
+        title: listingCopy.title,
+        bullets: listingCopy.bullets ?? [],
+        description: listingCopy.description,
+        backendKeywords: listingCopy.backendKeywords,
+      };
+      const { imageCount } = await buildExportPack(
+        {
+          slug,
+          productName,
+          marketplaceId,
+          assets: completedImages,
+          listingCopy: payload,
+        },
+        (phase) => setDownloadProgress(phase)
+      );
+      toast(`Downloaded ${exportPackLabel} (${imageCount} images + listing files)`);
+    } catch {
+      toast("Export pack failed — try individual downloads below", "error");
+    } finally {
+      setPackDownloading(false);
+      setDownloadProgress(null);
+    }
+  };
+
   if (!hasCopy && !hasImages) {
     return (
       <Card className="scroll-mt-24 border-dashed" id="export">
@@ -171,13 +221,13 @@ export function ProductExportActions({
           <div className="mx-auto max-w-xs text-left">{checklist}</div>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button asChild>
-              <Link href={`/generate?productId=${productId}`}>
+              <Link href={studioImagesHref({ productId })}>
                 <ImageIcon className="h-4 w-4" />
                 Run image studio
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href={`/copy?productId=${productId}`}>
+              <Link href={studioCopyHref(productId)}>
                 <FileText className="h-4 w-4" />
                 Generate copy
               </Link>
@@ -218,20 +268,48 @@ export function ProductExportActions({
             <div className="mt-4 flex flex-wrap gap-2">
               {hasImages ? (
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/copy?productId=${productId}`}>Generate copy</Link>
+                  <Link href={studioCopyHref(productId)}>Generate copy</Link>
                 </Button>
               ) : (
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/generate?productId=${productId}`}>Run image studio</Link>
+                  <Link href={studioImagesHref({ productId })}>Run image studio</Link>
                 </Button>
               )}
             </div>
           </div>
         ) : null}
 
+        {exportReady ? (
+          <Button
+            type="button"
+            size="sm"
+            className="w-full sm:w-auto"
+            disabled={packDownloading || downloading}
+            onClick={() => void downloadFullExportPack()}
+          >
+            {packDownloading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {downloadProgress ?? "Packing export…"}
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                {exportPackLabel}
+              </>
+            )}
+          </Button>
+        ) : null}
+
         <div className="flex flex-wrap gap-2">
           {hasImages ? (
-            <Button type="button" variant="outline" size="sm" disabled={downloading} onClick={downloadImages}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={downloading || packDownloading}
+              onClick={downloadImages}
+            >
               {downloading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -253,11 +331,11 @@ export function ProductExportActions({
               </Button>
               <Button type="button" variant="outline" size="sm" onClick={exportListingTxt}>
                 <Download className="h-4 w-4" />
-                Download .txt
+                {listingTxtLabel}
               </Button>
               <Button type="button" variant="outline" size="sm" onClick={exportListingCsv}>
                 <Download className="h-4 w-4" />
-                Download .csv
+                {listingCsvLabel}
               </Button>
               <Button type="button" variant="outline" size="sm" onClick={exportListingJson}>
                 <Download className="h-4 w-4" />

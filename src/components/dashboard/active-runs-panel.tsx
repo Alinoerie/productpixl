@@ -3,11 +3,26 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { PipelineProgressBar } from "@/components/ui/pipeline-progress-bar";
+import type { PipelineStatusShape } from "@/lib/pipeline-progress";
+import { ResetStuckRunButton } from "@/components/products/reset-stuck-run-button";
+import { STUDIO_ROUTES, studioImagesHref } from "@/lib/studio-routes";
 
 type ActiveRun = {
   id: string;
   name: string;
   status: string;
+  pipelineStatus?: PipelineStatusShape | null;
+  queuedStale?: boolean;
+  progress?: number;
+};
+
+type StatusPayload = {
+  status: string;
+  pipelineStatus?: PipelineStatusShape | null;
+  queuedStale?: boolean;
+  progress?: number;
 };
 
 export function ActiveRunsPanel({
@@ -15,12 +30,12 @@ export function ActiveRunsPanel({
   totalProjects,
   failedCount,
 }: {
-  initialRuns: ActiveRun[];
+  initialRuns: Omit<ActiveRun, "pipelineStatus" | "queuedStale" | "progress">[];
   totalProjects: number;
   failedCount: number;
 }) {
   const router = useRouter();
-  const [runs, setRuns] = useState(initialRuns);
+  const [runs, setRuns] = useState<ActiveRun[]>(initialRuns);
   const runsRef = useRef(runs);
 
   useEffect(() => {
@@ -44,9 +59,15 @@ export function ActiveRunsPanel({
           if (run.status !== "QUEUED" && run.status !== "PROCESSING") return run;
           try {
             const res = await fetch(`/api/products/${run.id}/status`);
-            const data = await res.json();
+            const data = (await res.json()) as StatusPayload;
             if (!res.ok) return run;
-            return { ...run, status: data.status as string };
+            return {
+              ...run,
+              status: data.status,
+              pipelineStatus: data.pipelineStatus ?? null,
+              queuedStale: data.queuedStale,
+              progress: data.progress,
+            };
           } catch {
             return run;
           }
@@ -81,36 +102,66 @@ export function ActiveRunsPanel({
           ? `${inProgressCount} run${inProgressCount === 1 ? "" : "s"} in progress`
           : "Needs attention"}
       </p>
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-3 space-y-3">
         {runs.map((run) => (
-          <li key={run.id}>
-            <Link
-              href={`/products/${run.id}`}
-              className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm transition-colors hover:border-[var(--accent)]/40"
-            >
-              <span className="truncate font-medium">{run.name}</span>
-              <span
-                className={
-                  run.status === "FAILED"
-                    ? "shrink-0 text-[var(--error)]"
-                    : "shrink-0 text-[var(--accent)]"
-                }
+          <li
+            key={run.id}
+            className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-sm"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <Link
+                href={`/products/${run.id}`}
+                className="min-w-0 flex-1 transition-colors hover:text-[var(--accent)]"
               >
-                {run.status === "FAILED"
-                  ? "Failed · Retry"
-                  : run.status === "QUEUED"
-                    ? "Starting…"
-                    : run.status === "PROCESSING"
-                      ? "Processing…"
-                      : "Complete"}
-              </span>
-            </Link>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="truncate font-medium">{run.name}</span>
+                  {run.status === "FAILED" ? (
+                    <span className="shrink-0 text-[var(--error)]">Failed</span>
+                  ) : null}
+                </div>
+                {run.status === "QUEUED" || run.status === "PROCESSING" ? (
+                  <PipelineProgressBar
+                    className="mt-2"
+                    compact
+                    status={run.status}
+                    pipelineStatus={run.pipelineStatus}
+                    queuedStale={run.queuedStale}
+                  />
+                ) : run.status === "FAILED" ? (
+                  <span className="mt-1 block text-xs text-[var(--muted-fg)]">
+                    Retry in Images →
+                  </span>
+                ) : null}
+              </Link>
+              {run.status === "QUEUED" || run.status === "PROCESSING" ? (
+                <ResetStuckRunButton
+                  productId={run.id}
+                  label={run.queuedStale ? "Reset stuck" : "Reset"}
+                  variant="outline"
+                  size="sm"
+                  onReset={() => {
+                    setRuns((current) =>
+                      current.map((item) =>
+                        item.id === run.id
+                          ? { ...item, status: "FAILED", queuedStale: false, progress: 0 }
+                          : item
+                      )
+                    );
+                    router.refresh();
+                  }}
+                />
+              ) : run.status === "FAILED" ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={studioImagesHref({ productId: run.id })}>Retry</Link>
+                </Button>
+              ) : null}
+            </div>
           </li>
         ))}
       </ul>
       {totalProjects > runs.length ? (
         <Link
-          href={failedOnlyPanel ? "/projects?status=FAILED" : "/projects"}
+          href={failedOnlyPanel ? "/projects?status=FAILED" : STUDIO_ROUTES.projects}
           className="mt-3 inline-block text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
         >
           {failedOnlyPanel ? "View all failed projects →" : "View all projects →"}

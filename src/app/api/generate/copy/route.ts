@@ -4,7 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { inngest, COPY_PIPELINE_EVENT } from "@/inngest/client";
 import type { ProductIntakeData } from "@/lib/product-intake";
 import { quoteCopyRun } from "@/lib/credit-pricing";
-import { isInngestConfigured, inngestNotConfiguredResponse } from "@/lib/inngest-config";
+import { isInngestConfigured, inngestNotConfiguredResponse, shouldUseInlinePipeline } from "@/lib/inngest-config";
+import { PIPELINE_ERROR } from "@/lib/pipeline-errors";
+import { scheduleInlineCopyPipeline } from "@/lib/run-copy-pipeline-async";
 import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
 
 export async function POST(req: NextRequest) {
@@ -92,16 +94,22 @@ export async function POST(req: NextRequest) {
     data: { credits: { decrement: quote.total } },
   });
 
+  const useInline = shouldUseInlinePipeline();
+
   try {
-    await inngest.send({
-      name: COPY_PIPELINE_EVENT,
-      data: {
-        productId,
-        marketplace,
-        intake: productData,
-        chargedCredits: quote.total,
-      },
-    });
+    const pipelineInput = { productId, marketplace, intake: productData };
+
+    if (useInline) {
+      scheduleInlineCopyPipeline(pipelineInput, session.user.id, quote.total);
+    } else {
+      await inngest.send({
+        name: COPY_PIPELINE_EVENT,
+        data: {
+          ...pipelineInput,
+          chargedCredits: quote.total,
+        },
+      });
+    }
   } catch (err) {
     await prisma.user.update({
       where: { id: session.user.id },
@@ -115,7 +123,7 @@ export async function POST(req: NextRequest) {
       where: { productId },
       data: {
         status: "FAILED",
-        errorMessage: err instanceof Error ? err.message : "Failed to start background job",
+        errorMessage: err instanceof Error ? err.message : PIPELINE_ERROR.generationFailed,
       },
     });
     console.error("[generate/copy] inngest.send failed:", err);

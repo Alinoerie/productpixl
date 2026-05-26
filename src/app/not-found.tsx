@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { auth } from "@/lib/auth";
+import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { Button } from "@/components/ui/button";
 
 export default async function NotFound() {
@@ -26,13 +27,13 @@ export default async function NotFound() {
         {signedIn ? (
           <>
             <Button asChild variant="outline">
-              <Link href="/generate">Image studio</Link>
+              <Link href={STUDIO_ROUTES.images}>Images</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/projects">All projects</Link>
+              <Link href={STUDIO_ROUTES.projects}>All projects</Link>
             </Button>
             <Button asChild>
-              <Link href="/dashboard">Open studio</Link>
+              <Link href={STUDIO_ROUTES.home}>Content studio</Link>
             </Button>
           </>
         ) : (

@@ -1,22 +1,16 @@
 import type { NextAuthConfig } from "next-auth";
-import Google from "next-auth/providers/google";
 
+/** Edge-safe config for middleware — no Email provider (avoids nodemailer in edge bundle). */
 export const authConfig = {
   trustHost: true,
   pages: {
     signIn: "/login",
-    newUser: "/dashboard",
+    newUser: "/studio",
+    verifyRequest: "/login/check-email",
   },
-  providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID ?? process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret:
-        process.env.AUTH_GOOGLE_SECRET ?? process.env.GOOGLE_CLIENT_SECRET ?? "",
-    }),
-  ],
+  providers: [],
   callbacks: {
     authorized() {
-      // Route protection + callbackUrl handled in middleware.ts
       return true;
     },
   },

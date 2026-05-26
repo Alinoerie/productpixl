@@ -1,4 +1,5 @@
 import { prisma } from "../src/lib/prisma";
+import { getCheckoutReadiness } from "../src/lib/checkout";
 
 const TEST_EMAIL = process.argv[2] ?? "alinoerie@gmail.com";
 
@@ -45,6 +46,24 @@ async function main() {
   }
   ready = flag(inngestOk, "Inngest jobs", inngestOk ? "configured" : "NOT configured — generate/copy stuck at Queued on Vercel") && ready;
 
+  const { creditsFulfillmentReady, checkoutEnabled, webhookConfigured } = getCheckoutReadiness();
+  if (!creditsFulfillmentReady) {
+    if (!checkoutEnabled) {
+      console.log("  → Stripe: set STRIPE_SECRET_KEY — see docs/STRIPE_VERCEL.md");
+    } else if (!webhookConfigured) {
+      console.log("  → Stripe webhook: set STRIPE_WEBHOOK_SECRET + endpoint /api/webhooks/stripe");
+    }
+  }
+  flag(
+    creditsFulfillmentReady,
+    "Stripe checkout (live)",
+    creditsFulfillmentReady
+      ? "secret key + webhook configured"
+      : checkoutEnabled
+        ? "secret key set — webhook missing (purchases disabled)"
+        : "not configured — purchases disabled"
+  );
+
   // Test user
   const user = await prisma.user.findUnique({
     where: { email: TEST_EMAIL },
@@ -77,9 +96,10 @@ async function main() {
   console.log(`\n${ready ? "Ready for E2E testing." : "Fix the items above before full E2E testing."}\n`);
 
   if (process.env.NODE_ENV === "development") {
-    console.log("Local E2E: pnpm dev + pnpm inngest:dev (separate terminals), then open http://localhost:3001");
+    console.log("Local E2E: pnpm dev (inline pipelines) or pnpm dev + pnpm inngest:dev, then open http://localhost:3001");
+    console.log("Local API smoke: pnpm test:api");
   } else {
-    console.log("Production E2E: https://productpixl.vercel.app — sign in with Google");
+    console.log("Production smoke: SMOKE_BASE_URL=https://productpixl.vercel.app pnpm test:smoke:prod");
   }
   console.log("");
 }

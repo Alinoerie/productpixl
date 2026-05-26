@@ -7,30 +7,49 @@ import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { AppShell } from "@/components/layout/app-shell";
 import { StudioProviders } from "@/components/layout/studio-providers";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
 import { PricingBalance } from "@/components/pricing/pricing-balance";
 import { PricingCatalog } from "@/components/pricing/pricing-catalog";
+import { PricingPlanCards } from "@/components/pricing/pricing-plan-cards";
+import { PricingPlanComparison } from "@/components/pricing/pricing-plan-comparison";
+import { PricingFaq } from "@/components/pricing/pricing-faq";
 import { PricingComparison } from "@/components/pricing/pricing-comparison";
 import { CreditsLockedNotice } from "@/components/pricing/credits-locked-notice";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
-import { isCheckoutEnabled } from "@/lib/checkout";
+import { BillingStatusBanner } from "@/components/pricing/billing-status-banner";
+import { HowCreditsWork } from "@/components/pricing/how-credits-work";
+import { isCheckoutLive } from "@/lib/checkout";
+import { PRICING_VAT_NOTE } from "@/lib/pricing-plans";
+import { USP_ONE_LINER, USP_SUBHEAD, USP_TAGLINE } from "@/lib/marketing-usp";
 
 export const metadata: Metadata = {
-  title: "Credits & pricing — ProductPixl",
-  description: "Pay per generation — no subscription. Compare vs Pixii and buy credit packs when you need more.",
+  title: "Pricing — ProductPixl",
+  description: `${USP_ONE_LINER} Free signup, Starter & Catalog packs in EUR.`,
   openGraph: {
-    title: "Credits & pricing — ProductPixl",
-    description: "Pay per generation — no subscription. Compare vs Pixii and buy credit packs when you need more.",
+    title: "Pricing — ProductPixl",
+    description: "Free tier, Starter & Catalog packs, and monthly plans preview — all in credits.",
     url: "/pricing",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Credits & pricing — ProductPixl",
-    description: "Pay per generation — no subscription. Compare vs Pixii and buy credit packs when you need more.",
+    title: "Pricing — ProductPixl",
+    description: "Simple plans for every catalog size. Credits for image and copy studio runs.",
   },
 };
+
+function PricingHero() {
+  return (
+    <header className="mx-auto max-w-3xl text-center">
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">{USP_TAGLINE}</p>
+      <h1 className="mt-4 font-serif text-4xl leading-tight md:text-5xl">Simple plans for every catalog size</h1>
+      <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--muted-fg)]">
+        {USP_SUBHEAD.split(". ").slice(0, 2).join(". ")}. Credits — not a monthly listing cap — with packs when you
+        need more.
+      </p>
+      <p className="mt-3 text-xs text-[var(--muted-fg)]">{PRICING_VAT_NOTE}</p>
+    </header>
+  );
+}
 
 function PricingContent({
   signedIn,
@@ -48,20 +67,26 @@ function PricingContent({
   locked?: boolean;
 }) {
   return (
-    <div className="space-y-12">
+    <div className="space-y-16">
+      <PricingHero />
+
       {locked && signedIn ? <CreditsLockedNotice /> : null}
+
+      <BillingStatusBanner checkoutEnabled={checkoutEnabled} />
+
       {!signedIn ? (
         <div className="rounded-2xl border border-[var(--accent)]/25 bg-[var(--accent-soft)]/30 px-4 py-4 text-sm md:flex md:items-center md:justify-between md:gap-4">
           <p>
-            <strong>10 free credits</strong> on signup — enough for image runs and listing copy. Sign in to buy
-            packs or use your balance in the studio.
+            <strong>10 free credits</strong> on signup — no credit card. Sign in to see your balance and buy packs.
           </p>
-          <Button asChild className="mt-3 shrink-0 md:mt-0">
-            <Link href="/login?callbackUrl=/pricing">Sign in free</Link>
+          <Button asChild className="mt-3 shrink-0 rounded-xl md:mt-0">
+            <Link href="/login?callbackUrl=/pricing">Start free</Link>
           </Button>
         </div>
-      ) : null}
-      {signedIn ? <PricingBalance initialCredits={credits} /> : null}
+      ) : (
+        <PricingBalance initialCredits={credits} />
+      )}
+
       {success ? (
         <Suspense fallback={null}>
           <PaymentSuccessBanner />
@@ -74,22 +99,44 @@ function PricingContent({
         >
           Checkout canceled — no charges were made.{" "}
           <Link href="/pricing" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
-            Pick a pack and try again
+            Try again
           </Link>
         </div>
       ) : null}
-      <PageHeader
-        title="Credits that scale with your catalog"
-        description="No $207/mo subscription like Pixii. Credits are charged per run based on gallery size, marketplace, and product detail — the studio shows the total before you generate. Buy packs when you need more."
-      >
-        <Badge variant="outline" className="border-[var(--accent)]/30 text-[var(--accent)]">
-          Pay per generation
-        </Badge>
-      </PageHeader>
+
+      <HowCreditsWork />
+
+      <PricingPlanCards signedIn={signedIn} checkoutEnabled={checkoutEnabled} />
+
+      <PricingPlanComparison />
 
       <PricingCatalog initialCredits={signedIn ? credits : 0} checkoutEnabled={checkoutEnabled} signedIn={signedIn} />
 
-      <PricingComparison checkoutEnabled={checkoutEnabled} />
+      <PricingFaq />
+
+      <PricingComparison />
+
+      <section className="rounded-2xl bg-[var(--ink)] px-6 py-10 text-center text-white md:px-12 md:py-14">
+        <h2 className="font-serif text-2xl md:text-3xl">Launch before you list</h2>
+        <p className="mx-auto mt-3 max-w-lg text-white/70">
+          Start with 10 free credits or book a demo — one photo to gallery, copy, and marketplace export.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Button asChild size="lg" className="rounded-xl">
+            <Link href={signedIn ? "/studio" : "/login?callbackUrl=/studio"}>
+              {signedIn ? "Open studio" : "Start free"}
+            </Link>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="rounded-xl border-white/30 bg-transparent text-white hover:bg-white/10"
+          >
+            <Link href="/demo">Book a demo</Link>
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }
@@ -100,7 +147,7 @@ export default async function PricingPage({
   searchParams: Promise<{ canceled?: string; success?: string; locked?: string }>;
 }) {
   const params = await searchParams;
-  const checkoutEnabled = isCheckoutEnabled();
+  const checkoutEnabled = isCheckoutLive();
   const session = await auth();
   const signedIn = Boolean(session?.user?.id);
   const credits =

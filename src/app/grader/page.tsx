@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
+import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { GraderTool } from "@/components/grader/grader-tool";
@@ -33,9 +34,17 @@ function GraderMarketingFooter({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabe
         ProductPixl generates gallery images + copy from one photo. No ASIN required.
       </p>
       <ShowcaseSampleStrip />
-      <Button asChild size="lg" className="mt-6">
-        <Link href={ctaHref}>{ctaLabel}</Link>
-      </Button>
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <Button asChild size="lg">
+          <Link href={ctaHref}>{ctaLabel}</Link>
+        </Button>
+        <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+          <Link href="/guides/ecommerce">Free guide pack →</Link>
+        </Button>
+        <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+          <Link href="/demo">Book a demo →</Link>
+        </Button>
+      </div>
     </div>
   );
 }
@@ -43,8 +52,8 @@ function GraderMarketingFooter({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabe
 export default async function GraderPage() {
   const session = await auth();
   const signedIn = Boolean(session?.user?.id);
-  const ctaHref = signedIn ? "/generate" : "/login";
-  const ctaLabel = signedIn ? "Open image studio" : "Start free — 10 credits";
+  const ctaHref = signedIn ? STUDIO_ROUTES.images : "/login";
+  const ctaLabel = signedIn ? "Open images" : "Start free — 10 credits";
 
   if (signedIn) {
     return (

@@ -19,15 +19,9 @@ export function CheckoutButton({
 
   if (!checkoutEnabled) {
     return (
-      <div className="space-y-2">
-        <Button className="w-full" disabled aria-disabled>
-          Payments coming soon
-        </Button>
-        <p className="text-xs text-[var(--muted-fg)]">
-          Stripe checkout is a placeholder until billing launches. Credit packs and pricing are shown for
-          reference — use your free signup credits until then.
-        </p>
-      </div>
+      <Button className="w-full" disabled aria-disabled>
+        {label}
+      </Button>
     );
   }
 

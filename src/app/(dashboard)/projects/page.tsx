@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { ChevronLeft, ChevronRight, ClipboardCheck, ImageIcon } from "lucide-react";
+import { ChevronRight, ClipboardCheck, ImageIcon } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
-import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 import { ProjectsFilterBar, buildProjectsQuery } from "@/components/projects/projects-filter-bar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getProjectsJourney } from "@/lib/user-journey";
+import { STUDIO_ROUTES } from "@/lib/studio-routes";
+import { getActiveBrandId } from "@/lib/brands";
+import { StudioPageShell } from "@/components/layout/studio-page-shell";
 
 const PAGE_SIZE = 24;
 
@@ -26,15 +29,15 @@ function getFilterEmptyState(filters: {
       title: "No export-ready projects yet",
       description:
         "Export-ready projects have both gallery images and listing copy saved. Generate images, write copy, or finish both on an existing project.",
-      primary: { href: "/generate", label: "Start image run" },
-      secondary: { href: "/copy", label: "Generate listing copy" },
+      primary: { href: STUDIO_ROUTES.images, label: "Start image run" },
+      secondary: { href: STUDIO_ROUTES.copy, label: "Generate listing copy" },
     };
   }
   if (filters.status === "FAILED") {
     return {
       title: "No failed projects",
       description: "All image runs completed successfully — or failures were retried already.",
-      primary: { href: "/generate", label: "Start new image run" },
+      primary: { href: STUDIO_ROUTES.images, label: "Start new image run" },
       secondary: { href: "/projects", label: "Clear filters" },
     };
   }
@@ -42,7 +45,7 @@ function getFilterEmptyState(filters: {
     return {
       title: "No active runs",
       description: "Queued and processing projects appear here while gallery images are generating.",
-      primary: { href: "/generate", label: "Start image run" },
+      primary: { href: STUDIO_ROUTES.images, label: "Start image run" },
       secondary: { href: "/projects", label: "Clear filters" },
     };
   }
@@ -50,7 +53,7 @@ function getFilterEmptyState(filters: {
     return {
       title: "All projects have listing copy",
       description: "Try a different filter, or generate copy for a new product.",
-      primary: { href: "/copy", label: "Generate listing copy" },
+      primary: { href: STUDIO_ROUTES.copy, label: "Generate listing copy" },
       secondary: { href: "/projects", label: "Clear filters" },
     };
   }
@@ -58,7 +61,7 @@ function getFilterEmptyState(filters: {
     return {
       title: "All projects have gallery images",
       description: "Try a different filter, or start a new image run.",
-      primary: { href: "/generate", label: "Start image run" },
+      primary: { href: STUDIO_ROUTES.images, label: "Start image run" },
       secondary: { href: "/projects", label: "Clear filters" },
     };
   }
@@ -67,22 +70,26 @@ function getFilterEmptyState(filters: {
       title: "No matches for your search",
       description: `Nothing matched “${filters.q.trim()}”. Try another product name or clear filters.`,
       primary: { href: "/projects", label: "Clear filters" },
-      secondary: { href: "/generate", label: "Start new project" },
+      secondary: { href: STUDIO_ROUTES.images, label: "Start new project" },
     };
   }
   return {
     title: "No matches",
     description: "Try clearing filters or search with a different product name.",
     primary: { href: "/projects", label: "Clear filters" },
-    secondary: { href: "/generate", label: "Open image studio" },
+    secondary: { href: STUDIO_ROUTES.images, label: "Open images" },
   };
 }
 
 function buildWhere(
   userId: string,
-  filters: { status?: string; copy?: string; images?: string; ready?: string; q?: string }
+  filters: { status?: string; copy?: string; images?: string; ready?: string; q?: string; brandId?: string }
 ): Prisma.ProductWhereInput {
   const where: Prisma.ProductWhereInput = { userId };
+
+  if (filters.brandId) {
+    where.brandId = filters.brandId;
+  }
 
   if (filters.status && ["COMPLETE", "PROCESSING", "FAILED", "QUEUED"].includes(filters.status)) {
     where.status = filters.status;
@@ -123,7 +130,15 @@ function FiltersFallback() {
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; status?: string; copy?: string; images?: string; ready?: string; q?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    status?: string;
+    copy?: string;
+    images?: string;
+    ready?: string;
+    q?: string;
+    brandId?: string;
+  }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) return null;
@@ -131,12 +146,26 @@ export default async function ProjectsPage({
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
   const skip = (page - 1) * PAGE_SIZE;
+
+  const [brands, activeBrandId] = await Promise.all([
+    prisma.brand.findMany({
+      where: { userId: session.user.id },
+      orderBy: [{ isDefault: "desc" }, { name: "asc" }],
+      select: { id: true, name: true },
+    }),
+    getActiveBrandId(session.user.id),
+  ]);
+
+  const filterBrandId =
+    params.brandId && brands.some((b) => b.id === params.brandId) ? params.brandId : undefined;
+
   const filters = {
     status: params.status,
     copy: params.copy,
     images: params.images,
     ready: params.ready,
     q: params.q,
+    brandId: filterBrandId,
   };
   const where = buildWhere(session.user.id, filters);
 
@@ -154,27 +183,30 @@ export default async function ProjectsPage({
 
   const totalPages = Math.max(1, Math.ceil(filtered / PAGE_SIZE));
   const hasFilters = Boolean(
-    filters.status || filters.copy || filters.images || filters.ready || filters.q?.trim()
+    filters.status || filters.copy || filters.images || filters.ready || filters.q?.trim() || filters.brandId
   );
+  const filterBrand = filterBrandId ? brands.find((b) => b.id === filterBrandId) : null;
+  const journey = getProjectsJourney(total);
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow="Studio"
-        title="All projects"
-        description={`${total} saved project${total === 1 ? "" : "s"} — image runs and listing copy.`}
-      >
-        <Button asChild variant="outline" size="sm">
-          <Link href="/dashboard">
-            <ChevronLeft className="h-4 w-4" />
-            Back to studio
-          </Link>
-        </Button>
-      </PageHeader>
-
+    <StudioPageShell
+      eyebrow="Library"
+      title="Projects"
+      description={
+        filterBrand
+          ? `${filtered} project${filtered === 1 ? "" : "s"} under ${filterBrand.name} — image runs and listing copy.`
+          : `${total} saved project${total === 1 ? "" : "s"} — image runs and listing copy.`
+      }
+      guide={journey}
+    >
       {total > 0 ? (
         <Suspense fallback={<FiltersFallback />}>
-          <ProjectsFilterBar total={total} filtered={filtered} />
+          <ProjectsFilterBar
+            total={total}
+            filtered={filtered}
+            brands={brands}
+            activeBrandId={activeBrandId}
+          />
         </Suspense>
       ) : null}
 
@@ -192,10 +224,10 @@ export default async function ProjectsPage({
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
                 <Button asChild size="lg">
-                  <Link href="/generate">Open image studio</Link>
+                  <Link href={STUDIO_ROUTES.images}>Open images</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
-                  <Link href="/copy">Generate listing copy</Link>
+                  <Link href={STUDIO_ROUTES.copy}>Generate listing copy</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link href="/grader">
@@ -290,6 +322,6 @@ export default async function ProjectsPage({
           ) : null}
         </>
       )}
-    </div>
+    </StudioPageShell>
   );
 }

@@ -1,4 +1,5 @@
 import { prisma } from "../src/lib/prisma";
+import { resetAllStuckProducts } from "../src/lib/reset-stuck-run";
 
 async function main() {
   const email = process.argv[2] ?? "alinoerie@gmail.com";
@@ -22,23 +23,7 @@ async function main() {
     return;
   }
 
-  const result = await prisma.product.updateMany({
-    where: {
-      userId: user.id,
-      status: { in: ["QUEUED", "PROCESSING"] },
-    },
-    data: {
-      status: "FAILED",
-      pipelineStatus: {
-        phase: "FAILED",
-        error: "Run was reset — start a fresh generation from the studio.",
-        steps: [],
-        currentStepIndex: 0,
-        startedAt: new Date().toISOString(),
-        completedAt: new Date().toISOString(),
-      },
-    },
-  });
+  const result = await resetAllStuckProducts(user.id);
 
   console.log(`Reset ${result.count} stuck project(s) for ${email}:`);
   for (const p of stuck) {

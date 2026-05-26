@@ -6,7 +6,13 @@
 
 **ICP:** Solo and small-team sellers (10–200 SKUs) on Amazon and European marketplaces (Bol.com, Amazon DE/UK), launching or refreshing listings without agencies or $207/mo suites.
 
-**One-liner:** Launch before you list — one photo to publication-ready gallery and copy.
+**Tagline:** Launch before you list.
+
+**True USP:** ProductPixl owns the *pre-listing* moment — one photo → research-backed gallery + copy — with pay-when-you-generate economics. Catalog-sync tools (e.g. ButterflAI) start from existing SKUs; ASIN suites (e.g. Pixii) need a live listing; we start from your product shot.
+
+**One-liner:** Photo-first AI listing studio: gallery images + marketplace copy from one photo, pay only when you generate.
+
+**Canonical copy:** `src/lib/marketing-usp.ts`
 
 ## Why this palette: Studio Iris
 

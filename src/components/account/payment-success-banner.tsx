@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -102,7 +103,7 @@ export function PaymentSuccessBanner({
       {phase !== "confirming" ? (
         <div className="mt-3 flex flex-wrap gap-2">
           <Button asChild size="sm" className="bg-[var(--success)] text-white hover:opacity-90">
-            <Link href="/generate">Open image studio</Link>
+            <Link href={STUDIO_ROUTES.images}>Open images</Link>
           </Button>
           <Button asChild size="sm" variant="outline" className="border-[var(--success)]/30 bg-transparent">
             <Link href="/projects">View projects</Link>

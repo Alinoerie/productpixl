@@ -31,6 +31,9 @@ import { PaymentSuccessBanner } from "@/components/account/payment-success-banne
 import { cn } from "@/lib/utils";
 import { type MarketplaceId } from "@/lib/marketplaces";
 import { UnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
+import { PIPELINE_ERROR, toSellerPipelineError } from "@/lib/pipeline-errors";
+import { PipelineErrorMessage } from "@/components/ui/pipeline-error-message";
+import { studioImagesHref } from "@/lib/studio-routes";
 
 type LinkedProduct = {
   id: string;
@@ -54,7 +57,28 @@ type LinkedProduct = {
   } | null;
 };
 
-const COPY_STEPS = ["Details", "Generate", "Edit copy"];
+const COPY_STEPS_NEW = ["Product details", "Edit copy"];
+const COPY_STEPS_EXISTING = ["Edit copy", "Save & export"];
+
+function baselineFromListingCopy(lc: NonNullable<LinkedProduct["listingCopy"]>) {
+  return {
+    title: lc.title,
+    bullets: lc.bullets,
+    description: lc.description ?? "",
+    backendKeywords: lc.backendKeywords ?? "",
+  };
+}
+
+function copyFromListingCopy(lc: NonNullable<LinkedProduct["listingCopy"]>) {
+  const baseline = baselineFromListingCopy(lc);
+  return {
+    title: baseline.title,
+    bullets: baseline.bullets,
+    description: baseline.description,
+    backendKeywords: baseline.backendKeywords,
+    status: "COMPLETE" as const,
+  };
+}
 
 export function CopyWorkspace({
   initialCredits,
@@ -62,20 +86,25 @@ export function CopyWorkspace({
   missingProductId = false,
   defaultBrandName = "",
   paymentSuccess = false,
+  hidePageHeader = false,
 }: {
   initialCredits: number;
   linkedProduct?: LinkedProduct | null;
   missingProductId?: boolean;
   defaultBrandName?: string;
   paymentSuccess?: boolean;
+  hidePageHeader?: boolean;
 }) {
   const router = useRouter();
   const { toast } = useToast();
   const [credits] = useLiveCredits(initialCredits);
   const previewUrlRef = useRef<string | null>(null);
   const completionRef = useRef<HTMLDivElement>(null);
+  const editCopyRef = useRef<HTMLDivElement>(null);
   const awaitingCompletion = useRef(false);
   const graderImportScrolled = useRef(false);
+  const existingCopyScrolled = useRef(false);
+  const hasExistingProjectCopy = Boolean(linkedProduct?.listingCopy?.title);
   const [showCompletionNudge, setShowCompletionNudge] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"regenerate" | "discard" | null>(null);
   const [linkedProductId, setLinkedProductId] = useState<string | null>(linkedProduct?.id ?? null);
@@ -84,7 +113,9 @@ export function CopyWorkspace({
   const [preview, setPreview] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [marketplace, setMarketplace] = useState<MarketplaceId>("AMAZON_US");
-  const [productId, setProductId] = useState<string | null>(null);
+  const [productId, setProductId] = useState<string | null>(
+    hasExistingProjectCopy && linkedProduct ? linkedProduct.id : null
+  );
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -95,15 +126,18 @@ export function CopyWorkspace({
     bullets: string[];
     description: string;
     backendKeywords: string;
-  } | null>(null);
+  } | null>(
+    linkedProduct?.listingCopy?.title ? baselineFromListingCopy(linkedProduct.listingCopy) : null
+  );
   const [copy, setCopy] = useState<{
     title?: string;
     bullets?: string[];
     description?: string;
     backendKeywords?: string;
     status?: string;
-  } | null>(null);
-
+  } | null>(
+    linkedProduct?.listingCopy?.title ? copyFromListingCopy(linkedProduct.listingCopy) : null
+  );
   const [form, setForm] = useState<ProductIntakeData>({
     ...EMPTY_PRODUCT_INTAKE,
     brandName: defaultBrandName,
@@ -136,6 +170,7 @@ export function CopyWorkspace({
   };
 
   useEffect(() => {
+    if (linkedProduct) return;
     const draft = loadCopyDraft();
     if (!draft?.title) return;
     const baseline = {
@@ -154,7 +189,19 @@ export function CopyWorkspace({
     setSavedBaseline(baseline);
     setFromGrader(true);
     toast("Loaded listing from grader — save to a project without using a credit");
-  }, [toast]);
+  }, [toast, linkedProduct]);
+
+  useEffect(() => {
+    if (!hasExistingProjectCopy || existingCopyScrolled.current) return;
+    existingCopyScrolled.current = true;
+    requestAnimationFrame(() => {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      editCopyRef.current?.scrollIntoView({
+        behavior: prefersReduced ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+  }, [hasExistingProjectCopy]);
 
   useEffect(() => {
     if (!fromGrader || !copy?.title || productId || graderImportScrolled.current) return;
@@ -190,20 +237,9 @@ export function CopyWorkspace({
       setPreview(linkedProduct.inputImageUrl);
     }
     if (linkedProduct.listingCopy?.title) {
-      const baseline = {
-        title: linkedProduct.listingCopy.title,
-        bullets: linkedProduct.listingCopy.bullets,
-        description: linkedProduct.listingCopy.description ?? "",
-        backendKeywords: linkedProduct.listingCopy.backendKeywords ?? "",
-      };
+      const baseline = baselineFromListingCopy(linkedProduct.listingCopy);
       setProductId(linkedProduct.id);
-      setCopy({
-        title: baseline.title,
-        bullets: baseline.bullets,
-        description: baseline.description,
-        backendKeywords: baseline.backendKeywords,
-        status: "COMPLETE",
-      });
+      setCopy(copyFromListingCopy(linkedProduct.listingCopy));
       setSavedBaseline(baseline);
     }
   }, [linkedProduct, defaultBrandName]);
@@ -290,16 +326,15 @@ export function CopyWorkspace({
       const data = await res.json();
       if (res.status === 402) throw new Error("INSUFFICIENT_CREDITS");
       if (res.status === 503 && data.code === "INNGEST_NOT_CONFIGURED") {
-        throw new Error(
-          "Background jobs are not connected yet. Install Inngest from the Vercel Marketplace for productpixl, then redeploy."
-        );
+        throw new Error(PIPELINE_ERROR.notConfigured);
       }
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(toSellerPipelineError(data.error || PIPELINE_ERROR.copyFailed));
       setProductId(data.productId);
       window.dispatchEvent(new Event("credits-updated"));
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed";
-      setError(msg === "INSUFFICIENT_CREDITS" ? "INSUFFICIENT_CREDITS" : msg);
+      const raw = e instanceof Error ? e.message : PIPELINE_ERROR.copyFailed;
+      const msg = raw === "INSUFFICIENT_CREDITS" ? "INSUFFICIENT_CREDITS" : toSellerPipelineError(raw);
+      setError(msg);
       setLoading(false);
       awaitingCompletion.current = false;
     }
@@ -335,7 +370,7 @@ export function CopyWorkspace({
           setLoading(false);
           if (data.listingCopy.status === "FAILED") {
             awaitingCompletion.current = false;
-            setError(data.listingCopy.errorMessage || "Copy generation failed");
+            setError(toSellerPipelineError(data.listingCopy.errorMessage || PIPELINE_ERROR.copyFailed));
           } else if (awaitingCompletion.current) {
             awaitingCompletion.current = false;
             setShowCompletionNudge(true);
@@ -351,7 +386,7 @@ export function CopyWorkspace({
         }
       } else if (attempts > 180) {
         setLoading(false);
-        setError("Copy generation timed out. Check Inngest is running.");
+        setError(PIPELINE_ERROR.copyTimedOut);
       }
     };
     poll();
@@ -371,12 +406,13 @@ export function CopyWorkspace({
   };
 
   const titleOverLimit = (copy?.title?.length ?? 0) > AMAZON_TITLE_MAX;
-  const copyStep = copy?.title ? 2 : loading ? 1 : 0;
   const lacksCredits = credits < copyQuote.total;
   const canRetry = Boolean(error && error !== "INSUFFICIENT_CREDITS" && form.name.trim() && !loading);
   const showGraderImportBanner = Boolean(fromGrader && copy?.title && !productId);
   const showProjectNextSteps = Boolean(
-    productId && copy?.title && (showCompletionNudge || linkedProduct?.listingCopy?.title)
+    productId &&
+      copy?.title &&
+      (showCompletionNudge || (linkedProduct?.listingCopy?.title && !hasExistingProjectCopy))
   );
   const showNextStepsCard = showGraderImportBanner || showProjectNextSteps;
   const mobileStickyFooter =
@@ -391,6 +427,15 @@ export function CopyWorkspace({
       (copy.backendKeywords ?? "") !== savedBaseline.backendKeywords
     );
   }, [copy, savedBaseline]);
+
+  const copySteps = hasExistingProjectCopy ? COPY_STEPS_EXISTING : COPY_STEPS_NEW;
+  const copyStep = hasExistingProjectCopy
+    ? isDirty
+      ? 0
+      : 1
+    : copy?.title || loading
+      ? 1
+      : 0;
 
   const saveDraftToProject = useCallback(async () => {
     if (!copy?.title) return;
@@ -506,24 +551,35 @@ export function CopyWorkspace({
         </Suspense>
       ) : null}
 
-      <PageHeader
-        eyebrow="Listing copy"
-        title="Listing copy"
-        description={
-          <>
-            Title, 5 bullets, description, backend keywords — RUFUS-ready ·{" "}
-            <CreditsRequiredLine total={copyQuote.total} detailLine={copyQuote.detailLine} />
-          </>
-        }
-      />
+      {!hidePageHeader ? (
+        <PageHeader
+          eyebrow="Listing copy"
+          title="Listing copy"
+          description={
+            <>
+              Title, 5 bullets, description, backend keywords — RUFUS-ready ·{" "}
+              <CreditsRequiredLine total={copyQuote.total} detailLine={copyQuote.detailLine} />
+            </>
+          }
+        />
+      ) : (
+        <p className="text-sm text-[var(--muted-fg)]">
+          Title, 5 bullets, description, backend keywords — RUFUS-ready ·{" "}
+          <CreditsRequiredLine total={copyQuote.total} detailLine={copyQuote.detailLine} />
+        </p>
+      )}
 
-      <StudioStepper
-        steps={COPY_STEPS}
-        currentStep={copyStep}
-        label="Copy studio progress"
-        sticky
-        statusText={loading ? "Generating listing copy…" : undefined}
-      />
+      <div id="studio-steps" className="scroll-mt-24">
+        <StudioStepper
+          steps={copySteps}
+          currentStep={copyStep}
+          label="Copy studio progress"
+          sticky
+          statusText={
+            loading ? "Generating listing copy…" : hasExistingProjectCopy ? "Editing saved listing copy" : undefined
+          }
+        />
+      </div>
 
       {missingProductId ? (
         <p className="rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]">
@@ -615,7 +671,10 @@ export function CopyWorkspace({
 
       {error && error !== "INSUFFICIENT_CREDITS" ? (
         <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
-          <p>{error}</p>
+          <PipelineErrorMessage
+            message={toSellerPipelineError(error)}
+            supportSubject="ProductPixl copy generation issue"
+          />
           {canRetry ? (
             <Button
               type="button"
@@ -633,17 +692,9 @@ export function CopyWorkspace({
         </div>
       ) : null}
 
-      {!copy?.title && !loading && (
+      {!copy?.title && !loading && !hasExistingProjectCopy && (
         <Card>
           <CardContent className="grid gap-4 pt-6 md:grid-cols-2">
-            {linkedProduct?.listingCopy?.title ? (
-              <div className="md:col-span-2 rounded-xl border border-[var(--border)] bg-[var(--muted)]/40 p-4 text-sm">
-                <p className="font-medium">This project already has listing copy.</p>
-                <p className="mt-1 text-[var(--muted-fg)]">
-                  Scroll down to edit, or regenerate below to replace it with fresh AI copy ({copyQuote.summary}).
-                </p>
-              </div>
-            ) : null}
             <div className="md:col-span-2">
               <Label htmlFor="copy-upload">Product image (optional but improves accuracy)</Label>
               <UploadDropzone
@@ -723,7 +774,16 @@ export function CopyWorkspace({
       </p>
 
       {copy?.title && (
-        <div className="space-y-4">
+        <div id="edit-copy" ref={editCopyRef} className="scroll-mt-24 space-y-4">
+          {hasExistingProjectCopy && linkedProduct ? (
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3">
+              <p className="font-medium">Edit copy — {linkedProduct.name}</p>
+              <p className="mt-1 text-sm text-[var(--muted-fg)]">
+                Update title, bullets, and keywords below. Save to your project, or regenerate to replace with fresh AI
+                copy ({copyQuote.summary}).
+              </p>
+            </div>
+          ) : null}
           {showNextStepsCard ? (
             <StudioSuccessBanner
               innerRef={completionRef}
@@ -762,7 +822,7 @@ export function CopyWorkspace({
               ) : (
                 <>
                   <Button asChild size="sm">
-                    <Link href={`/generate?productId=${productId}`}>
+                    <Link href={studioImagesHref({ productId })}>
                       <Camera className="h-4 w-4" />
                       Generate gallery
                     </Link>
@@ -1043,7 +1103,7 @@ export function CopyWorkspace({
             </Button>
             {productId && (
               <Button asChild>
-                <Link href={`/generate?productId=${productId}`}>
+                <Link href={studioImagesHref({ productId })}>
                   <Camera className="h-4 w-4" />
                   Generate gallery images
                 </Link>
@@ -1080,7 +1140,7 @@ export function CopyWorkspace({
                 Regenerate ({copyQuote.total.toLocaleString()} credits)
               </Button>
             ) : null}
-            <Button variant="ghost" onClick={startOver}>
+            <Button variant="ghost" onClick={startOver} className={hasExistingProjectCopy ? "hidden" : undefined}>
               Start over
             </Button>
           </div>

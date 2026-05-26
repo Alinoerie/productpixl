@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { studioCopyHref, studioImagesHref } from "@/lib/studio-routes";
+import { ResetStuckRunButton } from "@/components/products/reset-stuck-run-button";
 import { Loader2, Save } from "lucide-react";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { useProductEdit } from "@/components/products/product-edit-context";
@@ -25,8 +27,10 @@ export function ProductMobileActions({
   } | null;
 }) {
   const edit = useProductEdit();
+  const runInProgress = status === "QUEUED" || status === "PROCESSING";
   const showBar =
     edit?.listingDirty ||
+    runInProgress ||
     status === "FAILED" ||
     (hasImages && !hasCopy) ||
     hasCopy ||
@@ -62,13 +66,20 @@ export function ProductMobileActions({
   return (
     <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
       <div className="mx-auto flex max-w-lg gap-2">
-        {status === "FAILED" ? (
+        {runInProgress ? (
+          <>
+            <Button asChild variant="outline" className="flex-1">
+              <Link href={`/products/${productId}`}>View progress</Link>
+            </Button>
+            <ResetStuckRunButton productId={productId} label="Reset" size="sm" className="shrink-0" />
+          </>
+        ) : status === "FAILED" ? (
           <Button asChild className="flex-1">
-            <Link href={`/generate?productId=${productId}`}>Retry run</Link>
+            <Link href={studioImagesHref({ productId })}>Retry run</Link>
           </Button>
         ) : hasImages && !hasCopy ? (
           <Button asChild className="flex-1">
-            <Link href={`/copy?productId=${productId}`}>Generate copy</Link>
+            <Link href={studioCopyHref(productId)}>Generate copy</Link>
           </Button>
         ) : hasCopy && listingCopy ? (
           <>
@@ -88,13 +99,13 @@ export function ProductMobileActions({
               </Button>
             ) : (
               <Button asChild variant="outline" className="flex-1">
-                <Link href={`/generate?productId=${productId}`}>Add images</Link>
+                <Link href={studioImagesHref({ productId })}>Add images</Link>
               </Button>
             )}
           </>
         ) : !hasImages ? (
           <Button asChild className="flex-1">
-            <Link href={`/generate?productId=${productId}`}>Run image studio</Link>
+            <Link href={studioImagesHref({ productId })}>Run images</Link>
           </Button>
         ) : null}
       </div>

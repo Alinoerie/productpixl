@@ -4,18 +4,19 @@ import Link from "next/link";
 import { Camera, CreditCard, FileText, Lock, Palette, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hasPaidCredits } from "@/lib/credits-access";
+import { STUDIO_ROUTES } from "@/lib/studio-routes";
 
 const actions = [
   {
-    href: "/generate",
-    label: "Image studio",
+    href: STUDIO_ROUTES.images,
+    label: "Images",
     desc: "Gallery images · credits per run",
     icon: Camera,
     accent: "text-[var(--accent)] bg-[var(--accent-soft)]",
     requiresCredits: true,
   },
   {
-    href: "/copy",
+    href: STUDIO_ROUTES.copy,
     label: "Listing copy",
     desc: "Title, bullets, keywords",
     icon: FileText,
@@ -31,9 +32,9 @@ const actions = [
     requiresCredits: false,
   },
   {
-    href: "/brand",
-    label: "Brand profile",
-    desc: "Colors & tone for every run",
+    href: STUDIO_ROUTES.brandProfile,
+    label: "Brand kit",
+    desc: "Listing colors & copy voice",
     icon: Palette,
     accent: "text-[var(--accent)] bg-[var(--accent-soft)]",
     requiresCredits: false,
@@ -57,7 +58,7 @@ export function QuickActions({ credits, className }: { credits: number; classNam
           <span className="min-w-0">
             <span className="block font-semibold text-[var(--warning)]">Free credits used</span>
             <span className="mt-0.5 block text-xs text-[var(--muted-fg)]">
-              Image studio and copy are locked. View pricing — Stripe checkout is coming soon.
+              Images and copy are locked. View pricing to upgrade or top up.
             </span>
           </span>
         </Link>

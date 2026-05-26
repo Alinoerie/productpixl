@@ -9,32 +9,35 @@ const rows = [
     highlight: false,
   },
   {
-    label: "Pixii Growth",
-    value: "€207/mo",
-    sub: "~20 listings · €2,484/year locked in",
+    label: "Fixed SaaS subscription",
+    value: "~€200+/mo",
+    sub: "Annual lock-in · listing caps",
     highlight: false,
     muted: true,
   },
   {
-    label: "ProductPixl",
+    label: "ProductPixl credits",
     value: "Pay per run",
-    sub: "Credits required shown before generate — scales with images & detail",
+    sub: "See the exact total before each generate · top up with packs",
     highlight: true,
   },
 ] as const;
 
-export function PricingComparison({ checkoutEnabled }: { checkoutEnabled: boolean }) {
+export function PricingComparison() {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 md:p-8">
+    <section aria-labelledby="compare-heading" className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 md:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-serif text-xl">How credits compare</h2>
+          <h2 id="compare-heading" className="font-serif text-xl">
+            Why credits instead of subscriptions?
+          </h2>
           <p className="mt-2 max-w-2xl text-sm text-[var(--muted-fg)]">
-            Pay only when you generate — a 12-SKU catalog at 2 runs each is a fraction of Pixii&apos;s annual lock-in.
+            You are not locked into a monthly listing cap. Buy credits when you ship new SKUs — idle months cost
+            nothing beyond your balance.
           </p>
         </div>
         <Badge variant="outline" className="border-[var(--success-border)] text-[var(--success)]">
-          ~97% cheaper at catalog scale
+          No monthly minimum today
         </Badge>
       </div>
       <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -50,7 +53,7 @@ export function PricingComparison({ checkoutEnabled }: { checkoutEnabled: boolea
             )}
           >
             {row.highlight ? (
-              <Badge className="absolute -top-2.5 left-4 bg-[var(--accent)]">Best for sellers</Badge>
+              <Badge className="absolute -top-2.5 left-4 bg-[var(--accent)]">ProductPixl</Badge>
             ) : null}
             <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">{row.label}</p>
             <p className={cn("mt-1 font-serif text-2xl", row.highlight && "text-[var(--accent)]")}>{row.value}</p>
@@ -58,11 +61,6 @@ export function PricingComparison({ checkoutEnabled }: { checkoutEnabled: boolea
           </div>
         ))}
       </div>
-      <p className="mt-6 text-sm text-[var(--muted-fg)]">
-        {checkoutEnabled
-          ? "Secure checkout via Stripe. Credits are added instantly after payment."
-          : "Stripe checkout is a placeholder for now — packs and prices are shown for reference until billing launches."}
-      </p>
-    </div>
+    </section>
   );
 }

@@ -7,19 +7,23 @@ import { cn } from "@/lib/utils";
 export function ProductSectionNav({
   hasCopy,
   hasGallery,
+  compact = false,
 }: {
   hasCopy: boolean;
   hasGallery: boolean;
+  compact?: boolean;
 }) {
   const links = useMemo(
     () =>
-      [
-        { href: "#readiness", label: "Readiness" },
-        { href: "#export", label: "Export" },
-        ...(hasGallery ? [{ href: "#gallery", label: "Gallery" as const }] : []),
-        ...(hasCopy ? [{ href: "#listing", label: "Copy" as const }] : []),
-      ] as const,
-    [hasCopy, hasGallery]
+      compact
+        ? ([{ href: "#gallery", label: "Gallery" as const }] as const)
+        : ([
+            { href: "#readiness", label: "Readiness" },
+            { href: "#export", label: "Export" },
+            ...(hasGallery ? [{ href: "#gallery", label: "Gallery" as const }] : []),
+            ...(hasCopy ? [{ href: "#listing", label: "Copy" as const }] : []),
+          ] as const),
+    [hasCopy, hasGallery, compact]
   );
 
   const [active, setActive] = useState<string>(links[0]?.href ?? "#readiness");

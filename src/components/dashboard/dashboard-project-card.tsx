@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { studioCopyHref, studioImagesHref } from "@/lib/studio-routes";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -34,7 +35,7 @@ export function DashboardProjectCard({
   const router = useRouter();
   const [status, setStatus] = useState(initialStatus);
   const [phase, setPhase] = useState<string | null>(null);
-  const isProcessing = status === "PROCESSING";
+  const isActive = status === "PROCESSING" || status === "QUEUED";
   const mp = getMarketplace(marketplace as MarketplaceId);
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export function DashboardProjectCard({
   }, [initialStatus]);
 
   useEffect(() => {
-    if (status !== "PROCESSING") return;
+    if (status !== "PROCESSING" && status !== "QUEUED") return;
 
     let active = true;
     const poll = async () => {
@@ -90,7 +91,7 @@ export function DashboardProjectCard({
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
-              {isProcessing ? (
+              {isActive ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin text-[var(--accent)]" />
                   <span className="text-sm text-[var(--muted-fg)]">
@@ -114,7 +115,7 @@ export function DashboardProjectCard({
           >
             {formatProductStatus(status)}
           </Badge>
-          {isProcessing && thumbs.length > 0 && phase ? (
+          {isActive && thumbs.length > 0 && phase ? (
             <span className="absolute bottom-3 left-3 right-3 rounded-lg bg-black/55 px-2 py-1 text-center text-xs text-white backdrop-blur-sm">
               {formatPipelinePhase(phase)}
             </span>
@@ -148,15 +149,15 @@ export function DashboardProjectCard({
         </Link>
         {status === "FAILED" ? (
           <Button asChild size="sm" variant="outline" className="mt-3 w-full">
-            <Link href={`/generate?productId=${id}`}>Retry in Image studio</Link>
+            <Link href={studioImagesHref({ productId: id })}>Retry in Images</Link>
           </Button>
         ) : status === "COMPLETE" && hasImages && !hasCopy ? (
           <Button asChild size="sm" className="mt-3 w-full">
-            <Link href={`/copy?productId=${id}`}>Generate copy</Link>
+            <Link href={studioCopyHref(id)}>Generate copy</Link>
           </Button>
         ) : status === "COMPLETE" && hasCopy && !hasImages ? (
           <Button asChild size="sm" variant="outline" className="mt-3 w-full">
-            <Link href={`/generate?productId=${id}`}>Generate images</Link>
+            <Link href={studioImagesHref({ productId: id })}>Generate images</Link>
           </Button>
         ) : null}
       </CardContent>

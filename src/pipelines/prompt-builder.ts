@@ -45,6 +45,8 @@ export function buildListingPrompt(
     brandProfile?: BrandProfileData;
     marketplace?: string;
     spotEditHint?: string;
+    playbookContext?: string;
+    templateContext?: string;
   }
 ): string {
   const marketplace = getMarketplace(options?.marketplace ?? "AMAZON_US");
@@ -130,6 +132,8 @@ DO NOT generate:
 
   return [
     constraints.trim(),
+    options?.playbookContext,
+    options?.templateContext,
     brandBlock,
     productBlock,
     marketBlock,

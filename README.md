@@ -7,7 +7,7 @@ Listing studio for marketplace sellers: one product photo → gallery images + c
 - Next.js 15, React 19, TypeScript, Tailwind CSS 4
 - PostgreSQL (Supabase) + Prisma
 - NextAuth v5 — **Google OAuth only** (JWT sessions)
-- Inngest background jobs
+- Inngest background jobs (Vercel Marketplace in production; inline pipelines in local dev)
 - Cloudinary storage
 - Replicate (`google/nano-banana-pro`, `google/gemini-3-flash`)
 - Tavily research
@@ -15,128 +15,98 @@ Listing studio for marketplace sellers: one product photo → gallery images + c
 
 ## Brand
 
-See **[docs/BRAND.md](docs/BRAND.md)** — **Studio Iris** palette (indigo CTA, cool slate background, cyan for EU/RUFUS story). Positioning: photo-first, pay-per-credit, Amazon + Bol.com.
-
-Marketing pages use real showcase samples in **`public/showcase/`** (Zealots hand soap, skincare, Danish chair) — sourced from local generation runs.
+See **[docs/BRAND.md](docs/BRAND.md)** — **Studio Iris** palette (indigo CTA, cool slate background, cyan for EU/RUFUS story).
 
 ## Setup
 
 1. Copy `.env.example` to `.env.local` and fill in credentials.
 2. `pnpm install`
-3. `pnpm db:push` (loads `.env.local` via script)
-4. Dev (port **3001** if 3000 is taken):
+3. `pnpm db:push`
+4. Local dev (port **3001**):
 
 ```bash
 pnpm dev
-# separate terminal — point Inngest at :3001
-pnpm inngest:dev
+# Optional — only if testing cloud Inngest locally:
+# PIPELINE_INLINE=0 pnpm dev && pnpm inngest:dev
 ```
 
-5. Google OAuth redirect URIs (Google Cloud Console → Credentials → your OAuth client):
+5. Google OAuth redirect URIs:
    - Local: `http://localhost:3001/api/auth/callback/google`
    - Production: `https://productpixl.vercel.app/api/auth/callback/google`
-6. Set `AUTH_URL=http://localhost:3001` in `.env.local` (production Vercel: `AUTH_URL=https://productpixl.vercel.app`)
+6. `AUTH_URL` must match the origin you use locally or on Vercel.
 
-## Features
+## Routes
 
 | Feature | Route |
 |--------|--------|
-| Dashboard & projects | `/dashboard`, `/projects` |
-| Image studio (L1/L3/L4/L8) | `/generate` |
-| Listing copy | `/copy` |
-| Brand onboarding (required before studio) | `/onboarding` |
-| Brand profile (edit anytime) | `/brand` |
-| Free listing grader (A–F) | `/grader` |
-| Spot-edit single module | Product page → 1 credit |
-| Export hub (images + copy JSON/CSV/TXT) | `/products/[id]#export` |
-| Marketplaces | Amazon US/UK/DE, Bol.com, Shopify |
+| Content studio home | `/studio` |
+| Image studio | `/studio/images` |
+| Listing copy | `/studio/copy` |
+| Projects (all SKUs / runs) | `/projects` |
+| Project detail | `/products/[id]` |
+| Brand onboarding | `/onboarding` |
+| Listing brand kit | `/brand` |
+| All brands | `/brands` |
+| Free listing grader | `/grader` |
+| Pricing | `/pricing` |
 
-**Brand-first flow:** New users complete `/onboarding` (company → brand identity → AI brand story → launch) before `/generate` or `/copy`. Company, brand story, tone, and logo feed every image and copy run.
+Legacy `/products` (list) redirects to `/projects`. Legacy `/generate` and `/copy` redirect to `/studio/*`.
 
-**Product intake:** After brand setup, each product run collects vibe, use case, differentiators, competitors, and optional reference images — merged with vision AI analysis into prompt generation.
+**Brand-first flow:** New users complete `/onboarding` (listing identity → visual system → copy voice → launch) before studio access.
 
-**Credits:** 10 free on signup · charged per run based on gallery modules, marketplace, and product detail depth. Studios show credits required before you generate. At **0 credits**, `/generate` and `/copy` redirect to `/pricing?locked=1`; projects, brand profile, account, and the free grader stay open. Stripe checkout buttons are placeholders until billing launches.
+**Credits:** Quoted before every run. At **0 credits**, Images/Copy show in-flow paywall; projects, brand kit, grader, and account stay open.
 
-**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready and failed-project filters, marketplace-aware export (txt/csv/json + gallery ZIP), in-app unsaved guards on project/copy/brand pages, failed-module retry in gallery, payment success polling after Stripe checkout, grader → copy draft flow with persisted grades, marketplace guidance in generate/copy studios, smart pack recommendations on pricing, collapsible listing bullets on mobile, mobile More menu for Brand/Credits, debounced project search, re-grade from readiness checklist, live dashboard run polling, marketplace labels on project cards, accessible delete confirmation, clickable grade badge, export readiness checklist, screen-reader char counters in copy/grader studios, sticky studio steppers with live status, richer account orders empty state, brand preview mockup, login onboarding steps, pricing comparison cards, animated studio success banners, public pricing page with sign-in CTAs, first-run dashboard onboarding, grader import success banner in copy studio, logged-out grader → copy handoff with draft preservation, filter-aware projects empty states, grader grade toast + mobile scroll, copy completion parity with generate, Open Graph metadata for sharing, new project onboarding on product pages, generate failure recovery with retry, and marketing nav links to public pricing.
+## Production: connect Inngest (required)
 
-## Pipeline docs
+See **[docs/INNGEST_VERCEL.md](docs/INNGEST_VERCEL.md)** for the full checklist.
 
-- [`docs/image-pipelines/`](docs/image-pipelines/)
-- [`docs/text-pipelines/amazon-listing-copy.md`](docs/text-pipelines/amazon-listing-copy.md)
-
-## Production launch checklist
-
-1. **Inngest (required for generate/copy)** — [Install on Vercel Marketplace](https://vercel.com/marketplace/inngest) → connect **productpixl** → accept terms → redeploy. Verify with `pnpm test:e2e-ready` (Inngest line must pass).
-2. **Google OAuth** — Redirect URI: `https://productpixl.vercel.app/api/auth/callback/google`. `AUTH_URL=https://productpixl.vercel.app` on Vercel.
-3. **Env vars on Vercel** — `DATABASE_URL`, `DIRECT_URL`, `AUTH_*`, `REPLICATE_API_TOKEN`, `CLOUDINARY_*`, `TAVILY_API_KEY`, plus auto-injected `INNGEST_*` after integration.
-4. **Test account** — `npx tsx scripts/set-user-credits.ts your@email.com 9999999` for unlimited test runs.
-5. **Product fidelity** — Original upload is always first in `image_input`; QA compares generated vs reference; auto-retry on low fidelity score.
-
-## End-to-end testing (your account)
-
-**Production:** https://productpixl.vercel.app — sign in with Google as `alinoerie@gmail.com` (or your own account).
-
-Before a full studio run on **Vercel**, connect background jobs:
-
-1. Open [Inngest on Vercel Marketplace](https://vercel.com/marketplace/inngest) → **Install** → connect the **productpixl** project.
-2. Redeploy (or push to `main`). Vercel will add `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` automatically.
-3. Run readiness check:
+1. [Install Inngest](https://vercel.com/marketplace/inngest) on the **productpixl** Vercel project.
+2. Redeploy production.
+3. Verify:
 
 ```bash
 pnpm test:e2e-ready
+SMOKE_BASE_URL=https://productpixl.vercel.app pnpm test:smoke:prod
 ```
 
-**Test account prep** (already done for `alinoerie@gmail.com`):
+## Production: Stripe checkout (optional)
+
+See **[docs/STRIPE_VERCEL.md](docs/STRIPE_VERCEL.md)**. Requires `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` on Vercel.
+
+## Testing
+
+| Command | Purpose |
+|---------|---------|
+| `pnpm test:e2e-ready` | Env, DB, Inngest, Stripe, test account |
+| `pnpm test:e2e:install` | Install Playwright Chromium |
+| `pnpm test:e2e` | Browser E2E (studio, projects, checkout API) |
+| `pnpm test:smoke:prod` | Production HTTP + optional copy pipeline poll |
+| `pnpm test:api` | Local authenticated API smoke (dev server on :3002) |
+
+**Test account prep:**
 
 ```bash
-npx tsx scripts/set-user-credits.ts alinoerie@gmail.com 9999999
-npx tsx scripts/reset-stuck-products.ts alinoerie@gmail.com   # if old runs stuck at Queued
+npx tsx scripts/set-user-credits.ts your@email.com 9999999
+npx tsx scripts/reset-stuck-products.ts your@email.com   # if runs stuck at Queued
 ```
 
-**Local E2E** (Inngest dev server — no cloud keys needed):
-
-```bash
-pnpm dev                    # http://localhost:3001
-pnpm inngest:dev            # separate terminal
-pnpm test:e2e-ready
-```
-
-Set `AUTH_URL=http://localhost:3001` and add Google redirect URI `http://localhost:3001/api/auth/callback/google`.
-
-Suggested user journey: sign in → `/dashboard` → `/generate` (upload photo, review credits quote, generate) → open project → `/copy` or spot-edit → export from product page → `/grader` (free) → `/account` (balance).
+**Suggested journey:** sign in → `/onboarding` → `/studio` → `/studio/images` → open project → `/studio/copy` → export from project page → `/grader` (free).
 
 ## Manual test checklist
 
-- [ ] Sign in with Google → redirected to `/onboarding` if brand not complete; dashboard shows 10 credits after
-- [ ] `/onboarding` — company + brand identity, AI brand story, completes before studio access
-- [ ] `/dashboard` — first-run welcome copy; hero stats link to projects, export-ready, and failed runs; active runs panel updates live; empty state includes free grader CTA
-- [ ] `/projects` — search/filter (debounced search, failed, export-ready, queued), filter-specific empty states, marketplace on cards, open generate or copy handoffs; empty studio includes free grader CTA
-- [ ] `/brand` — company, story, colors, tone, logo; AI brand story; live preview mockup; unsaved guard
-- [ ] `/generate` — vision AI prefill + product vibe/use case/reference images; stub mode banner when Replicate token missing; analysis reused in prompt plan (no triple re-analyze)
-- [ ] `/copy` — enriched product intake fields flow into listing copy generation
-- [ ] `/grader` — grade listing without login; grade toast + mobile results scroll; char counter a11y; hand off to copy studio with draft preserved; mobile sticky bar respects logged-out layout
-- [ ] `/products/[id]` — new project onboarding card, readiness checklist with re-grade, clickable grade badge, export checklist, section nav below header, collapsible bullets on mobile, marketplace export (ZIP + txt/csv/json), gallery filters + failed-module retry, spot-edit on completed assets
-- [ ] `/account` — balance, credit usage guide, orders empty state with pack CTA, sign out, payment return banner
-- [ ] `/login` — onboarding steps, callback destination hint, link to free grader
-- [ ] `/pricing` — public when logged out; sign-in CTA on packs; highlighted comparison cards, smart pack recommendation, checkout return banner
+- [ ] Sign in → `/onboarding` if brand kit incomplete
+- [ ] `/studio` — Images + Copy cards; batch/playbooks hint when zero projects
+- [ ] `/projects` — filters, brand chips, card grid; `/products` redirects here
+- [ ] `/studio/copy?productId=` — jumps to Edit copy when project has listing copy
+- [ ] `/products/[id]` — gallery first; export/readiness collapsed until images or copy exist
+- [ ] Generation errors show plain language + contact support (no Inngest jargon)
+- [ ] `pnpm test:smoke:prod` passes after Inngest connected
 
 ## Stub mode
 
 Without `REPLICATE_API_TOKEN`, analyze/generate return demo data so the UI remains testable.
 
-## API smoke test (local)
+## Pipeline docs
 
-Requires dev server + Inngest dev running:
-
-```bash
-# terminal 1
-pnpm dev --port 3002
-
-# terminal 2
-npx inngest-cli@latest dev -u http://localhost:3002/api/inngest
-
-# terminal 3
-pnpm test:api
-```
-
-This hits authenticated HTTP routes (via test session cookie), live Replicate vision/copy, prompt planning, and the copy Inngest pipeline. Set `SKIP_PIPELINE=1` to skip the credit-consuming copy run.
+- [`docs/image-pipelines/`](docs/image-pipelines/)
+- [`docs/text-pipelines/amazon-listing-copy.md`](docs/text-pipelines/amazon-listing-copy.md)

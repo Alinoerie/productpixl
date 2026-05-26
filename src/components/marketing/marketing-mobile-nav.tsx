@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -69,7 +70,8 @@ export function MarketingMobileNav({ signedIn }: { signedIn: boolean }) {
                     href={link.href}
                     className={cn(
                       "block rounded-lg px-3 py-2 text-sm font-medium hover:bg-[var(--muted)]",
-                      link.highlight === "teal" && "text-[var(--teal)]"
+                      link.highlight === "teal" && "text-[var(--teal)]",
+                      link.highlight === "accent" && "text-[var(--accent)]"
                     )}
                     onClick={() => setOpen(false)}
                   >
@@ -79,7 +81,7 @@ export function MarketingMobileNav({ signedIn }: { signedIn: boolean }) {
               ))}
               <li className="pt-2">
                 <Button asChild size="sm" className="w-full">
-                  <Link href={signedIn ? "/dashboard" : "/login"} onClick={() => setOpen(false)}>
+                  <Link href={signedIn ? STUDIO_ROUTES.home : "/login"} onClick={() => setOpen(false)}>
                     {signedIn ? "Open studio" : "Start free"}
                   </Link>
                 </Button>
