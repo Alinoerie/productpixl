@@ -82,3 +82,20 @@ pnpm inngest:dev
 ## Stub mode
 
 Without `REPLICATE_API_TOKEN`, analyze/generate return demo data so the UI remains testable.
+
+## API smoke test (local)
+
+Requires dev server + Inngest dev running:
+
+```bash
+# terminal 1
+pnpm dev --port 3002
+
+# terminal 2
+npx inngest-cli@latest dev -u http://localhost:3002/api/inngest
+
+# terminal 3
+pnpm test:api
+```
+
+This hits authenticated HTTP routes (via test session cookie), live Replicate vision/copy, prompt planning, and the copy Inngest pipeline. Set `SKIP_PIPELINE=1` to skip the credit-consuming copy run.
