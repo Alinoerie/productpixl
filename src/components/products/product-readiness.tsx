@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, Circle } from "lucide-react";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
-import { isProductGraded } from "@/lib/grade-session";
+import { isProductGraded, GRADE_UPDATED_EVENT } from "@/lib/grade-session";
 import { cn } from "@/lib/utils";
 
 export function ProductReadiness({
@@ -30,7 +30,25 @@ export function ProductReadiness({
   const [graded, setGraded] = useState(false);
 
   useEffect(() => {
-    setGraded(isProductGraded(productId));
+    const refresh = () => setGraded(isProductGraded(productId));
+    refresh();
+    const onGrade = (event: Event) => {
+      const detail = (event as CustomEvent<{ productId?: string }>).detail;
+      if (!detail?.productId || detail.productId === productId) refresh();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener(GRADE_UPDATED_EVENT, onGrade);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("pageshow", refresh);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener(GRADE_UPDATED_EVENT, onGrade);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("pageshow", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [productId]);
 
   const steps = [

@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import { useToast } from "@/components/ui/toast-provider";
 import { ProductImageGallery } from "@/components/products/product-image-gallery";
+import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { Camera, Check, Download, Loader2, Sparkles } from "lucide-react";
 import { type MarketplaceId } from "@/lib/marketplaces";
 import { getMarketplace } from "@/lib/marketplaces";
@@ -116,6 +117,16 @@ export function GenerateWizard({
   } | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [pipelineFailed, setPipelineFailed] = useState(false);
+  const [pollTimedOut, setPollTimedOut] = useState(false);
+  const [projectListingCopy, setProjectListingCopy] = useState<{
+    title: string;
+    bullets: string[];
+    description?: string | null;
+    backendKeywords?: string | null;
+  } | null>(null);
+
+  const mobileStickyFooter =
+    "sticky bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-10 md:static md:bottom-auto";
 
   const [form, setForm] = useState<ProductData>({
     name: "",
@@ -277,6 +288,8 @@ export function GenerateWizard({
       if (!ok) throw new Error(data.error || "Failed to start");
       setProductId(data.productId ?? linkedProductId ?? null);
       setPipelineFailed(false);
+      setPollTimedOut(false);
+      setProjectListingCopy(null);
       setStep(3);
       window.dispatchEvent(new Event("credits-updated"));
     } catch (e) {
@@ -300,9 +313,18 @@ export function GenerateWizard({
     if (step !== 3 || !productId) return;
 
     let stopped = false;
+    let attempts = 0;
 
     const check = async () => {
       if (stopped) return;
+      attempts += 1;
+      if (attempts > 90) {
+        stopped = true;
+        setPollTimedOut(true);
+        setError("Generation timed out. Open your project page or retry your prompt plan.");
+        toast("Generation timed out", "error");
+        return;
+      }
       const status = await pollStatus();
       if (!status || (status !== "COMPLETE" && status !== "FAILED")) return;
 
@@ -326,6 +348,26 @@ export function GenerateWizard({
   }, [step, productId, pollStatus, router, toast]);
 
   useEffect(() => {
+    if (!productId || pipelineStatus?.phase !== "COMPLETE") return;
+    void fetchJson<{
+      listingCopy?: {
+        title?: string;
+        bullets?: string[];
+        description?: string | null;
+        backendKeywords?: string | null;
+      };
+    }>(`/api/products/${productId}/status`).then(({ data }) => {
+      if (!data.listingCopy?.title) return;
+      setProjectListingCopy({
+        title: data.listingCopy.title,
+        bullets: (data.listingCopy.bullets as string[]) ?? [],
+        description: data.listingCopy.description,
+        backendKeywords: data.listingCopy.backendKeywords,
+      });
+    });
+  }, [productId, pipelineStatus?.phase]);
+
+  useEffect(() => {
     stepperRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [step]);
 
@@ -344,6 +386,8 @@ export function GenerateWizard({
 
   const resetWizard = useCallback((mode: "prompt" | "fresh") => {
     setPipelineFailed(false);
+    setPollTimedOut(false);
+    setProjectListingCopy(null);
     setPipelineStatus(null);
     setError("");
     setDownloading(false);
@@ -487,7 +531,7 @@ export function GenerateWizard({
               emptyHint="JPG, PNG or WEBP · max 20MB · No ASIN needed"
               inputId="generate-upload"
             />
-            <div className="sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:static md:mx-0 md:mb-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+            <div className={cn(mobileStickyFooter, "-mx-6 -mb-6 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:mb-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none")}>
               <Button
                 onClick={analyze}
                 disabled={!imageUrl || uploading || analyzing}
@@ -566,7 +610,7 @@ export function GenerateWizard({
                 onChange={(e) => setField("targetBuyer", e.target.value)}
               />
             </div>
-            <div className="sticky bottom-0 z-10 -mx-6 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none md:col-span-2">
+            <div className={cn(mobileStickyFooter, "-mx-6 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none md:col-span-2")}>
               <Button variant="outline" onClick={() => setStep(0)}>
                 Back
               </Button>
@@ -667,7 +711,7 @@ export function GenerateWizard({
                 </div>
               )}
             </div>
-            <div className="sticky bottom-0 z-10 -mx-6 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+            <div className={cn(mobileStickyFooter, "-mx-6 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none")}>
               <Button variant="outline" onClick={() => setStep(1)}>
                 Back
               </Button>
@@ -686,12 +730,19 @@ export function GenerateWizard({
 
       {step === 3 && (
         <div className="space-y-6">
-          {pipelineFailed ? (
+          {pipelineFailed || pollTimedOut ? (
             <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-4 text-sm text-[var(--error)]">
               <p>
-                Image generation failed. Check Inngest is running locally, or go back and retry your prompt plan.
+                {pollTimedOut
+                  ? "Generation timed out. Check Inngest is running locally, open your project, or retry your prompt plan."
+                  : "Image generation failed. Check Inngest is running locally, or go back and retry your prompt plan."}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
+                {productId ? (
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/products/${productId}`}>Open project</Link>
+                  </Button>
+                ) : null}
                 <Button type="button" size="sm" variant="outline" onClick={() => resetWizard("prompt")}>
                   Back to prompt plan
                 </Button>
@@ -810,9 +861,27 @@ export function GenerateWizard({
                 <Button asChild size="lg" variant="outline" className="rounded-xl">
                   <Link href={`/products/${productId}#export`}>Export hub</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-xl">
-                  <Link href="/grader">Grade listing copy</Link>
-                </Button>
+                {projectListingCopy?.title ? (
+                  <GradeListingButton
+                    listingCopy={{
+                      title: projectListingCopy.title,
+                      bullets: projectListingCopy.bullets,
+                      description: projectListingCopy.description ?? undefined,
+                      backendKeywords: projectListingCopy.backendKeywords ?? undefined,
+                      productId,
+                    }}
+                    productId={productId}
+                    size="lg"
+                    variant="outline"
+                    className="rounded-xl"
+                  >
+                    Grade listing copy
+                  </GradeListingButton>
+                ) : (
+                  <Button asChild size="lg" variant="outline" className="rounded-xl">
+                    <Link href="/grader">Grade listing copy</Link>
+                  </Button>
+                )}
               </div>
             </div>
           )}

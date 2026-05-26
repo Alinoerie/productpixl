@@ -24,6 +24,7 @@ import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft } from "@/lib/copy-draft";
 import { useLiveCredits } from "@/hooks/use-live-credits";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
+import { cn } from "@/lib/utils";
 import { type MarketplaceId, getMarketplace } from "@/lib/marketplaces";
 
 type LinkedProduct = {
@@ -339,6 +340,11 @@ export function CopyWorkspace({
   const lacksCredits = credits < 1;
   const categoryLabel = `${getMarketplace(marketplace).label} category`;
   const canRetry = Boolean(error && error !== "INSUFFICIENT_CREDITS" && form.name.trim() && !loading);
+  const showNextStepsCard = Boolean(
+    productId && copy?.title && (showCompletionNudge || linkedProduct?.listingCopy?.title)
+  );
+  const mobileStickyFooter =
+    "sticky bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-10 md:static md:bottom-auto";
 
   const isDirty = useMemo(() => {
     if (!copy?.title || !savedBaseline) return false;
@@ -594,7 +600,7 @@ export function CopyWorkspace({
                 onChange={(e) => setForm((f) => ({ ...f, keyFeatures: e.target.value }))}
               />
             </div>
-            <div className="sticky bottom-0 z-10 -mx-6 mt-2 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none md:col-span-2">
+            <div className={cn(mobileStickyFooter, "-mx-6 mt-2 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:mt-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none md:col-span-2")}>
               <Button
                 onClick={generate}
                 disabled={loading || uploading || !form.name.trim() || lacksCredits}
@@ -618,18 +624,27 @@ export function CopyWorkspace({
               </p>
             </div>
           </CardContent>
+          <p className="sr-only" aria-live="polite">
+            Generating listing copy
+          </p>
         </Card>
       )}
 
+      <p className="sr-only" aria-live="polite">
+        {showCompletionNudge ? "Listing copy ready" : ""}
+      </p>
+
       {copy?.title && (
         <div className="space-y-4">
-          {showCompletionNudge && productId ? (
+          {showNextStepsCard ? (
             <Card
               ref={completionRef}
               className="scroll-mt-24 border-[var(--success-border)] bg-[var(--success-bg)]/40"
             >
               <CardContent className="py-4">
-                <p className="font-semibold">Copy ready — what&apos;s next?</p>
+                <p className="font-semibold">
+                  {showCompletionNudge ? "Copy ready — what&apos;s next?" : "Project copy — next steps"}
+                </p>
                 <p className="mt-1 text-sm text-[var(--muted-fg)]">
                   Review edits below, save to your project, then generate gallery images or grade the listing.
                 </p>
@@ -646,9 +661,9 @@ export function CopyWorkspace({
                       bullets: (copy.bullets as string[]) ?? [],
                       description: copy.description,
                       backendKeywords: copy.backendKeywords,
-                      productId,
+                      productId: productId ?? undefined,
                     }}
-                    productId={productId}
+                    productId={productId ?? undefined}
                     variant="outline"
                     size="sm"
                   >
@@ -725,7 +740,7 @@ export function CopyWorkspace({
               />
             </CardContent>
           </Card>
-          <div className="sticky bottom-0 z-10 -mx-0 flex flex-wrap gap-3 border-t border-[var(--border)] bg-[var(--background)]/95 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-sm md:static md:border-0 md:bg-transparent md:p-0 md:pb-0 md:backdrop-blur-none">
+          <div className={cn(mobileStickyFooter, "-mx-0 flex flex-wrap gap-3 border-t border-[var(--border)] bg-[var(--background)]/95 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-sm md:border-0 md:bg-transparent md:p-0 md:pb-0 md:backdrop-blur-none")}>
             {!productId && copy?.title ? (
               <Button size="sm" disabled={saving} onClick={saveDraftToProject}>
                 {saving ? (

@@ -31,7 +31,7 @@ export function ProductMobileActions({
   if (!showBar) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md md:hidden">
+    <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
       <div className="mx-auto flex max-w-lg gap-2">
         {status === "FAILED" ? (
           <Button asChild className="flex-1">

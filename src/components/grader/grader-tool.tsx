@@ -295,7 +295,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
                 </ul>
               </CardContent>
             </Card>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <Button type="button" variant="outline" className="flex-1" onClick={copyTips}>
                 {tipsCopied ? (
                   <>
@@ -313,6 +313,11 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
                   <Button asChild variant="outline" className="flex-1">
                     <Link href={generateHref}>Generate gallery</Link>
                   </Button>
+                  {draftProductId ? (
+                    <Button asChild variant="outline" className="flex-1">
+                      <Link href={`/products/${draftProductId}`}>Return to project</Link>
+                    </Button>
+                  ) : null}
                 </>
               ) : (
                 <Button asChild className="flex-1">

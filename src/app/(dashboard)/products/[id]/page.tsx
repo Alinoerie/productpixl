@@ -47,7 +47,7 @@ export default async function ProductPage({
   }));
 
   return (
-    <div className="space-y-8 pb-28 md:pb-0">
+    <div className="space-y-8 pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-0">
       <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-[var(--muted-fg)]">
         <Link href="/dashboard" className="hover:text-[var(--foreground)]">
           Studio

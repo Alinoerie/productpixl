@@ -23,9 +23,9 @@ const mobileNav = nav.filter((item) =>
 function isActive(pathname: string, href: string) {
   return (
     pathname === href ||
-    (href === "/dashboard" && pathname.startsWith("/products")) ||
-    (href === "/projects" && pathname.startsWith("/projects")) ||
-    (href !== "/dashboard" && href !== "/projects" && pathname.startsWith(href))
+    (href === "/projects" &&
+      (pathname.startsWith("/projects") || pathname.startsWith("/products"))) ||
+    (href !== "/projects" && pathname.startsWith(href))
   );
 }
 
