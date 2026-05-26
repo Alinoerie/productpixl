@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { inngest, IMAGE_PIPELINE_EVENT } from "@/inngest/client";
 import type { ProductIntakeData } from "@/lib/product-intake";
 import type { ProductAnalysis } from "@/lib/ai";
-import { insufficientCreditsResponse, requireCredits } from "@/lib/require-credits";
+import { quoteImageRun } from "@/lib/credit-pricing";
+import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -35,9 +36,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const user = await requireCredits(session.user.id);
+  const quote = quoteImageRun({
+    includePackaging: Boolean(includePackaging),
+    marketplace,
+    intake: productData,
+  });
+
+  const user = await requireCredits(session.user.id, quote.total);
   if (!user) {
-    return insufficientCreditsResponse();
+    const available = await getUserCredits(session.user.id);
+    return insufficientCreditsResponse(quote.total, available);
   }
 
   let productId = existingProductId;
@@ -85,7 +93,7 @@ export async function POST(req: NextRequest) {
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { credits: { decrement: 1 } },
+    data: { credits: { decrement: quote.total } },
   });
 
   await inngest.send({
@@ -96,8 +104,9 @@ export async function POST(req: NextRequest) {
       promptOverrides,
       analysis,
       intake: productData,
+      chargedCredits: quote.total,
     },
   });
 
-  return NextResponse.json({ success: true, productId });
+  return NextResponse.json({ success: true, productId, creditsCharged: quote.total });
 }

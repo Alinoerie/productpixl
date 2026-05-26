@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { analyzeProductImage, type ProductAnalysis } from "@/lib/ai";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
 import type { ProductIntakeData } from "@/lib/product-intake";
-import { insufficientCreditsResponse, requireCredits } from "@/lib/require-credits";
+import { quoteImageRun } from "@/lib/credit-pricing";
+import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
 import { getModulesForRun } from "@/pipelines/modules";
 import { buildListingPrompt } from "@/pipelines/prompt-builder";
 import { runCategoryResearch } from "@/pipelines/tavily";
@@ -29,8 +30,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!(await requireCredits(session.user.id))) {
-    return insufficientCreditsResponse();
+  const quote = quoteImageRun({
+    includePackaging: Boolean(body.includePackaging),
+    marketplace: body.marketplace ?? "AMAZON_US",
+    intake: body.productData,
+  });
+
+  if (!(await requireCredits(session.user.id, quote.total))) {
+    const available = await getUserCredits(session.user.id);
+    return insufficientCreditsResponse(quote.total, available);
   }
 
   const brandProfile = await getBrandProfileForUser(session.user.id);
@@ -60,5 +68,6 @@ export async function POST(req: NextRequest) {
     analysis,
     research,
     prompts,
+    quote,
   });
 }

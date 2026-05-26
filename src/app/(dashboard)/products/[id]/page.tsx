@@ -22,6 +22,12 @@ import {
   formatProductStatus,
   statusBadgeClass,
 } from "@/lib/status-labels";
+import {
+  intakeFromProduct,
+  quoteCopyRun,
+  quoteRegenerateModule,
+} from "@/lib/credit-pricing";
+import type { ListingModuleId } from "@/pipelines/modules";
 
 export default async function ProductPage({
   params,
@@ -55,6 +61,15 @@ export default async function ProductPage({
     status: a.status,
     errorMessage: a.errorMessage,
   }));
+
+  const intake = intakeFromProduct(product);
+  const copyQuote = quoteCopyRun({ marketplace: product.marketplace, intake });
+  const moduleCreditCosts = Object.fromEntries(
+    [...new Set(product.assets.map((a) => a.moduleId))].map((moduleId) => [
+      moduleId,
+      quoteRegenerateModule(moduleId as ListingModuleId, product.marketplace, intake).total,
+    ])
+  );
 
   return (
     <ProductEditProvider>
@@ -207,6 +222,7 @@ export default async function ProductPage({
               productName={product.name}
               initialAssets={galleryAssets}
               initialStatus={product.status}
+              moduleCreditCosts={moduleCreditCosts}
             />
           ) : (
             <Card className="border-dashed">
@@ -241,7 +257,7 @@ export default async function ProductPage({
               <div>
                 <p className="font-semibold">Images ready — add listing copy?</p>
                 <p className="mt-1 text-sm text-[var(--muted-fg)]">
-                  Generate RUFUS-ready title, bullets, and keywords for 1 credit.
+                  Generate RUFUS-ready title, bullets, and keywords — {copyQuote.summary} required.
                 </p>
               </div>
               <Button asChild>

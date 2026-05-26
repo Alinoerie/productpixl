@@ -20,11 +20,13 @@ export function ProductLiveGallery({
   productName,
   initialAssets,
   initialStatus,
+  moduleCreditCosts = {},
 }: {
   productId: string;
   productName: string;
   initialAssets: GalleryAsset[];
   initialStatus: string;
+  moduleCreditCosts?: Record<string, number>;
 }) {
   const router = useRouter();
   const [assets, setAssets] = useState(initialAssets);
@@ -89,7 +91,12 @@ export function ProductLiveGallery({
   return (
     <div className="space-y-4">
       {status === "PROCESSING" ? <ProductLiveStatus productId={productId} /> : null}
-      <ProductImageGallery productId={productId} productName={productName} assets={assets} />
+      <ProductImageGallery
+        productId={productId}
+        productName={productName}
+        assets={assets}
+        moduleCreditCosts={moduleCreditCosts}
+      />
     </div>
   );
 }

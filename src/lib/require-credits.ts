@@ -18,11 +18,13 @@ export async function requireCredits(userId: string, min = 1) {
   return user;
 }
 
-export function insufficientCreditsResponse() {
+export function insufficientCreditsResponse(required?: number, available?: number) {
   return Response.json(
     {
       error: "Insufficient credits",
       code: "INSUFFICIENT_CREDITS",
+      required,
+      available,
       paywallUrl: "/pricing?locked=1",
     },
     { status: 402 }

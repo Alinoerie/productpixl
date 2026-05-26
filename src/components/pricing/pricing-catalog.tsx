@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CreditCalculator } from "@/components/pricing/credit-calculator";
 import { PricingPacks } from "@/components/pricing/pricing-packs";
+import { typicalImageRunCredits } from "@/lib/credit-pricing";
 
 export function PricingCatalog({
   initialCredits,
@@ -15,7 +16,10 @@ export function PricingCatalog({
 }) {
   const [skus, setSkus] = useState(12);
   const [runsPerSku, setRunsPerSku] = useState(2);
-  const creditsNeeded = useMemo(() => skus * runsPerSku, [skus, runsPerSku]);
+  const creditsNeeded = useMemo(
+    () => skus * runsPerSku * typicalImageRunCredits(),
+    [skus, runsPerSku]
+  );
 
   return (
     <>

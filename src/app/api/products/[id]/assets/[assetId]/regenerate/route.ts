@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { regenerateAsset } from "@/lib/regenerate-asset";
+import {
+  intakeFromProduct,
+  quoteRegenerateModule,
+} from "@/lib/credit-pricing";
+import { getUserCredits, insufficientCreditsResponse, requireCredits } from "@/lib/require-credits";
 import type { ListingModuleId } from "@/pipelines/modules";
 
 export const maxDuration = 120;
@@ -24,12 +30,19 @@ export async function POST(
 
     const moduleId = (body.moduleId ?? assetId.split("-").pop() ?? "L1") as ListingModuleId;
 
-    const user = await session.user;
-    const dbUser = await import("@/lib/prisma").then((m) =>
-      m.prisma.user.findUnique({ where: { id: user.id } })
-    );
-    if (!dbUser || dbUser.credits < 1) {
-      return NextResponse.json({ error: "Spot edit costs 1 credit" }, { status: 402 });
+    const product = await prisma.product.findFirst({
+      where: { id: productId, userId: session.user.id },
+    });
+    if (!product) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    const intake = intakeFromProduct(product);
+    const quote = quoteRegenerateModule(moduleId, product.marketplace, intake);
+
+    if (!(await requireCredits(session.user.id, quote.total))) {
+      const available = await getUserCredits(session.user.id);
+      return insufficientCreditsResponse(quote.total, available);
     }
 
     const result = await regenerateAsset({
@@ -39,17 +52,16 @@ export async function POST(
       spotEditHint: hint,
     });
 
-    await import("@/lib/prisma").then((m) =>
-      m.prisma.user.update({
-        where: { id: session.user.id! },
-        data: { credits: { decrement: 1 } },
-      })
-    );
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { credits: { decrement: quote.total } },
+    });
 
     return NextResponse.json({
       imageUrl: result.imageUrl,
       qaScore: result.qaScore,
       status: result.asset.status,
+      creditsCharged: quote.total,
     });
   } catch (err) {
     console.error("[regenerate]", err);

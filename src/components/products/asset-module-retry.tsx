@@ -16,10 +16,12 @@ export function AssetModuleRetry({
   productId,
   assetId,
   moduleId,
+  creditCost,
 }: {
   productId: string;
   assetId: string;
   moduleId: string;
+  creditCost: number;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -61,13 +63,13 @@ export function AssetModuleRetry({
         ) : (
           <>
             <RotateCcw className="h-4 w-4" />
-            Retry {formatModuleLabel(moduleId)} · 1 credit
+            Retry {formatModuleLabel(moduleId)} · {creditCost.toLocaleString()} credits
           </>
         )}
       </Button>
       {error === "INSUFFICIENT_CREDITS" ? (
         <p className="mt-2 text-xs text-[var(--error)]">
-          Need 1 credit.{" "}
+          Need {creditCost.toLocaleString()} credits.{" "}
           <Link href="/pricing" className="font-medium underline">
             Buy credits
           </Link>

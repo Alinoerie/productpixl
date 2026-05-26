@@ -18,8 +18,8 @@ const FAQ = [
     a: "Amazon's semantic search surfaces. We structure bullets and descriptions so AI shopping assistants can recommend your product — not keyword-stuff.",
   },
   {
-    q: "What does one credit buy?",
-    a: "One full image pipeline (L1 + L3 + L4, optional L8) OR one copy generation run. Spot-editing a single module costs 1 credit.",
+    q: "How do credits work?",
+    a: "Each studio run shows credits required before you generate. Image runs add up per gallery module plus research and QA depth; copy runs scale with marketplace and product detail. Spot-edits charge per single image.",
   },
   {
     q: "Is Bol.com supported?",

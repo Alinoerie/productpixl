@@ -17,8 +17,8 @@ export function LandingPricing() {
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Pricing</p>
           <h2 className="mt-3 font-serif text-3xl md:text-4xl">Credits that scale with your catalog</h2>
           <p className="mt-4 text-[var(--muted-fg)]">
-            No $207/mo subscription. One credit = one full image pipeline or one listing copy run. Sign in to
-            get 10 free credits and buy more when you need them.
+            No $207/mo subscription. Buy credit packs when you need more — each studio run shows credits required
+            before you generate. Sign in for 10 free credits.
           </p>
         </div>
         <div className="mt-12 grid gap-4 md:grid-cols-2">
@@ -38,7 +38,7 @@ export function LandingPricing() {
                   <CreditCard className="h-5 w-5 text-[var(--muted-fg)]" strokeWidth={1.5} />
                 </CardTitle>
                 <p className="font-serif text-4xl">{p.price}</p>
-                <p className="text-sm text-[var(--muted-fg)]">{p.per} per credit</p>
+                <p className="text-sm text-[var(--muted-fg)]">{p.credits} credits in pack</p>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm">
@@ -48,7 +48,7 @@ export function LandingPricing() {
                   </li>
                   <li className="flex gap-2">
                     <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                    Image pipeline or copy per credit
+                    Use across image & copy runs (totals vary per project)
                   </li>
                 </ul>
               </CardContent>

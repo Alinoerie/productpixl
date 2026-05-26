@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { inngest, COPY_PIPELINE_EVENT } from "@/inngest/client";
 import type { ProductIntakeData } from "@/lib/product-intake";
-import { insufficientCreditsResponse, requireCredits } from "@/lib/require-credits";
+import { quoteCopyRun } from "@/lib/credit-pricing";
+import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -28,9 +29,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Product name and category are required" }, { status: 400 });
   }
 
-  const user = await requireCredits(session.user.id);
+  const quote = quoteCopyRun({ marketplace, intake: productData });
+  const user = await requireCredits(session.user.id, quote.total);
   if (!user) {
-    return insufficientCreditsResponse();
+    const available = await getUserCredits(session.user.id);
+    return insufficientCreditsResponse(quote.total, available);
   }
 
   let productId = existingProductId;
@@ -81,7 +84,7 @@ export async function POST(req: NextRequest) {
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { credits: { decrement: 1 } },
+    data: { credits: { decrement: quote.total } },
   });
 
   await inngest.send({
@@ -90,8 +93,9 @@ export async function POST(req: NextRequest) {
       productId,
       marketplace,
       intake: productData,
+      chargedCredits: quote.total,
     },
   });
 
-  return NextResponse.json({ success: true, productId });
+  return NextResponse.json({ success: true, productId, creditsCharged: quote.total });
 }

@@ -80,7 +80,7 @@ function PricingContent({
       ) : null}
       <PageHeader
         title="Credits that scale with your catalog"
-        description="No $207/mo subscription like Pixii. One credit = one full image pipeline (L1 + L3 + L4) or one listing copy run. Buy when you need more — credits do not expire on a monthly clock."
+        description="No $207/mo subscription like Pixii. Credits are charged per run based on gallery size, marketplace, and product detail — the studio shows the total before you generate. Buy packs when you need more."
       >
         <Badge variant="outline" className="border-[var(--accent)]/30 text-[var(--accent)]">
           Pay per generation

@@ -95,7 +95,7 @@ export function PricingPacks({
                 </CardTitle>
                 <p className="font-serif text-4xl">{p.price}</p>
                 <p className="text-sm text-[var(--muted-fg)]">
-                  {p.per} per credit · {p.credits + balance} total after purchase
+                  {p.credits} credits · {p.credits + balance} total after purchase
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -106,7 +106,7 @@ export function PricingPacks({
                   </li>
                   <li className="flex gap-2">
                     <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                    Image pipeline or copy per credit
+                    Use across image & copy runs (totals vary per project)
                   </li>
                 </ul>
                 {signedIn ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, Suspense } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import { StudioSuccessBanner } from "@/components/ui/studio-success-banner";
 import { ProductIntakeFields } from "@/components/product/product-intake-fields";
 import { fetchJson } from "@/lib/fetch-json";
 import { EMPTY_PRODUCT_INTAKE, type ProductIntakeData } from "@/lib/product-intake";
+import { quoteImageRun } from "@/lib/credit-pricing";
+import { CreditsRequiredLine } from "@/components/ui/credits-required-line";
 import type { ProductAnalysis } from "@/lib/ai";
 import { cn } from "@/lib/utils";
 import { formatPipelinePhase, formatModuleLabel } from "@/lib/status-labels";
@@ -130,6 +132,16 @@ export function GenerateWizard({
       referenceImageUrls,
     }),
     [form, referenceImageUrls]
+  );
+
+  const imageQuote = useMemo(
+    () =>
+      quoteImageRun({
+        includePackaging,
+        marketplace,
+        intake: intakePayload(),
+      }),
+    [includePackaging, marketplace, intakePayload]
   );
 
   const onFile = async (file: File) => {
@@ -411,7 +423,7 @@ export function GenerateWizard({
     !pipelineFailed;
   const formInProgress = step >= 1 && step <= 2;
   const navigationBlocked = uploading || analyzing || planningPrompts || formInProgress || pipelineRunning;
-  const lacksCredits = credits < 1;
+  const lacksCredits = credits < imageQuote.total;
   const resultsLoading = step === 3 && !pipelineStatus?.steps?.length && !pipelineFailed;
   const galleryAssets =
     pipelineStatus?.steps?.map((s) => ({
@@ -473,6 +485,8 @@ export function GenerateWizard({
     <div className="space-y-8">
       <WorkflowNotice
         initialCredits={credits}
+        creditsRequired={imageQuote.total}
+        detailLine={imageQuote.detailLine}
         description="PHOILA image pipeline — review prompts before any image is generated."
       />
 
@@ -489,7 +503,7 @@ export function GenerateWizard({
           <>
             L1 hero · L3 lifestyle · L4 detail
             {includePackaging ? " · L8 packaging" : ""} —{" "}
-            <strong className="text-[var(--foreground)]">1 credit</strong>
+            <CreditsRequiredLine total={imageQuote.total} detailLine={imageQuote.detailLine} />
           </>
         }
       />
@@ -539,7 +553,9 @@ export function GenerateWizard({
         </div>
       ) : null}
 
-      {error === "INSUFFICIENT_CREDITS" ? <InsufficientCreditsAlert /> : null}
+      {error === "INSUFFICIENT_CREDITS" ? (
+        <InsufficientCreditsAlert required={imageQuote.total} available={credits} />
+      ) : null}
 
       {error && error !== "INSUFFICIENT_CREDITS" && step !== 0 && step !== 2 ? (
         <p className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">{error}</p>
@@ -819,7 +835,9 @@ export function GenerateWizard({
                 size="lg"
                 disabled={!promptPlan.length || planningPrompts || lacksCredits}
               >
-                {lacksCredits ? "Need credits to start" : "Start generation with reviewed prompts (1 credit)"}
+                {lacksCredits
+                  ? "Need credits to start"
+                  : `Start generation (${imageQuote.total.toLocaleString()} credits)`}
               </Button>
             </div>
           </CardContent>

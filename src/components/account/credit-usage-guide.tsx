@@ -1,24 +1,25 @@
 import { Camera, FileText, Wand2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { typicalCopyRunCredits, typicalImageRunCredits } from "@/lib/credit-pricing";
 
 const uses = [
   {
     icon: Camera,
     label: "Image pipeline",
-    detail: "L1 hero + L3 lifestyle + L4 detail (optional L8 packaging)",
-    cost: "1 credit",
+    detail: "Per gallery image + research, QA, and orchestration depth",
+    cost: `from ~${typicalImageRunCredits()} credits`,
   },
   {
     icon: FileText,
     label: "Listing copy",
-    detail: "Title, bullets, description, backend keywords",
-    cost: "1 credit",
+    detail: "Research-backed title, bullets, description, backend keywords",
+    cost: `from ~${typicalCopyRunCredits()} credits`,
   },
   {
     icon: Wand2,
     label: "Spot edit or retry",
-    detail: "Refine one gallery module or retry a failed asset",
-    cost: "1 credit",
+    detail: "Single-module refinement — scales with module and project detail",
+    cost: "Varies per image",
   },
 ];
 
@@ -26,7 +27,7 @@ export function CreditUsageGuide() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">What 1 credit buys</CardTitle>
+        <CardTitle className="text-base">How credits are used</CardTitle>
       </CardHeader>
       <CardContent>
         <ul className="space-y-3">
@@ -39,12 +40,14 @@ export function CreditUsageGuide() {
                 <span className="font-medium">{item.label}</span>
                 <span className="mt-0.5 block text-xs text-[var(--muted-fg)]">{item.detail}</span>
               </span>
-              <span className="ml-auto shrink-0 text-xs font-semibold text-[var(--accent)]">{item.cost}</span>
+              <span className="ml-auto shrink-0 text-right text-xs font-semibold text-[var(--accent)]">
+                {item.cost}
+              </span>
             </li>
           ))}
         </ul>
         <p className="mt-4 text-xs text-[var(--muted-fg)]">
-          Listing grader is free. Editing saved copy on a project costs nothing.
+          Totals update live in each studio before you run. Listing grader and saved copy edits are free.
         </p>
       </CardContent>
     </Card>

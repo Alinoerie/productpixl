@@ -16,7 +16,7 @@ export function PricingBalance({ initialCredits }: { initialCredits: number }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)]">Your balance</p>
           <p className="mt-1 font-serif text-3xl">{credits}</p>
           <p className="text-sm text-[var(--muted-fg)]">
-            {low ? "Running low — top up before your next run" : "1 credit = image pipeline or listing copy"}
+            {low ? "Running low — top up before your next run" : "Studio shows credits required before each run"}
           </p>
         </div>
         <Button asChild variant={low ? "default" : "outline"}>

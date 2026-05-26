@@ -7,7 +7,7 @@ const STEPS = [
   {
     icon: Camera,
     title: "Gallery images",
-    detail: "Hero, lifestyle, and detail shots from one photo — 1 credit.",
+    detail: "Hero, lifestyle, and detail shots — credits scale with modules and product depth.",
     href: (id: string) => `/generate?productId=${id}`,
     cta: "Start image run",
     primary: true,
@@ -15,7 +15,7 @@ const STEPS = [
   {
     icon: FileText,
     title: "Listing copy",
-    detail: "RUFUS-ready title, bullets, and keywords — 1 credit.",
+    detail: "RUFUS-ready title, bullets, and keywords — estimate shown in copy studio.",
     href: (id: string) => `/copy?productId=${id}`,
     cta: "Generate copy",
     primary: false,

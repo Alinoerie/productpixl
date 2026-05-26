@@ -15,10 +15,12 @@ export function AssetSpotEdit({
   productId,
   assetId,
   moduleId,
+  creditCost,
 }: {
   productId: string;
   assetId: string;
   moduleId: string;
+  creditCost: number;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -65,7 +67,7 @@ export function AssetSpotEdit({
         onClick={() => setOpen(true)}
       >
         <Wand2 className="h-4 w-4" />
-        Refine {formatModuleLabel(moduleId)} · 1 credit
+        Refine {formatModuleLabel(moduleId)} · {creditCost.toLocaleString()} credits
       </Button>
     );
   }
@@ -74,7 +76,7 @@ export function AssetSpotEdit({
     <div className="mt-4 rounded-xl border border-[var(--teal)]/30 bg-[var(--teal-soft)]/40 p-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--teal)]">
-          Spot edit · 1 credit
+          Spot edit · {creditCost.toLocaleString()} credits
         </p>
         <button
           type="button"
@@ -99,7 +101,7 @@ export function AssetSpotEdit({
       />
       {error === "INSUFFICIENT_CREDITS" ? (
         <p className="mt-2 text-xs text-[var(--error)]">
-          Need 1 credit.{" "}
+          Need {creditCost.toLocaleString()} credits.{" "}
           <Link href="/pricing" className="font-medium underline">
             Buy credits
           </Link>

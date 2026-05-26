@@ -21,11 +21,13 @@ export function ProductImageGallery({
   productName,
   assets,
   readOnly = false,
+  moduleCreditCosts = {},
 }: {
   productId: string;
   productName: string;
   assets: GalleryAsset[];
   readOnly?: boolean;
+  moduleCreditCosts?: Record<string, number>;
 }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
@@ -228,10 +230,20 @@ export function ProductImageGallery({
                   <p className="mt-2 text-xs text-[var(--error)]">{a.errorMessage}</p>
                 ) : null}
                 {a.status === "COMPLETE" && a.imageUrl && !readOnly ? (
-                  <AssetSpotEdit productId={productId} assetId={a.id} moduleId={a.moduleId} />
+                  <AssetSpotEdit
+                    productId={productId}
+                    assetId={a.id}
+                    moduleId={a.moduleId}
+                    creditCost={moduleCreditCosts[a.moduleId] ?? 8}
+                  />
                 ) : null}
                 {a.status === "FAILED" && !readOnly ? (
-                  <AssetModuleRetry productId={productId} assetId={a.id} moduleId={a.moduleId} />
+                  <AssetModuleRetry
+                    productId={productId}
+                    assetId={a.id}
+                    moduleId={a.moduleId}
+                    creditCost={moduleCreditCosts[a.moduleId] ?? 8}
+                  />
                 ) : null}
               </div>
             </article>

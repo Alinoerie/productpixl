@@ -50,14 +50,14 @@ const WORKFLOW = [
   {
     icon: Zap,
     title: "Download & publish",
-    body: "Gallery images plus RUFUS-ready listing copy. One credit per image run or copy run.",
+    body: "Gallery images plus RUFUS-ready listing copy. Credits required are shown before each run.",
   },
 ];
 
 const STATS = [
   { value: "1 photo", label: "Input — not an ASIN" },
   { value: "~2 min", label: "Analyze to brief" },
-  { value: "1 credit", label: "Per pipeline run" },
+  { value: "Per run", label: "Credits shown upfront" },
   { value: "10 free", label: "Credits on signup" },
 ];
 
@@ -178,7 +178,7 @@ export default async function HomePage() {
               </p>
               <h2 className="mt-3 font-serif text-3xl md:text-4xl">Listing modules that convert</h2>
             </div>
-            <Badge variant="secondary">1 credit · full image run</Badge>
+            <Badge variant="secondary">Credits shown before each run</Badge>
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {MODULES.map((m) => {

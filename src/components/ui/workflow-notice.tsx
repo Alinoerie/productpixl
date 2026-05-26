@@ -7,14 +7,25 @@ import { cn } from "@/lib/utils";
 
 export function WorkflowNotice({
   initialCredits,
-  costLabel = "1 credit",
+  costLabel,
+  creditsRequired,
+  detailLine,
   description,
 }: {
   initialCredits: number;
+  /** @deprecated use creditsRequired */
   costLabel?: string;
+  creditsRequired?: number;
+  detailLine?: string;
   description: string;
 }) {
-  const low = initialCredits < 1;
+  const required = creditsRequired ?? 1;
+  const label =
+    costLabel ??
+    (creditsRequired != null
+      ? `${creditsRequired.toLocaleString()} credits`
+      : "credits (estimate pending)");
+  const low = initialCredits < required;
 
   return (
     <div
@@ -29,7 +40,10 @@ export function WorkflowNotice({
       <div className="min-w-0">
         <p className="text-sm text-[var(--muted-fg)]">{description}</p>
         <p className="mt-0.5 text-xs font-medium text-[var(--foreground)]">
-          This run costs <span className="text-[var(--accent)]">{costLabel}</span>
+          This run requires <span className="text-[var(--accent)]">{label}</span>
+          {detailLine ? (
+            <span className="mt-1 block font-normal text-[var(--muted-fg)]">{detailLine}</span>
+          ) : null}
           {low ? (
             <>
               {" "}

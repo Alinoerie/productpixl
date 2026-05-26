@@ -17,8 +17,8 @@ const rows = [
   },
   {
     label: "ProductPixl",
-    value: "1 credit",
-    sub: "Per full image run or copy run · no monthly clock",
+    value: "Pay per run",
+    sub: "Credits required shown before generate — scales with images & detail",
     highlight: true,
   },
 ] as const;
@@ -30,8 +30,7 @@ export function PricingComparison({ checkoutEnabled }: { checkoutEnabled: boolea
         <div>
           <h2 className="font-serif text-xl">How credits compare</h2>
           <p className="mt-2 max-w-2xl text-sm text-[var(--muted-fg)]">
-            Pay only when you generate — a 12-SKU catalog at 2 runs each is ~24 credits (~€63 on Growth pricing)
-            vs €2,484/year on a Pixii subscription.
+            Pay only when you generate — a 12-SKU catalog at 2 runs each is a fraction of Pixii&apos;s annual lock-in.
           </p>
         </div>
         <Badge variant="outline" className="border-[var(--success-border)] text-[var(--success)]">

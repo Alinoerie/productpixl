@@ -21,6 +21,8 @@ import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-a
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { ProductIntakeFields } from "@/components/product/product-intake-fields";
 import { EMPTY_PRODUCT_INTAKE, type ProductIntakeData } from "@/lib/product-intake";
+import { quoteCopyRun } from "@/lib/credit-pricing";
+import { CreditsRequiredLine } from "@/components/ui/credits-required-line";
 import type { ProductAnalysis } from "@/lib/ai";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft } from "@/lib/copy-draft";
@@ -107,6 +109,15 @@ export function CopyWorkspace({
     brandName: defaultBrandName,
   });
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
+
+  const copyQuote = useMemo(
+    () =>
+      quoteCopyRun({
+        marketplace,
+        intake: { ...form, referenceImageUrls },
+      }),
+    [marketplace, form, referenceImageUrls]
+  );
 
   const reset = () => {
     if (previewUrlRef.current) {
@@ -356,7 +367,7 @@ export function CopyWorkspace({
 
   const titleOverLimit = (copy?.title?.length ?? 0) > AMAZON_TITLE_MAX;
   const copyStep = copy?.title ? 2 : loading ? 1 : 0;
-  const lacksCredits = credits < 1;
+  const lacksCredits = credits < copyQuote.total;
   const canRetry = Boolean(error && error !== "INSUFFICIENT_CREDITS" && form.name.trim() && !loading);
   const showGraderImportBanner = Boolean(fromGrader && copy?.title && !productId);
   const showProjectNextSteps = Boolean(
@@ -479,6 +490,8 @@ export function CopyWorkspace({
     >
       <WorkflowNotice
         initialCredits={credits}
+        creditsRequired={copyQuote.total}
+        detailLine={copyQuote.detailLine}
         description="RUFUS-ready title, bullets, description, and backend keywords."
       />
 
@@ -494,7 +507,7 @@ export function CopyWorkspace({
         description={
           <>
             Title, 5 bullets, description, backend keywords — RUFUS-ready ·{" "}
-            <strong className="text-[var(--foreground)]">1 credit</strong>
+            <CreditsRequiredLine total={copyQuote.total} detailLine={copyQuote.detailLine} />
           </>
         }
       />
@@ -521,8 +534,8 @@ export function CopyWorkspace({
         <div className="rounded-xl border border-[var(--teal)]/30 bg-[var(--teal-soft)]/40 px-4 py-3 text-sm">
           {linkedProduct.listingCopy?.title ? (
             <>
-              Editing existing copy for <strong>{linkedProduct.name}</strong>. Regenerating costs 1 credit and
-              replaces the current listing.
+              Editing existing copy for <strong>{linkedProduct.name}</strong>. Regenerating requires{" "}
+              {copyQuote.summary} and replaces the current listing.
             </>
           ) : (
             <>
@@ -532,7 +545,9 @@ export function CopyWorkspace({
         </div>
       ) : null}
 
-      {error === "INSUFFICIENT_CREDITS" ? <InsufficientCreditsAlert /> : null}
+      {error === "INSUFFICIENT_CREDITS" ? (
+        <InsufficientCreditsAlert required={copyQuote.total} available={credits} />
+      ) : null}
 
       {confirmAction === "regenerate" ? (
         <div
@@ -544,7 +559,7 @@ export function CopyWorkspace({
             Regenerate listing copy?
           </p>
           <p className="mt-1 text-[var(--muted-fg)]">
-            This replaces the current text and costs <strong>1 credit</strong>.
+            This replaces the current text and requires <strong>{copyQuote.summary}</strong>.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" size="sm" variant="outline" onClick={() => setConfirmAction(null)}>
@@ -620,7 +635,7 @@ export function CopyWorkspace({
               <div className="md:col-span-2 rounded-xl border border-[var(--border)] bg-[var(--muted)]/40 p-4 text-sm">
                 <p className="font-medium">This project already has listing copy.</p>
                 <p className="mt-1 text-[var(--muted-fg)]">
-                  Scroll down to edit, or regenerate below to replace it with fresh AI copy (1 credit).
+                  Scroll down to edit, or regenerate below to replace it with fresh AI copy ({copyQuote.summary}).
                 </p>
               </div>
             ) : null}
@@ -670,7 +685,11 @@ export function CopyWorkspace({
                 disabled={loading || uploading || !form.name.trim() || !form.category.trim() || lacksCredits}
                 className="flex-1 md:col-span-2"
               >
-                {lacksCredits ? "Need credits to generate" : loading ? "Generating…" : "Generate copy (1 credit)"}
+                {lacksCredits
+                  ? "Need credits to generate"
+                  : loading
+                    ? "Generating…"
+                    : `Generate copy (${copyQuote.total.toLocaleString()} credits)`}
               </Button>
             </div>
           </CardContent>
@@ -1053,7 +1072,7 @@ export function CopyWorkspace({
                 onClick={() => requestRegenerate()}
               >
                 <RefreshCw className="h-4 w-4" />
-                Regenerate (1 credit)
+                Regenerate ({copyQuote.total.toLocaleString()} credits)
               </Button>
             ) : null}
             <Button variant="ghost" onClick={startOver}>
