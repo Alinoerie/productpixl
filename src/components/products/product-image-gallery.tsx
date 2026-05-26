@@ -33,10 +33,10 @@ export function ProductImageGallery({
     setLightbox(asset);
   };
 
-  const closeLightbox = () => {
+  const closeLightbox = useCallback(() => {
     setLightbox(null);
     triggerEl?.focus();
-  };
+  }, [triggerEl]);
 
   useEffect(() => {
     if (!lightbox) return;
@@ -74,7 +74,7 @@ export function ProductImageGallery({
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
     };
-  }, [lightbox, triggerEl]);
+  }, [lightbox, closeLightbox]);
 
   return (
     <>
