@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPipelinePhase, formatProductStatus, statusBadgeClass } from "@/lib/status-labels";
+import { getMarketplace, type MarketplaceId } from "@/lib/marketplaces";
 
 type Thumb = { id: string; imageUrl: string | null };
 
@@ -15,6 +16,7 @@ export function DashboardProjectCard({
   id,
   name,
   status: initialStatus,
+  marketplace,
   createdAt,
   hasCopy,
   hasImages = false,
@@ -23,6 +25,7 @@ export function DashboardProjectCard({
   id: string;
   name: string;
   status: string;
+  marketplace: string;
   createdAt: Date;
   hasCopy: boolean;
   hasImages?: boolean;
@@ -32,6 +35,11 @@ export function DashboardProjectCard({
   const [status, setStatus] = useState(initialStatus);
   const [phase, setPhase] = useState<string | null>(null);
   const isProcessing = status === "PROCESSING";
+  const mp = getMarketplace(marketplace as MarketplaceId);
+
+  useEffect(() => {
+    setStatus(initialStatus);
+  }, [initialStatus]);
 
   useEffect(() => {
     if (status !== "PROCESSING") return;
@@ -117,7 +125,7 @@ export function DashboardProjectCard({
         <Link href={`/products/${id}`} className="group/title block">
           <p className="font-semibold leading-snug group-hover/title:text-[var(--accent)]">{name}</p>
           <p className="mt-1 text-xs text-[var(--muted-fg)]">
-            {new Date(createdAt).toLocaleDateString()}
+            {mp.flag} {mp.label} · {new Date(createdAt).toLocaleDateString()}
             {exportReady ? " · Ready to export" : hasCopy ? " · Copy ready" : hasImages ? " · Images ready" : ""}
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">

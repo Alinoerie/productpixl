@@ -52,7 +52,7 @@ pnpm inngest:dev
 
 **Credits:** 10 free on signup · 1 credit per image run, copy run, or spot-edit.
 
-**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready and failed-project filters, marketplace-aware export (txt/csv/json + gallery ZIP), in-app unsaved guards on project/copy/brand pages, failed-module retry in gallery, payment success polling after Stripe checkout, grader → copy draft flow with persisted grades, marketplace guidance in generate/copy studios, smart pack recommendations on pricing, collapsible listing bullets on mobile, mobile More menu for Brand/Credits, debounced project search, and re-grade from readiness checklist.
+**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready and failed-project filters, marketplace-aware export (txt/csv/json + gallery ZIP), in-app unsaved guards on project/copy/brand pages, failed-module retry in gallery, payment success polling after Stripe checkout, grader → copy draft flow with persisted grades, marketplace guidance in generate/copy studios, smart pack recommendations on pricing, collapsible listing bullets on mobile, mobile More menu for Brand/Credits, debounced project search, re-grade from readiness checklist, live dashboard run polling, marketplace labels on project cards, and accessible delete confirmation.
 
 ## Pipeline docs
 
@@ -62,8 +62,8 @@ pnpm inngest:dev
 ## Manual test checklist
 
 - [ ] Sign in with Google → dashboard shows 10 credits
-- [ ] `/dashboard` — hero stats link to projects, export-ready, and failed runs when present
-- [ ] `/projects` — search/filter (debounced search, failed, export-ready, queued), open generate or copy handoffs
+- [ ] `/dashboard` — hero stats link to projects, export-ready, and failed runs; active runs panel updates live
+- [ ] `/projects` — search/filter (debounced search, failed, export-ready, queued), marketplace on cards, open generate or copy handoffs
 - [ ] `/grader` — grade listing without login; hand off to copy studio when signed in
 - [ ] `/brand` — save colors/tone, mobile save bar, unsaved navigation guard
 - [ ] `/generate` — marketplace picker + pipeline completes → export/copy CTAs

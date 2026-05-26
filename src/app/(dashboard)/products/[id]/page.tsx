@@ -62,7 +62,9 @@ export default async function ProductPage({
             Projects
           </Link>
           <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
-          <span className="truncate text-[var(--foreground)]">{product.name}</span>
+          <span className="truncate text-[var(--foreground)]" aria-current="page">
+            {product.name}
+          </span>
         </nav>
 
         <div className="flex flex-wrap items-start justify-between gap-4">

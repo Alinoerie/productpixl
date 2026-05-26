@@ -180,6 +180,7 @@ export default async function ProjectsPage({
                   id={p.id}
                   name={p.name}
                   status={p.status}
+                  marketplace={p.marketplace}
                   createdAt={p.createdAt}
                   hasCopy={Boolean(p.listingCopy?.title)}
                   hasImages={thumbs.length > 0}

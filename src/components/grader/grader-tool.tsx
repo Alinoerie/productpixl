@@ -234,7 +234,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
           <Button className="hidden w-full md:inline-flex" size="lg" onClick={grade} disabled={loading || !title.trim()}>
             {loading ? "Grading…" : "Grade my listing"}
           </Button>
-          <p className="hidden text-center text-xs text-[var(--muted-fg)] md:block">Tip: ⌘/Ctrl+Enter to grade</p>
+          <p className="text-center text-xs text-[var(--muted-fg)]">Tip: ⌘/Ctrl+Enter to grade</p>
         </CardContent>
       </Card>
 

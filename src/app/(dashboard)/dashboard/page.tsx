@@ -8,6 +8,7 @@ import { BrandSetupNudge } from "@/components/ui/brand-setup-nudge";
 import { isBrandProfileConfigured } from "@/lib/brand-profile";
 import { cn } from "@/lib/utils";
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
+import { ActiveRunsPanel } from "@/components/dashboard/active-runs-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -42,8 +43,6 @@ export default async function DashboardPage() {
   ]);
 
   const credits = user?.credits ?? 0;
-  const failedOnlyPanel =
-    activeRuns.length > 0 && activeRuns.every((p) => p.status === "FAILED");
   const heroStats = [
     { label: "Credits", value: String(credits), href: "/pricing" as const },
     { label: "Projects", value: String(totalProjects), href: "/projects" as const },
@@ -113,57 +112,11 @@ export default async function DashboardPage() {
       <QuickActions credits={credits} />
 
       {activeRuns.length > 0 ? (
-        <div className="rounded-2xl border border-[var(--accent)]/25 bg-[var(--accent-soft)]/25 px-4 py-4">
-          <p className="text-sm font-semibold">
-            {activeRuns.filter((p) => p.status === "PROCESSING" || p.status === "QUEUED").length > 0
-              ? `${activeRuns.filter((p) => p.status === "PROCESSING" || p.status === "QUEUED").length} run${
-                  activeRuns.filter((p) => p.status === "PROCESSING" || p.status === "QUEUED").length === 1
-                    ? ""
-                    : "s"
-                } in progress`
-              : "Needs attention"}
-          </p>
-          <ul className="mt-3 space-y-2">
-            {activeRuns.map((p) => (
-              <li key={p.id}>
-                <Link
-                  href={`/products/${p.id}`}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm transition-colors hover:border-[var(--accent)]/40"
-                >
-                  <span className="truncate font-medium">{p.name}</span>
-                  <span
-                    className={
-                      p.status === "FAILED"
-                        ? "shrink-0 text-[var(--error)]"
-                        : "shrink-0 text-[var(--accent)]"
-                    }
-                  >
-                    {p.status === "FAILED"
-                      ? "Failed · Retry"
-                      : p.status === "QUEUED"
-                        ? "Starting…"
-                        : "Processing…"}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-          {totalProjects > activeRuns.length ? (
-            <Link
-              href={failedOnlyPanel ? "/projects?status=FAILED" : "/projects"}
-              className="mt-3 inline-block text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
-            >
-              {failedOnlyPanel ? "View all failed projects →" : "View all projects →"}
-            </Link>
-          ) : failedCount > 0 ? (
-            <Link
-              href="/projects?status=FAILED"
-              className="mt-3 inline-block text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
-            >
-              View all failed projects →
-            </Link>
-          ) : null}
-        </div>
+        <ActiveRunsPanel
+          initialRuns={activeRuns}
+          totalProjects={totalProjects}
+          failedCount={failedCount}
+        />
       ) : null}
 
       <div>
@@ -222,6 +175,7 @@ export default async function DashboardPage() {
                   id={p.id}
                   name={p.name}
                   status={p.status}
+                  marketplace={p.marketplace}
                   createdAt={p.createdAt}
                   hasCopy={Boolean(p.listingCopy?.title)}
                   hasImages={thumbs.length > 0}

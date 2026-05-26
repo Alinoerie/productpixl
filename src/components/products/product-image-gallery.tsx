@@ -142,7 +142,11 @@ export function ProductImageGallery({
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-serif text-xl">Gallery images</h2>
           {assets.length > 1 && (failedCount > 0 || completeCount > 0) ? (
-            <div className="flex gap-1 rounded-full border border-[var(--border)] bg-[var(--card)] p-1">
+            <div
+              role="group"
+              aria-label="Gallery filter"
+              className="flex gap-1 rounded-full border border-[var(--border)] bg-[var(--card)] p-1"
+            >
               {(
                 [
                   { id: "all" as const, label: `All (${assets.length})` },
@@ -158,6 +162,7 @@ export function ProductImageGallery({
                   key={chip.id}
                   type="button"
                   onClick={() => setFilter(chip.id)}
+                  aria-pressed={filter === chip.id}
                   className={cn(
                     "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                     filter === chip.id
