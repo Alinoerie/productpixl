@@ -34,7 +34,14 @@ interface ProductAnalysis {
   keyObservations?: string;
 }
 
-const STEPS = ["Upload", "Product info", "Configure", "Results"];
+interface PromptPlanItem {
+  moduleId: string;
+  label: string;
+  resolution: "2K" | "4K";
+  prompt: string;
+}
+
+const STEPS = ["Upload", "Product info", "Prompt plan", "Results"];
 
 export function GenerateWizard() {
   const router = useRouter();
@@ -47,9 +54,18 @@ export function GenerateWizard() {
   const [marketplace, setMarketplace] = useState<MarketplaceId>("AMAZON_US");
   const [productId, setProductId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [planningPrompts, setPlanningPrompts] = useState(false);
+  const [promptPlan, setPromptPlan] = useState<PromptPlanItem[]>([]);
   const [pipelineStatus, setPipelineStatus] = useState<{
     phase: string;
-    steps: { id: string; label: string; status: string; imageUrl?: string; qaScore?: number }[];
+    steps: {
+      id: string;
+      label: string;
+      status: string;
+      imageUrl?: string;
+      qaScore?: number;
+      prompt?: string;
+    }[];
   } | null>(null);
 
   const [form, setForm] = useState<ProductData>({
@@ -112,6 +128,7 @@ export function GenerateWizard() {
         keyFeatures: a.keyObservations || form.keyFeatures,
         targetBuyer: form.targetBuyer,
       });
+      setPromptPlan([]);
       setStep(1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Analysis failed");
@@ -120,7 +137,37 @@ export function GenerateWizard() {
     }
   };
 
+  const buildPromptPlan = async () => {
+    setError("");
+    setPlanningPrompts(true);
+    try {
+      const { ok, data } = await fetchJson<{
+        prompts?: PromptPlanItem[];
+        error?: string;
+      }>("/api/generate/images/prompts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inputImageUrl: imageUrl,
+          includePackaging,
+          marketplace,
+          productData: form,
+        }),
+      });
+      if (!ok) throw new Error(data.error || "Failed to build prompt plan");
+      setPromptPlan(data.prompts ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to build prompt plan");
+    } finally {
+      setPlanningPrompts(false);
+    }
+  };
+
   const startGeneration = async () => {
+    if (!promptPlan.length) {
+      setError("Generate prompt plan first so you can review/edit prompts.");
+      return;
+    }
     setError("");
     try {
       const { ok, status, data } = await fetchJson<{ productId?: string; error?: string }>(
@@ -133,6 +180,7 @@ export function GenerateWizard() {
             includePackaging,
             marketplace,
             productData: form,
+            promptOverrides: Object.fromEntries(promptPlan.map((p) => [p.moduleId, p.prompt])),
           }),
         }
       );
@@ -298,7 +346,14 @@ export function GenerateWizard() {
               <Button variant="outline" onClick={() => setStep(0)}>
                 Back
               </Button>
-              <Button onClick={() => setStep(2)}>Next</Button>
+              <Button
+                onClick={() => {
+                  setPromptPlan([]);
+                  setStep(2);
+                }}
+              >
+                Next
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -325,7 +380,10 @@ export function GenerateWizard() {
                       name="marketplace"
                       className="mt-1"
                       checked={marketplace === m.id}
-                      onChange={() => setMarketplace(m.id)}
+                      onChange={() => {
+                        setMarketplace(m.id);
+                        setPromptPlan([]);
+                      }}
                     />
                     <div>
                       <p className="text-sm font-medium">
@@ -343,7 +401,10 @@ export function GenerateWizard() {
                   type="checkbox"
                   className="mt-1"
                   checked={includePackaging}
-                  onChange={(e) => setIncludePackaging(e.target.checked)}
+                  onChange={(e) => {
+                    setIncludePackaging(e.target.checked);
+                    setPromptPlan([]);
+                  }}
                 />
                 <div>
                   <p className="font-medium">Include L8 packaging module</p>
@@ -356,23 +417,70 @@ export function GenerateWizard() {
             <ul className="space-y-2 text-sm text-[var(--muted-fg)]">
               <li className="flex gap-2">
                 <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                Category research via Tavily
+                Step 2 + 3 pipeline context (analysis + category research)
               </li>
               <li className="flex gap-2">
                 <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                PHOILA prompts + nano-banana-pro generation
+                Prompts structured from PHOILA listing pipeline constraints
               </li>
               <li className="flex gap-2">
                 <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                QA scoring on each module
+                Edit prompt text before any image2image call is sent
               </li>
             </ul>
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={buildPromptPlan}
+                disabled={planningPrompts || !imageUrl}
+              >
+                {planningPrompts ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Building prompt plan…
+                  </>
+                ) : (
+                  "Generate prompt plan"
+                )}
+              </Button>
+              {promptPlan.length > 0 && (
+                <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--muted)]/30 p-4">
+                  <p className="text-sm font-medium">
+                    Prompt plan ready — edit anything below before generation:
+                  </p>
+                  {promptPlan.map((item, index) => (
+                    <div key={item.moduleId} className="space-y-2 rounded-lg border bg-white/70 p-3">
+                      <p className="text-sm font-semibold">
+                        {index + 1}. {item.moduleId} · {item.label} ({item.resolution})
+                      </p>
+                      <Textarea
+                        className="min-h-[220px] text-xs leading-relaxed"
+                        value={item.prompt}
+                        onChange={(e) =>
+                          setPromptPlan((prev) =>
+                            prev.map((p) =>
+                              p.moduleId === item.moduleId ? { ...p, prompt: e.target.value } : p
+                            )
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep(1)}>
                 Back
               </Button>
-              <Button onClick={startGeneration} className="flex-1 rounded-xl" size="lg">
-                Start generation (1 credit)
+              <Button
+                onClick={startGeneration}
+                className="flex-1 rounded-xl"
+                size="lg"
+                disabled={!promptPlan.length || planningPrompts}
+              >
+                Start generation with reviewed prompts (1 credit)
               </Button>
             </div>
           </CardContent>
@@ -445,6 +553,14 @@ export function GenerateWizard() {
                         <Badge variant="secondary">QA {s.qaScore}/10</Badge>
                       )}
                     </div>
+                    {s.prompt && (
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-xs font-medium text-[var(--muted-fg)]">
+                          View prompt used
+                        </summary>
+                        <Textarea className="mt-2 min-h-[160px] text-xs" value={s.prompt} readOnly />
+                      </details>
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -25,6 +25,7 @@ interface StepState {
   status: "PENDING" | "GENERATING" | "COMPLETE" | "FAILED";
   imageUrl?: string;
   qaScore?: number;
+  prompt?: string;
   error?: string;
 }
 
@@ -47,6 +48,7 @@ export const imagePipeline = inngest.createFunction(
     const { productId, includePackaging, intake } = event.data as {
       productId: string;
       includePackaging: boolean;
+      promptOverrides?: Record<string, string>;
       intake: {
         name: string;
         brandName: string;
@@ -134,10 +136,13 @@ export const imagePipeline = inngest.createFunction(
         await setStatus(pipelineStatus);
 
         try {
-          const prompt = buildListingPrompt(mod.id, analysis, intake, research, {
+          const prompt =
+            event.data.promptOverrides?.[mod.id]?.trim() ||
+            buildListingPrompt(mod.id, analysis, intake, research, {
             brandProfile,
             marketplace: product.marketplace,
-          });
+            });
+          pipelineStatus.steps[i].prompt = prompt;
           const buffer = await generateListingImage(
             product.inputImageUrl,
             prompt,

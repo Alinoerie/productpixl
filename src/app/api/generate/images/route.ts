@@ -15,10 +15,12 @@ export async function POST(req: NextRequest) {
     includePackaging = false,
     productData,
     marketplace = "AMAZON_US",
+    promptOverrides = {},
   } = body as {
     inputImageUrl: string;
     includePackaging?: boolean;
     marketplace?: string;
+    promptOverrides?: Record<string, string>;
     productData: {
       name: string;
       brandName: string;
@@ -71,6 +73,7 @@ export async function POST(req: NextRequest) {
     data: {
       productId: product.id,
       includePackaging,
+      promptOverrides,
       intake: {
         name: productData.name,
         brandName: productData.brandName,
