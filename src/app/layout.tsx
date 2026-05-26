@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Instrument_Serif } from "next/font/google";
 import "./globals.css";
+import { siteUrl } from "@/lib/site-url";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -14,9 +15,23 @@ const instrument = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: "ProductPixl — AI listing studio for Amazon sellers",
   description:
     "One product photo → Amazon gallery images and RUFUS-ready copy. Pay per generation. No ASIN required.",
+  openGraph: {
+    title: "ProductPixl — AI listing studio for Amazon sellers",
+    description:
+      "One product photo → Amazon gallery images and RUFUS-ready copy. Pay per generation. No ASIN required.",
+    siteName: "ProductPixl",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ProductPixl — AI listing studio for Amazon sellers",
+    description:
+      "One product photo → Amazon gallery images and RUFUS-ready copy. Pay per generation. No ASIN required.",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

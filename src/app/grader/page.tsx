@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
@@ -9,9 +10,19 @@ import { StudioProviders } from "@/components/layout/studio-providers";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Free Amazon Listing Grader — ProductPixl",
   description: "Score your listing A–F. RUFUS-ready tips. No login required.",
+  openGraph: {
+    title: "Free Amazon Listing Grader — ProductPixl",
+    description: "Score your listing A–F. RUFUS-ready tips. No login required.",
+    url: "/grader",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Free Amazon Listing Grader — ProductPixl",
+    description: "Score your listing A–F. RUFUS-ready tips. No login required.",
+  },
 };
 
 function GraderMarketingFooter({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: string }) {

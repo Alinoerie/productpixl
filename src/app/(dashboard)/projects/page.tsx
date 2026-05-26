@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardCheck, ImageIcon } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
@@ -13,6 +13,70 @@ import { ProjectsFilterBar, buildProjectsQuery } from "@/components/projects/pro
 import { Skeleton } from "@/components/ui/skeleton";
 
 const PAGE_SIZE = 24;
+
+function getFilterEmptyState(filters: {
+  status?: string;
+  copy?: string;
+  images?: string;
+  ready?: string;
+  q?: string;
+}) {
+  if (filters.ready === "export") {
+    return {
+      title: "No export-ready projects yet",
+      description:
+        "Export-ready projects have both gallery images and listing copy saved. Run an image pipeline, generate copy, or finish both on an existing project.",
+      primary: { href: "/generate", label: "Start image run" },
+      secondary: { href: "/copy", label: "Generate listing copy" },
+    };
+  }
+  if (filters.status === "FAILED") {
+    return {
+      title: "No failed projects",
+      description: "All image runs completed successfully — or failures were retried already.",
+      primary: { href: "/generate", label: "Start new image run" },
+      secondary: { href: "/projects", label: "Clear filters" },
+    };
+  }
+  if (filters.status === "QUEUED" || filters.status === "PROCESSING") {
+    return {
+      title: "No active runs",
+      description: "Queued and processing projects appear here while the image pipeline is running.",
+      primary: { href: "/generate", label: "Start image run" },
+      secondary: { href: "/projects", label: "Clear filters" },
+    };
+  }
+  if (filters.copy === "without") {
+    return {
+      title: "All projects have listing copy",
+      description: "Try a different filter, or generate copy for a new product.",
+      primary: { href: "/copy", label: "Generate listing copy" },
+      secondary: { href: "/projects", label: "Clear filters" },
+    };
+  }
+  if (filters.images === "without") {
+    return {
+      title: "All projects have gallery images",
+      description: "Try a different filter, or start a new image run.",
+      primary: { href: "/generate", label: "Start image run" },
+      secondary: { href: "/projects", label: "Clear filters" },
+    };
+  }
+  if (filters.q?.trim()) {
+    return {
+      title: "No matches for your search",
+      description: `Nothing matched “${filters.q.trim()}”. Try another product name or clear filters.`,
+      primary: { href: "/projects", label: "Clear filters" },
+      secondary: { href: "/generate", label: "Start new project" },
+    };
+  }
+  return {
+    title: "No matches",
+    description: "Try clearing filters or search with a different product name.",
+    primary: { href: "/projects", label: "Clear filters" },
+    secondary: { href: "/generate", label: "Open image studio" },
+  };
+}
 
 function buildWhere(
   userId: string,
@@ -123,7 +187,8 @@ export default async function ProjectsPage({
               </div>
               <h3 className="mt-6 font-serif text-xl">No projects yet</h3>
               <p className="mt-2 max-w-sm text-sm text-[var(--muted-fg)] md:max-w-md">
-                Start with an image run or generate listing copy — every run saves as a project you can return to.
+                Start with an image run or generate listing copy — every run saves as a project you can return to. Or
+                grade an existing listing free before you spend credits.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
                 <Button asChild size="lg">
@@ -131,6 +196,12 @@ export default async function ProjectsPage({
                 </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link href="/copy">Generate listing copy</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <Link href="/grader">
+                    <ClipboardCheck className="h-4 w-4" />
+                    Grade a listing free
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -143,32 +214,25 @@ export default async function ProjectsPage({
           </CardContent>
         </Card>
       ) : products.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="py-16 text-center">
-            <p className="font-serif text-xl">
-              {filters.status === "FAILED" ? "No failed projects" : "No matches"}
-            </p>
-            <p className="mt-2 text-sm text-[var(--muted-fg)]">
-              {filters.status === "FAILED"
-                ? "All image runs completed successfully — or failures were retried already."
-                : "Try clearing filters or search with a different product name."}
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button asChild variant="outline">
-                <Link href="/projects">Clear filters</Link>
-              </Button>
-              {filters.status === "FAILED" ? (
-                <Button asChild>
-                  <Link href="/generate">Start new image run</Link>
-                </Button>
-              ) : (
-                <Button asChild variant="outline">
-                  <Link href="/generate">Open image studio</Link>
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        (() => {
+          const empty = getFilterEmptyState(filters);
+          return (
+            <Card className="border-dashed">
+              <CardContent className="py-16 text-center">
+                <p className="font-serif text-xl">{empty.title}</p>
+                <p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted-fg)]">{empty.description}</p>
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <Button asChild>
+                    <Link href={empty.primary.href}>{empty.primary.label}</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link href={empty.secondary.href}>{empty.secondary.label}</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()
       ) : (
         <>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

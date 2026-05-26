@@ -80,16 +80,22 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
       if (draftProductId) {
         markProductGraded(draftProductId, { grade: graded.grade, score: graded.score });
       }
+      toast(`Grade ${graded.grade} — ${graded.score}/100`);
       requestAnimationFrame(() => {
         scoreSummaryRef.current?.focus();
-        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const isMobile = window.matchMedia("(max-width: 767px)").matches;
+        resultsRef.current?.scrollIntoView({
+          behavior: prefersReduced ? "auto" : "smooth",
+          block: isMobile ? "center" : "start",
+        });
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Grading failed");
     } finally {
       setLoading(false);
     }
-  }, [title, bullets, description, keywords, draftProductId]);
+  }, [title, bullets, description, keywords, draftProductId, toast]);
 
   useEffect(() => {
     const draft = loadCopyDraft();
@@ -288,7 +294,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
         </Button>
       </div>
 
-      <div ref={resultsRef} className="space-y-4" aria-live="polite" aria-busy={loading}>
+      <div ref={resultsRef} className="scroll-mt-28 space-y-4 md:scroll-mt-8" aria-live="polite" aria-busy={loading}>
         {loading ? (
           <>
             <Skeleton className="h-32 w-full" />

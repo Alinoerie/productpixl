@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { SiteHeader } from "@/components/marketing/site-header";
@@ -15,9 +16,19 @@ import { PricingComparison } from "@/components/pricing/pricing-comparison";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { isCheckoutEnabled } from "@/lib/checkout";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Credits & pricing — ProductPixl",
   description: "Pay per generation — no subscription. Compare vs Pixii and buy credit packs when you need more.",
+  openGraph: {
+    title: "Credits & pricing — ProductPixl",
+    description: "Pay per generation — no subscription. Compare vs Pixii and buy credit packs when you need more.",
+    url: "/pricing",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Credits & pricing — ProductPixl",
+    description: "Pay per generation — no subscription. Compare vs Pixii and buy credit packs when you need more.",
+  },
 };
 
 function PricingContent({

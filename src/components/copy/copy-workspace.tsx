@@ -79,6 +79,7 @@ export function CopyWorkspace({
   const previewUrlRef = useRef<string | null>(null);
   const completionRef = useRef<HTMLDivElement>(null);
   const awaitingCompletion = useRef(false);
+  const graderImportScrolled = useRef(false);
   const [showCompletionNudge, setShowCompletionNudge] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"regenerate" | "discard" | null>(null);
   const [linkedProductId, setLinkedProductId] = useState<string | null>(linkedProduct?.id ?? null);
@@ -152,6 +153,18 @@ export function CopyWorkspace({
     setFromGrader(true);
     toast("Loaded listing from grader — save to a project without using a credit");
   }, [toast]);
+
+  useEffect(() => {
+    if (!fromGrader || !copy?.title || productId || graderImportScrolled.current) return;
+    graderImportScrolled.current = true;
+    requestAnimationFrame(() => {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      completionRef.current?.scrollIntoView({
+        behavior: prefersReduced ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+  }, [fromGrader, copy?.title, productId]);
 
   useEffect(() => {
     if (!linkedProduct) return;
@@ -307,9 +320,13 @@ export function CopyWorkspace({
           } else if (awaitingCompletion.current) {
             awaitingCompletion.current = false;
             setShowCompletionNudge(true);
-            toast("Listing copy ready — review and save to your project");
+            toast("Listing copy complete");
             requestAnimationFrame(() => {
-              completionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+              completionRef.current?.scrollIntoView({
+                behavior: prefersReduced ? "auto" : "smooth",
+                block: "start",
+              });
             });
           }
         }
