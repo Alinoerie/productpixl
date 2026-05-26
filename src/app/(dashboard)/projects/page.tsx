@@ -145,17 +145,27 @@ export default async function ProjectsPage({
       ) : products.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-16 text-center">
-            <p className="font-serif text-xl">No matches</p>
+            <p className="font-serif text-xl">
+              {filters.status === "FAILED" ? "No failed projects" : "No matches"}
+            </p>
             <p className="mt-2 text-sm text-[var(--muted-fg)]">
-              Try clearing filters or search with a different product name.
+              {filters.status === "FAILED"
+                ? "All image runs completed successfully — or failures were retried already."
+                : "Try clearing filters or search with a different product name."}
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button asChild variant="outline">
                 <Link href="/projects">Clear filters</Link>
               </Button>
-              <Button asChild variant="outline">
-                <Link href="/generate">Open image studio</Link>
-              </Button>
+              {filters.status === "FAILED" ? (
+                <Button asChild>
+                  <Link href="/generate">Start new image run</Link>
+                </Button>
+              ) : (
+                <Button asChild variant="outline">
+                  <Link href="/generate">Open image studio</Link>
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

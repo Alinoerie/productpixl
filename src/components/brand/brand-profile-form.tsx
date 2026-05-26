@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast-provider";
 import { fetchJson } from "@/lib/fetch-json";
 import type { BrandProfileData } from "@/lib/brand-profile";
+import { UnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
+import { cn } from "@/lib/utils";
 
 export function BrandProfileForm() {
   const { toast } = useToast();
@@ -101,21 +103,12 @@ export function BrandProfileForm() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
-        if (isDirty) void save();
+        if (isDirty && !saving) void save();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isDirty, save]);
-
-  useEffect(() => {
-    if (!isDirty) return;
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [isDirty]);
+  }, [isDirty, saving, save]);
 
   if (loading) {
     return (
@@ -138,7 +131,8 @@ export function BrandProfileForm() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
+    <>
+      <div className={cn("grid gap-8 lg:grid-cols-2", isDirty && "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0")}>
       <Card className="shadow-[var(--shadow-md)]">
         <CardContent className="space-y-4 p-6">
           <p className="text-sm text-[var(--muted-fg)]">
@@ -238,7 +232,11 @@ export function BrandProfileForm() {
               placeholder="Always show EU energy label, never show hands, etc."
             />
           </div>
-          <Button onClick={save} className="w-full" disabled={!isDirty || saving}>
+          <Button
+            onClick={save}
+            className={cn("w-full", isDirty && "hidden md:inline-flex")}
+            disabled={!isDirty || saving}
+          >
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" /> Saving…
@@ -257,7 +255,9 @@ export function BrandProfileForm() {
             </Button>
           ) : null}
           {isDirty ? (
-            <p className="text-xs text-[var(--muted-fg)]">Unsaved changes — save or use ⌘/Ctrl+S.</p>
+            <p className="text-xs text-[var(--muted-fg)]">
+              Unsaved changes — save from the bar below on mobile, or use Save / ⌘/Ctrl+S on desktop.
+            </p>
           ) : null}
           {error ? (
             <p className="rounded-lg border border-[var(--error-border)] bg-[var(--error-bg)] px-3 py-2 text-sm text-[var(--error)]">{error}</p>
@@ -311,6 +311,30 @@ export function BrandProfileForm() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+
+      {isDirty ? (
+        <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
+          <Button className="w-full" disabled={saving} onClick={save}>
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" /> Save brand profile
+              </>
+            )}
+          </Button>
+        </div>
+      ) : null}
+
+      <UnsavedNavigationGuard
+        enabled={isDirty}
+        onSave={save}
+        title="Unsaved brand profile"
+        description="Save your brand colors and tone before leaving, or discard changes to continue."
+      />
+    </>
   );
 }

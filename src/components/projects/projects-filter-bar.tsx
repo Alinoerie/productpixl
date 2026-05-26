@@ -10,6 +10,7 @@ const STATUS_OPTIONS = [
   { value: "", label: "All statuses" },
   { value: "COMPLETE", label: "Complete" },
   { value: "PROCESSING", label: "Processing" },
+  { value: "QUEUED", label: "Queued" },
   { value: "FAILED", label: "Failed" },
 ] as const;
 

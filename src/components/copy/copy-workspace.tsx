@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Check, Save, Camera, RefreshCw } from "lucide-react";
+import { Loader2, Check, Save, Camera, RefreshCw, Copy, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -417,6 +417,11 @@ export function CopyWorkspace({
     }
   }, [productId, copy, toast]);
 
+  const copyField = async (label: string, text: string) => {
+    await navigator.clipboard.writeText(text);
+    toast(`${label} copied`);
+  };
+
   const startOver = () => {
     if (isDirty) {
       setConfirmAction("discard");
@@ -742,19 +747,77 @@ export function CopyWorkspace({
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="text-base">Title</CardTitle>
-              <CharCounter value={copy.title} max={AMAZON_TITLE_MAX} />
+              <div className="flex items-center gap-2">
+                <CharCounter value={copy.title} max={AMAZON_TITLE_MAX} />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={() => copyField("Title", copy.title ?? "")}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  <span className="sr-only">Copy title</span>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <Textarea value={copy.title} onChange={(e) => setCopy({ ...copy, title: e.target.value })} />
             </CardContent>
           </Card>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-[var(--muted-fg)]">Bullets</p>
+            {((copy.bullets as string[]) ?? []).length < 5 ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCopy({
+                    ...copy,
+                    bullets: [...((copy.bullets as string[]) ?? []), ""],
+                  })
+                }
+              >
+                <Plus className="h-4 w-4" />
+                Add bullet
+              </Button>
+            ) : null}
+          </div>
           {(copy.bullets as string[] | undefined)?.map((b, i) => {
             const bulletOver = b.length > AMAZON_BULLET_MAX;
             return (
-              <Card key={i}>
+              <Card key={`bullet-${i}`}>
                 <CardHeader className="flex flex-row items-center justify-between gap-2">
                   <CardTitle className="text-base">Bullet {i + 1}</CardTitle>
-                  <CharCounter value={b} max={AMAZON_BULLET_MAX} />
+                  <div className="flex items-center gap-1">
+                    <CharCounter value={b} max={AMAZON_BULLET_MAX} />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => copyField(`Bullet ${i + 1}`, b)}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      <span className="sr-only">Copy bullet {i + 1}</span>
+                    </Button>
+                    {((copy.bullets as string[]) ?? []).length > 1 ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-[var(--muted-fg)] hover:text-[var(--error)]"
+                        onClick={() => {
+                          const bullets = ((copy.bullets as string[]) ?? []).filter((_, idx) => idx !== i);
+                          setCopy({ ...copy, bullets });
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span className="sr-only">Remove bullet {i + 1}</span>
+                      </Button>
+                    ) : null}
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {bulletOver ? (
@@ -773,8 +836,20 @@ export function CopyWorkspace({
             );
           })}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="text-base">Description</CardTitle>
+              {copy.description ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={() => copyField("Description", copy.description ?? "")}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  <span className="sr-only">Copy description</span>
+                </Button>
+              ) : null}
             </CardHeader>
             <CardContent>
               <Textarea
@@ -785,8 +860,20 @@ export function CopyWorkspace({
             </CardContent>
           </Card>
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="text-base">Backend keywords</CardTitle>
+              {copy.backendKeywords ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={() => copyField("Keywords", copy.backendKeywords ?? "")}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  <span className="sr-only">Copy keywords</span>
+                </Button>
+              ) : null}
             </CardHeader>
             <CardContent>
               <Input

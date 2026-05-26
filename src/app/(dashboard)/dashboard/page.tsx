@@ -6,6 +6,7 @@ import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { BrandSetupNudge } from "@/components/ui/brand-setup-nudge";
 import { isBrandProfileConfigured } from "@/lib/brand-profile";
+import { cn } from "@/lib/utils";
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +15,7 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) return null;
 
-  const [products, totalProjects, user, activeRuns, exportReady, brandConfigured] = await Promise.all([
+  const [products, totalProjects, user, activeRuns, exportReady, failedCount, brandConfigured] = await Promise.all([
     prisma.product.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
@@ -36,10 +37,21 @@ export default async function DashboardPage() {
         assets: { some: { imageUrl: { not: null } } },
       },
     }),
+    prisma.product.count({ where: { userId: session.user.id, status: "FAILED" } }),
     isBrandProfileConfigured(session.user.id),
   ]);
 
   const credits = user?.credits ?? 0;
+  const failedOnlyPanel =
+    activeRuns.length > 0 && activeRuns.every((p) => p.status === "FAILED");
+  const heroStats = [
+    { label: "Credits", value: String(credits), href: "/pricing" as const },
+    { label: "Projects", value: String(totalProjects), href: "/projects" as const },
+    ...(failedCount > 0
+      ? [{ label: "Needs fix", value: String(failedCount), href: "/projects?status=FAILED" as const }]
+      : []),
+    { label: "Export-ready", value: String(exportReady), href: "/projects?ready=export" as const },
+  ];
 
   return (
     <div className="space-y-10">
@@ -70,24 +82,18 @@ export default async function DashboardPage() {
             </Button>
           </div>
         </div>
-        <div className="relative mt-8 grid grid-cols-3 gap-4 border-t border-white/10 pt-8">
-          {[
-            { label: "Credits", value: String(credits), href: "/pricing" as const },
-            { label: "Projects", value: String(totalProjects) },
-            { label: "Export-ready", value: String(exportReady), href: "/projects?ready=export" as const },
-          ].map((s) => (
+        <div
+          className={cn(
+            "relative mt-8 grid gap-4 border-t border-white/10 pt-8",
+            heroStats.length === 4 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-3"
+          )}
+        >
+          {heroStats.map((s) => (
             <div key={s.label}>
-              {"href" in s && s.href ? (
-                <Link href={s.href} className="group block rounded-lg transition-colors hover:bg-white/5">
-                  <p className="font-serif text-2xl group-hover:text-[var(--accent-soft)]">{s.value}</p>
-                  <p className="text-xs uppercase tracking-wide text-white/50">{s.label}</p>
-                </Link>
-              ) : (
-                <>
-                  <p className="font-serif text-2xl">{s.value}</p>
-                  <p className="text-xs uppercase tracking-wide text-white/50">{s.label}</p>
-                </>
-              )}
+              <Link href={s.href} className="group block rounded-lg transition-colors hover:bg-white/5">
+                <p className="font-serif text-2xl group-hover:text-[var(--accent-soft)]">{s.value}</p>
+                <p className="text-xs uppercase tracking-wide text-white/50">{s.label}</p>
+              </Link>
             </div>
           ))}
         </div>
@@ -144,10 +150,17 @@ export default async function DashboardPage() {
           </ul>
           {totalProjects > activeRuns.length ? (
             <Link
-              href="/projects"
+              href={failedOnlyPanel ? "/projects?status=FAILED" : "/projects"}
               className="mt-3 inline-block text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
             >
-              View all projects →
+              {failedOnlyPanel ? "View all failed projects →" : "View all projects →"}
+            </Link>
+          ) : failedCount > 0 ? (
+            <Link
+              href="/projects?status=FAILED"
+              className="mt-3 inline-block text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+            >
+              View all failed projects →
             </Link>
           ) : null}
         </div>
