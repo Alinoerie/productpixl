@@ -7,22 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { CharCounter, LimitWarning } from "@/components/ui/char-counter";
 import { useToast } from "@/components/ui/toast-provider";
-import {
-  AMAZON_BULLET_MAX,
-  AMAZON_TITLE_MAX,
-  charCountLabel,
-} from "@/lib/amazon-limits";
-import { cn } from "@/lib/utils";
-
-function CharCounter({ value, max }: { value: string; max: number }) {
-  const { over, label } = charCountLabel(value, max);
-  return (
-    <span className={cn("text-xs tabular-nums", over ? "font-medium text-red-600" : "text-[var(--muted-fg)]")}>
-      {label}
-    </span>
-  );
-}
+import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 
 export function ProductListingPanel({
   productId,
@@ -51,7 +38,7 @@ export function ProductListingPanel({
     keywords: initialKeywords ?? "",
   });
 
-  const titleCount = charCountLabel(title, AMAZON_TITLE_MAX);
+  const titleOver = title.length > AMAZON_TITLE_MAX;
 
   const isDirty = useMemo(() => {
     return (
@@ -113,6 +100,15 @@ export function ProductListingPanel({
     return () => window.removeEventListener("keydown", onKey);
   }, [isDirty, saving, save]);
 
+  useEffect(() => {
+    if (!isDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty]);
+
   return (
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -148,11 +144,11 @@ export function ProductListingPanel({
         </div>
       </div>
 
-      {titleCount.over && (
-        <p className="mb-4 rounded-lg border border-[var(--warning-border)] bg-[var(--warning-bg)] px-3 py-2 text-sm text-[var(--warning)]">
-          Title is over Amazon&apos;s {AMAZON_TITLE_MAX}-character limit.
-        </p>
-      )}
+      {titleOver ? (
+        <div className="mb-4">
+          <LimitWarning message={`Title is over Amazon's ${AMAZON_TITLE_MAX}-character limit.`} />
+        </div>
+      ) : null}
 
       <div className="space-y-4">
         <Card>
@@ -174,7 +170,7 @@ export function ProductListingPanel({
         </Card>
 
         {bullets.map((b, i) => {
-          const bulletCount = charCountLabel(b, AMAZON_BULLET_MAX);
+          const bulletOver = b.length > AMAZON_BULLET_MAX;
           return (
             <Card key={`bullet-${i}`}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
@@ -182,9 +178,9 @@ export function ProductListingPanel({
                 <CharCounter value={b} max={AMAZON_BULLET_MAX} />
               </CardHeader>
               <CardContent>
-                {bulletCount.over && (
-                  <p className="mb-2 text-xs text-amber-700">Over {AMAZON_BULLET_MAX} characters</p>
-                )}
+                {bulletOver ? (
+                  <LimitWarning message={`Over ${AMAZON_BULLET_MAX} characters — trim before publishing.`} />
+                ) : null}
                 <Label htmlFor={`listing-bullet-${i}`} className="sr-only">
                   Bullet {i + 1}
                 </Label>
@@ -236,11 +232,11 @@ export function ProductListingPanel({
         </Card>
       </div>
 
-      {isDirty && (
+      {isDirty ? (
         <p className="mt-4 text-xs text-[var(--muted-fg)]">
           Unsaved edits — press Save or use ⌘/Ctrl+S.
         </p>
-      )}
+      ) : null}
     </section>
   );
 }

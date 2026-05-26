@@ -98,14 +98,14 @@ export function AssetSpotEdit({
         className="mt-2 min-h-[72px] text-sm"
       />
       {error === "INSUFFICIENT_CREDITS" ? (
-        <p className="mt-2 text-xs text-red-600">
+        <p className="mt-2 text-xs text-[var(--error)]">
           Need 1 credit.{" "}
           <Link href="/pricing" className="font-medium underline">
             Buy credits
           </Link>
         </p>
       ) : error ? (
-        <p className="mt-2 text-xs text-red-600">{error}</p>
+        <p className="mt-2 text-xs text-[var(--error)]">{error}</p>
       ) : null}
       <Button
         size="sm"

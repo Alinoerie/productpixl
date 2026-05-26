@@ -22,6 +22,7 @@ import { useToast } from "@/components/ui/toast-provider";
 import { ProductImageGallery } from "@/components/products/product-image-gallery";
 import { Camera, Check, Download, Loader2, Sparkles } from "lucide-react";
 import { type MarketplaceId } from "@/lib/marketplaces";
+import { getMarketplace } from "@/lib/marketplaces";
 
 interface ProductData {
   name: string;
@@ -315,6 +316,8 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
   };
 
   const PHASES = ["RECEIVING", "ANALYZING", "RESEARCHING", "SELECTING", "GENERATING", "QA", "COMPLETE"];
+  const marketplaceLabel = getMarketplace(marketplace).label;
+  const categoryLabel = `${marketplaceLabel} category`;
 
   return (
     <div className="space-y-8">
@@ -410,11 +413,23 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
             <p className="md:col-span-2 text-sm text-[var(--muted-fg)]">
               Review AI-extracted product data. Edit anything before generation — this feeds your PHOILA prompts.
             </p>
+            <div className="md:col-span-2">
+              <Label className="mb-2 block">Marketplace</Label>
+              <MarketplacePicker
+                value={marketplace}
+                onChange={(id) => {
+                  setMarketplace(id);
+                  setPromptPlan([]);
+                }}
+                noteField="imageNote"
+                name="generate-marketplace-step1"
+              />
+            </div>
             {(
               [
                 ["name", "Product name"],
                 ["brandName", "Brand name"],
-                ["category", "Amazon category"],
+                ["category", categoryLabel],
                 ["dimensions", "Dimensions"],
                 ["materials", "Materials"],
                 ["colors", "Colors"],
@@ -466,18 +481,9 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
       {step === 2 && (
         <Card className="shadow-[var(--shadow-md)]">
           <CardContent className="space-y-6 p-6 md:p-8">
-            <div>
-              <Label className="mb-2 block">Marketplace</Label>
-              <MarketplacePicker
-                value={marketplace}
-                onChange={(id) => {
-                  setMarketplace(id);
-                  setPromptPlan([]);
-                }}
-                noteField="imageNote"
-                name="generate-marketplace"
-              />
-            </div>
+            <p className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 px-3 py-2 text-sm">
+              Marketplace: <strong>{marketplaceLabel}</strong> — change on the product info step if needed.
+            </p>
             <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/40 p-4">
               <label className="flex cursor-pointer items-start gap-3">
                 <input

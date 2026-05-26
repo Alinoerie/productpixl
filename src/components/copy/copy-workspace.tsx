@@ -22,6 +22,17 @@ import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft } from "@/lib/copy-draft";
 import { type MarketplaceId } from "@/lib/marketplaces";
 
+type LinkedProduct = {
+  id: string;
+  name: string;
+  inputImageUrl: string;
+  marketplace: MarketplaceId;
+  materials?: string | null;
+  keyFeatures?: string | null;
+  targetBuyer?: string | null;
+  amazonCategory?: string | null;
+};
+
 const COPY_STEPS = ["Details", "Generate", "Edit copy"];
 
 const FIELD_LABELS: Record<string, string> = {
@@ -32,10 +43,18 @@ const FIELD_LABELS: Record<string, string> = {
   targetBuyer: "Target buyer",
 };
 
-export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
+export function CopyWorkspace({
+  initialCredits,
+  linkedProduct = null,
+}: {
+  initialCredits: number;
+  linkedProduct?: LinkedProduct | null;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const previewUrlRef = useRef<string | null>(null);
+  const [linkedProductId, setLinkedProductId] = useState<string | null>(linkedProduct?.id ?? null);
+  const [fromGrader, setFromGrader] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
   const [preview, setPreview] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -78,6 +97,8 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
     setImageUrl("");
     setCopy(null);
     setProductId(null);
+    setLinkedProductId(null);
+    setFromGrader(false);
     setSavedBaseline(null);
     setError("");
     setLoading(false);
@@ -100,8 +121,27 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
       status: "COMPLETE",
     });
     setSavedBaseline(baseline);
-    toast("Loaded listing from grader — edit and save to a project");
+    setFromGrader(true);
+    toast("Loaded listing from grader — save to a project without using a credit");
   }, [toast]);
+
+  useEffect(() => {
+    if (!linkedProduct) return;
+    setLinkedProductId(linkedProduct.id);
+    setMarketplace(linkedProduct.marketplace);
+    setForm({
+      name: linkedProduct.name,
+      brandName: "",
+      category: linkedProduct.amazonCategory ?? "",
+      materials: linkedProduct.materials ?? "",
+      keyFeatures: linkedProduct.keyFeatures ?? "",
+      targetBuyer: linkedProduct.targetBuyer ?? "",
+    });
+    if (linkedProduct.inputImageUrl) {
+      setImageUrl(linkedProduct.inputImageUrl);
+      setPreview(linkedProduct.inputImageUrl);
+    }
+  }, [linkedProduct]);
 
   const upload = async (file: File) => {
     setUploading(true);
@@ -166,7 +206,12 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
       const res = await fetch("/api/generate/copy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inputImageUrl: imageUrl, marketplace, productData: form }),
+        body: JSON.stringify({
+          productId: linkedProductId ?? undefined,
+          inputImageUrl: imageUrl,
+          marketplace,
+          productData: form,
+        }),
       });
       const data = await res.json();
       if (res.status === 402) throw new Error("INSUFFICIENT_CREDITS");
@@ -237,6 +282,40 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
       (copy.backendKeywords ?? "") !== savedBaseline.backendKeywords
     );
   }, [copy, savedBaseline]);
+
+  const saveDraftToProject = useCallback(async () => {
+    if (!copy?.title) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/products/listing-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name.trim() || copy.title.slice(0, 80),
+          title: copy.title,
+          bullets: copy.bullets ?? [],
+          description: copy.description,
+          backendKeywords: copy.backendKeywords,
+          marketplace,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Save failed");
+      setProductId(data.productId);
+      setFromGrader(false);
+      setSavedBaseline({
+        title: copy.title,
+        bullets: (copy.bullets as string[]) ?? [],
+        description: copy.description ?? "",
+        backendKeywords: copy.backendKeywords ?? "",
+      });
+      toast("Saved to new project");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Could not save project", "error");
+    } finally {
+      setSaving(false);
+    }
+  }, [copy, form.name, marketplace, toast]);
 
   const saveCopy = useCallback(async () => {
     if (!productId || !copy?.title) return;
@@ -318,6 +397,18 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
       />
 
       <StudioStepper steps={COPY_STEPS} currentStep={copyStep} label="Copy pipeline progress" />
+
+      {linkedProduct ? (
+        <div className="rounded-xl border border-[var(--teal)]/30 bg-[var(--teal-soft)]/40 px-4 py-3 text-sm">
+          Generating copy for <strong>{linkedProduct.name}</strong> — saves to your existing project.
+        </div>
+      ) : null}
+
+      {fromGrader && copy?.title && !productId ? (
+        <div className="rounded-xl border border-[var(--accent)]/20 bg-[var(--accent-soft)]/30 px-4 py-3 text-sm text-[var(--foreground)]">
+          Imported from grader — save this listing to a project without spending a credit.
+        </div>
+      ) : null}
 
       {error === "INSUFFICIENT_CREDITS" ? (
         <AlertBanner
@@ -478,6 +569,19 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
             </CardContent>
           </Card>
           <div className="flex flex-wrap gap-3">
+            {!productId && copy?.title ? (
+              <Button size="sm" disabled={saving} onClick={saveDraftToProject}>
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" /> Save to new project
+                  </>
+                )}
+              </Button>
+            ) : null}
             {productId ? (
               <Button size="sm" disabled={!isDirty || saving} onClick={saveCopy}>
                 {saving ? (

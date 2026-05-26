@@ -7,13 +7,29 @@ import { Button } from "@/components/ui/button";
 export function CheckoutButton({
   packageKey,
   label,
+  checkoutEnabled = true,
 }: {
   packageKey: "starter" | "growth";
   label: string;
+  checkoutEnabled?: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
+
+  if (!checkoutEnabled) {
+    return (
+      <div className="space-y-2">
+        <Button className="w-full" disabled>
+          Billing not configured
+        </Button>
+        <p className="text-xs text-[var(--muted-fg)]">
+          Use your free signup credits to test the full pipeline. Stripe checkout activates when billing is
+          enabled.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">
@@ -49,7 +65,7 @@ export function CheckoutButton({
       >
         {loading ? "Redirecting…" : label}
       </Button>
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
+      {error ? <p className="text-xs text-[var(--error)]">{error}</p> : null}
     </div>
   );
 }

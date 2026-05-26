@@ -4,6 +4,7 @@ import { authConfig } from "@/lib/auth.config";
 
 const protectedPrefixes = [
   "/dashboard",
+  "/projects",
   "/generate",
   "/copy",
   "/products",

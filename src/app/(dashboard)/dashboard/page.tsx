@@ -92,13 +92,16 @@ export default async function DashboardPage() {
       <div>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-serif text-2xl">Recent projects</h2>
-          {totalProjects > 0 && (
-            <span className="text-sm text-[var(--muted-fg)]">
-              {totalProjects > products.length
-                ? `Showing latest ${products.length} of ${totalProjects}`
-                : `${totalProjects} saved`}
-            </span>
-          )}
+          {totalProjects > products.length ? (
+            <Link
+              href="/projects"
+              className="text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+            >
+              View all {totalProjects} projects →
+            </Link>
+          ) : totalProjects > 0 ? (
+            <span className="text-sm text-[var(--muted-fg)]">{totalProjects} saved</span>
+          ) : null}
         </div>
 
         {products.length === 0 ? (

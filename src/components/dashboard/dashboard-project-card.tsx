@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPipelinePhase, formatProductStatus, statusBadgeClass } from "@/lib/status-labels";
@@ -59,8 +60,8 @@ export function DashboardProjectCard({
   const thumbs = initialThumbs;
 
   return (
-    <Link href={`/products/${id}`} className="group block">
-      <Card className="overflow-hidden transition-all hover:border-[var(--accent)]/40 hover:shadow-[var(--shadow-md)]">
+    <Card className="overflow-hidden transition-all hover:border-[var(--accent)]/40 hover:shadow-[var(--shadow-md)]">
+      <Link href={`/products/${id}`} className="group block">
         <div className="relative aspect-[4/3] bg-[var(--muted)]">
           {thumbs.length > 1 ? (
             <div className="grid h-full grid-cols-2 grid-rows-2 gap-0.5 p-0.5">
@@ -102,17 +103,21 @@ export function DashboardProjectCard({
             </span>
           ) : null}
         </div>
-        <CardContent className="p-4">
-          <p className="font-semibold leading-snug group-hover:text-[var(--accent)]">{name}</p>
+      </Link>
+      <CardContent className="p-4">
+        <Link href={`/products/${id}`} className="group/title block">
+          <p className="font-semibold leading-snug group-hover/title:text-[var(--accent)]">{name}</p>
           <p className="mt-1 text-xs text-[var(--muted-fg)]">
             {new Date(createdAt).toLocaleDateString()}
             {hasCopy ? " · Copy ready" : ""}
           </p>
-          {status === "FAILED" ? (
-            <p className="mt-2 text-xs font-medium text-[var(--error)]">Retry in Image studio →</p>
-          ) : null}
-        </CardContent>
-      </Card>
-    </Link>
+        </Link>
+        {status === "FAILED" ? (
+          <Button asChild size="sm" variant="outline" className="mt-3 w-full">
+            <Link href="/generate">Retry in Image studio</Link>
+          </Button>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

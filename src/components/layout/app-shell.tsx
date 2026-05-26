@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { User } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { CreditBadge } from "@/components/layout/credit-badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,12 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <CreditBadge initialCredits={credits} />
-            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+            <Button asChild variant="ghost" size="sm" className="h-9 w-9 p-0 md:hidden" aria-label="Account">
+              <Link href="/account">
+                <User className="h-5 w-5" strokeWidth={1.5} />
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
               <Link href="/account">Account</Link>
             </Button>
           </div>

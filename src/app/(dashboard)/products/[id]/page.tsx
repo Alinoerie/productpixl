@@ -142,7 +142,7 @@ export default async function ProductPage({
               </p>
             </div>
             <Button asChild>
-              <Link href="/copy">Generate copy</Link>
+              <Link href={`/copy?productId=${product.id}`}>Generate copy</Link>
             </Button>
           </CardContent>
         </Card>

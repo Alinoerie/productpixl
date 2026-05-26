@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,7 +70,7 @@ export function BrandProfileForm() {
     }
   };
 
-  const save = async () => {
+  const save = useCallback(async () => {
     setError("");
     const { ok, data } = await fetchJson<{ error?: string }>("/api/brand-profile", {
       method: "PUT",
@@ -87,7 +87,27 @@ export function BrandProfileForm() {
       setError(msg);
       toast(msg, "error");
     }
-  };
+  }, [profile, toast]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        if (isDirty) void save();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isDirty, save]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty]);
 
   if (loading) {
     return (
@@ -209,7 +229,7 @@ export function BrandProfileForm() {
             {saved ? "Saved ✓" : isDirty ? "Save brand profile" : "No changes to save"}
           </Button>
           {isDirty ? (
-            <p className="text-xs text-[var(--muted-fg)]">Unsaved changes — save before leaving this page.</p>
+            <p className="text-xs text-[var(--muted-fg)]">Unsaved changes — save or use ⌘/Ctrl+S.</p>
           ) : null}
           {error ? (
             <p className="rounded-lg border border-[var(--error-border)] bg-[var(--error-bg)] px-3 py-2 text-sm text-[var(--error)]">{error}</p>

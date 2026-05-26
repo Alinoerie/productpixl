@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { CheckoutButton } from "@/components/pricing/checkout-button";
 import { CreditCalculator } from "@/components/pricing/credit-calculator";
+import { isCheckoutEnabled } from "@/lib/checkout";
 
 const packs = [
   {
@@ -31,6 +32,7 @@ export default async function PricingPage({
   searchParams: Promise<{ canceled?: string }>;
 }) {
   const params = await searchParams;
+  const checkoutEnabled = isCheckoutEnabled();
 
   return (
     <div className="space-y-12">
@@ -86,7 +88,7 @@ export default async function PricingPage({
                   Image pipeline or copy per credit
                 </li>
               </ul>
-              <CheckoutButton packageKey={p.key} label={`Buy ${p.name}`} />
+              <CheckoutButton packageKey={p.key} label={`Buy ${p.name}`} checkoutEnabled={checkoutEnabled} />
             </CardContent>
           </Card>
         ))}
@@ -118,8 +120,9 @@ export default async function PricingPage({
           ))}
         </div>
         <p className="mt-6 text-sm text-[var(--muted-fg)]">
-          Stripe checkout is available when billing is enabled. Until then, use your 10 free signup credits to
-          test the full pipeline.
+          {checkoutEnabled
+            ? "Secure checkout via Stripe. Credits are added instantly after payment."
+            : "Stripe checkout is available when billing is enabled. Until then, use your 10 free signup credits to test the full pipeline."}
         </p>
       </div>
     </div>
