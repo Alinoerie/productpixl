@@ -2,9 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { analyzeProductImage, scoreImageQuality } from "@/lib/ai";
 import { uploadBufferToCloudinary } from "@/lib/cloudinary";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
+import { intakeFromProduct } from "@/lib/credit-pricing";
 import { getModulesForRun, type ListingModuleId } from "@/pipelines/modules";
 import { buildListingPrompt } from "@/pipelines/prompt-builder";
-import { generateListingImage } from "@/pipelines/image-gen";
+import { FIDELITY_RETRY_PREFIX, generateListingImage } from "@/pipelines/image-gen";
 import type { ResearchSummary } from "@/pipelines/prompt-builder";
 import type { ProductAnalysis } from "@/lib/ai";
 
@@ -19,7 +20,19 @@ export async function regenerateAsset(params: {
   });
   if (!product) throw new Error("Product not found");
 
-  const analysis = (product.analysisJson as ProductAnalysis | null) ?? (await analyzeProductImage(product.inputImageUrl));
+  const brandProfile = await getBrandProfileForUser(params.userId);
+  const intake = intakeFromProduct(product);
+  intake.brandName = brandProfile.displayName || intake.brandName;
+
+  let analysis = product.analysisJson as ProductAnalysis | null;
+  if (!analysis?.productName || analysis._sourceImageUrl !== product.inputImageUrl) {
+    analysis = await analyzeProductImage(product.inputImageUrl);
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { analysisJson: analysis as object },
+    });
+  }
+
   const research = (product.researchJson as ResearchSummary | null) ?? {
     categoryThemes: [],
     positioningGaps: [],
@@ -27,21 +40,8 @@ export async function regenerateAsset(params: {
     antiPatterns: [],
   };
 
-  const brandProfile = await getBrandProfileForUser(params.userId);
   const mod = getModulesForRun(true).find((m) => m.id === params.moduleId);
   if (!mod) throw new Error("Invalid module");
-
-  const intake = {
-    name: product.name,
-    brandName: analysis.brandName ?? product.name,
-    category: product.amazonCategory ?? "General",
-    dimensions: product.dimensions ?? undefined,
-    materials: product.materials ?? undefined,
-    colors: product.colors ?? undefined,
-    keyFeatures: product.keyFeatures ?? undefined,
-    targetBuyer: product.targetBuyer ?? undefined,
-    competitors: product.competitors ?? undefined,
-  };
 
   const prompt = buildListingPrompt(mod.id, analysis, intake, research, {
     brandProfile,
@@ -49,17 +49,34 @@ export async function regenerateAsset(params: {
     spotEditHint: params.spotEditHint,
   });
 
-  const buffer = await generateListingImage(
+  const extraRefs = intake.referenceImageUrls ?? [];
+  let buffer = await generateListingImage(
     product.inputImageUrl,
     prompt,
     mod.id,
-    mod.resolution
+    mod.resolution,
+    { referenceImageUrls: extraRefs, allowFallback: mod.id !== "L1" }
   );
-  const imageUrl = await uploadBufferToCloudinary(
+  let imageUrl = await uploadBufferToCloudinary(
     buffer,
     `productpixl/${params.userId}/${params.productId}`
   );
-  const qaScore = await scoreImageQuality(imageUrl, mod.id);
+  let qaScore = await scoreImageQuality(imageUrl, mod.id, product.inputImageUrl);
+
+  if (qaScore < 7) {
+    buffer = await generateListingImage(
+      product.inputImageUrl,
+      `${FIDELITY_RETRY_PREFIX}${prompt}`,
+      mod.id,
+      mod.resolution,
+      { referenceImageUrls: extraRefs, allowFallback: false }
+    );
+    imageUrl = await uploadBufferToCloudinary(
+      buffer,
+      `productpixl/${params.userId}/${params.productId}`
+    );
+    qaScore = await scoreImageQuality(imageUrl, mod.id, product.inputImageUrl);
+  }
 
   const asset = await prisma.asset.upsert({
     where: { id: `${params.productId}-${mod.id}` },
@@ -78,7 +95,7 @@ export async function regenerateAsset(params: {
       status: qaScore >= 7 ? "COMPLETE" : "FAILED",
       qaScore,
       retryCount: { increment: 1 },
-      errorMessage: null,
+      errorMessage: qaScore >= 7 ? null : "Quality check below threshold after retry",
     },
   });
 

@@ -64,6 +64,14 @@ pnpm inngest:dev
 - [`docs/image-pipelines/`](docs/image-pipelines/)
 - [`docs/text-pipelines/amazon-listing-copy.md`](docs/text-pipelines/amazon-listing-copy.md)
 
+## Production launch checklist
+
+1. **Inngest (required for generate/copy)** — [Install on Vercel Marketplace](https://vercel.com/marketplace/inngest) → connect **productpixl** → accept terms → redeploy. Verify with `pnpm test:e2e-ready` (Inngest line must pass).
+2. **Google OAuth** — Redirect URI: `https://productpixl.vercel.app/api/auth/callback/google`. `AUTH_URL=https://productpixl.vercel.app` on Vercel.
+3. **Env vars on Vercel** — `DATABASE_URL`, `DIRECT_URL`, `AUTH_*`, `REPLICATE_API_TOKEN`, `CLOUDINARY_*`, `TAVILY_API_KEY`, plus auto-injected `INNGEST_*` after integration.
+4. **Test account** — `npx tsx scripts/set-user-credits.ts your@email.com 9999999` for unlimited test runs.
+5. **Product fidelity** — Original upload is always first in `image_input`; QA compares generated vs reference; auto-retry on low fidelity score.
+
 ## End-to-end testing (your account)
 
 **Production:** https://productpixl.vercel.app — sign in with Google as `alinoerie@gmail.com` (or your own account).

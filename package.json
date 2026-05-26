@@ -12,6 +12,7 @@
     "test:api": "bash -c 'set -a && . ./.env.local && set +a && SMOKE_BASE_URL=http://localhost:3002 pnpm dlx tsx scripts/api-smoke-test.ts'",
     "test:e2e-ready": "bash -c 'set -a && . ./.env.local && set +a && npx tsx scripts/e2e-readiness.ts'",
     "reset:stuck": "bash -c 'set -a && . ./.env.local && set +a && npx tsx scripts/reset-stuck-products.ts'",
+    "dev:fresh": "bash scripts/dev-fresh.sh",
     "postinstall": "prisma generate"
   },
   "dependencies": {

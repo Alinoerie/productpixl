@@ -289,6 +289,11 @@ export function CopyWorkspace({
       });
       const data = await res.json();
       if (res.status === 402) throw new Error("INSUFFICIENT_CREDITS");
+      if (res.status === 503 && data.code === "INNGEST_NOT_CONFIGURED") {
+        throw new Error(
+          "Background jobs are not connected yet. Install Inngest from the Vercel Marketplace for productpixl, then redeploy."
+        );
+      }
       if (!res.ok) throw new Error(data.error);
       setProductId(data.productId);
       window.dispatchEvent(new Event("credits-updated"));
@@ -344,7 +349,7 @@ export function CopyWorkspace({
             });
           }
         }
-      } else if (attempts > 90) {
+      } else if (attempts > 180) {
         setLoading(false);
         setError("Copy generation timed out. Check Inngest is running.");
       }

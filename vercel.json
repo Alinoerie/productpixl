@@ -2,6 +2,15 @@
   "functions": {
     "src/app/api/inngest/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/generate/images/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/generate/copy/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/analyze/route.ts": {
+      "maxDuration": 120
     }
   }
 }

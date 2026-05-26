@@ -17,6 +17,8 @@ export interface ProductAnalysis {
   suggestedTargetBuyer: string;
   useCase: string;
   differentiators: string;
+  /** Set when analysis was run — used to skip stale vision results. */
+  _sourceImageUrl?: string;
 }
 
 const ANALYSIS_PROMPT = `Analyze this product image for Amazon/Bol marketplace listing generation.
@@ -37,12 +39,17 @@ Return ONLY valid JSON with these fields:
   "differentiators": "what makes this product visually distinct vs generic alternatives"
 }`;
 
-async function runGeminiVision(prompt: string, imageUrl: string, maxTokens: number): Promise<string> {
+async function runGeminiVision(
+  prompt: string,
+  imageUrls: string | string[],
+  maxTokens: number
+): Promise<string> {
+  const urls = Array.isArray(imageUrls) ? imageUrls : [imageUrls];
   const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
   const inputAttempts: Record<string, unknown>[] = [
-    { prompt, images: [imageUrl], max_tokens: maxTokens },
-    { prompt, image_input: [imageUrl], max_tokens: maxTokens },
-    { prompt, image: imageUrl, max_tokens: maxTokens },
+    { prompt, images: urls, max_tokens: maxTokens },
+    { prompt, image_input: urls, max_tokens: maxTokens },
+    ...(urls.length === 1 ? [{ prompt, image: urls[0], max_tokens: maxTokens }] : []),
   ];
 
   let lastError: unknown;
@@ -100,7 +107,8 @@ export async function analyzeProductImage(imageUrl: string): Promise<ProductAnal
 
   const raw = await runGeminiVision(ANALYSIS_PROMPT, imageUrl, 1200);
   const parsed = parseJsonFromModel<Partial<ProductAnalysis>>(raw);
-  return normalizeAnalysis(parsed);
+  const analysis = normalizeAnalysis(parsed);
+  return { ...analysis, _sourceImageUrl: imageUrl };
 }
 
 export async function generateBrandStory(profile: BrandProfileData): Promise<string> {
@@ -137,17 +145,25 @@ Return ONLY the brand story paragraph(s). No JSON, no headings. Focus on: who th
   return extractReplicateText(output).trim();
 }
 
-export async function scoreImageQuality(imageUrl: string, moduleId: string): Promise<number> {
+export async function scoreImageQuality(
+  imageUrl: string,
+  moduleId: string,
+  referenceImageUrl?: string
+): Promise<number> {
   if (isStubMode()) {
     await sleep(400);
     return 8;
   }
 
-  const raw = await runGeminiVision(
-    `Rate this Amazon listing module ${moduleId} image 1-10 for product fidelity, technical quality, and conversion appeal. Return ONLY one integer.`,
-    imageUrl,
-    10
-  );
+  const prompt = referenceImageUrl
+    ? `Compare the GENERATED Amazon listing image (image 1) to the ORIGINAL product photo (image 2) for module ${moduleId}.
+Score 1-10 for product fidelity: same product, label text, colors, shape, and branding must match the reference.
+Penalize product replacement, label drift, or wrong colors. Also consider technical quality and conversion appeal.
+Return ONLY one integer.`
+    : `Rate this Amazon listing module ${moduleId} image 1-10 for product fidelity, technical quality, and conversion appeal. Return ONLY one integer.`;
+
+  const images = referenceImageUrl ? [imageUrl, referenceImageUrl] : [imageUrl];
+  const raw = await runGeminiVision(prompt, images, 10);
 
   const score = parseInt(raw.trim(), 10);
   return Number.isFinite(score) ? Math.min(10, Math.max(1, score)) : 7;

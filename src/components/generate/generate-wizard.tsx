@@ -290,9 +290,11 @@ export function GenerateWizard({
     }
     setError("");
     try {
-      const { ok, status, data } = await fetchJson<{ productId?: string; error?: string }>(
-        "/api/generate/images",
-        {
+      const { ok, status, data } = await fetchJson<{
+        productId?: string;
+        error?: string;
+        code?: string;
+      }>("/api/generate/images", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -308,6 +310,11 @@ export function GenerateWizard({
       );
       if (status === 402) {
         throw new Error("INSUFFICIENT_CREDITS");
+      }
+      if (status === 503 && data.code === "INNGEST_NOT_CONFIGURED") {
+        throw new Error(
+          "Background jobs are not connected yet. Install Inngest from the Vercel Marketplace for productpixl, then redeploy."
+        );
       }
       if (!ok) throw new Error(data.error || "Failed to start");
       setProductId(data.productId ?? linkedProductId ?? null);
@@ -350,7 +357,7 @@ export function GenerateWizard({
     const check = async () => {
       if (stopped) return;
       attempts += 1;
-      if (attempts > 90) {
+      if (attempts > 240) {
         stopped = true;
         setPollTimedOut(true);
         setError("Generation timed out. Open your project page or retry your prompt plan.");
@@ -721,6 +728,22 @@ export function GenerateWizard({
       {step === 2 && (
         <Card className="shadow-[var(--shadow-md)]">
           <CardContent className="space-y-6 p-6 md:p-8">
+            {imageUrl ? (
+              <div className="flex items-start gap-4 rounded-xl border border-[var(--border)] bg-[var(--muted)]/30 p-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imageUrl}
+                  alt="Original product reference"
+                  className="h-24 w-24 shrink-0 rounded-lg border border-[var(--border)] bg-white object-contain"
+                />
+                <div>
+                  <p className="font-medium">Original product photo</p>
+                  <p className="mt-1 text-sm text-[var(--muted-fg)]">
+                    Every gallery module is generated from this reference — the product stays intact; prompts only change scene, lighting, and context.
+                  </p>
+                </div>
+              </div>
+            ) : null}
             <p className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 px-3 py-2 text-sm">
               Marketplace: <strong>{marketplaceLabel}</strong> — change on the product info step if needed.
             </p>

@@ -70,6 +70,8 @@ The product in the reference image is a ${intake.brandName || analysis.brandName
 — Label text reads EXACTLY: '${analysis.labelText}'
 — Physical dimensions: ${intake.dimensions || analysis.dimensions || "as shown in reference"}
 — Scale anchor: ${scaleAnchor}
+${analysis.keyObservations?.trim() ? `— Vision fidelity notes: ${analysis.keyObservations.trim()}` : ""}
+The attached reference image(s) show the exact product — preserve it pixel-for-pixel except where scene instructions allow background or context changes only.
 Do NOT change, regenerate, blur, distort, recolor, restyle, or alter product elements.
 The product must remain IDENTICAL to reference fidelity.`;
 
