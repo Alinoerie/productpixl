@@ -26,6 +26,7 @@ import { useLiveCredits } from "@/hooks/use-live-credits";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { cn } from "@/lib/utils";
 import { type MarketplaceId, getMarketplace } from "@/lib/marketplaces";
+import { UnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
 
 type LinkedProduct = {
   id: string;
@@ -436,22 +437,18 @@ export function CopyWorkspace({
   }, [isDirty, saving, productId, saveCopy]);
 
   useEffect(() => {
-    if (!isDirty) return;
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [isDirty]);
-
-  useEffect(() => {
     return () => {
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
     };
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div
+      className={cn(
+        "space-y-8",
+        copy?.title && productId && isDirty && "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0"
+      )}
+    >
       <WorkflowNotice
         initialCredits={credits}
         description="RUFUS-ready title, bullets, description, and backend keywords."
@@ -813,7 +810,12 @@ export function CopyWorkspace({
               </Button>
             ) : null}
             {productId ? (
-              <Button size="sm" disabled={!isDirty || saving} onClick={saveCopy}>
+              <Button
+                size="sm"
+                disabled={!isDirty || saving}
+                onClick={saveCopy}
+                className={isDirty ? "hidden md:inline-flex" : undefined}
+              >
                 {saving ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" /> Saving…
@@ -897,10 +899,35 @@ export function CopyWorkspace({
             </Button>
           </div>
           {isDirty ? (
-            <p className="text-xs text-[var(--muted-fg)]">Unsaved edits — save to project or use ⌘/Ctrl+S.</p>
+            <p className="text-xs text-[var(--muted-fg)]">
+              Unsaved edits — save from the bar below on mobile, or use Save / ⌘/Ctrl+S on desktop.
+            </p>
           ) : null}
         </div>
       )}
+
+      {copy?.title && productId && isDirty ? (
+        <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
+          <Button className="w-full" size="sm" disabled={saving} onClick={saveCopy}>
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" /> Save to project
+              </>
+            )}
+          </Button>
+        </div>
+      ) : null}
+
+      <UnsavedNavigationGuard
+        enabled={Boolean(isDirty && productId)}
+        onSave={saveCopy}
+        title="Unsaved listing edits"
+        description="Save your copy changes before leaving Copy studio, or discard them to continue."
+      />
     </div>
   );
 }

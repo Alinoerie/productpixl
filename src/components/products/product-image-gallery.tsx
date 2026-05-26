@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, X, ZoomIn } from "lucide-react";
 import { formatModuleLabel } from "@/lib/status-labels";
 import { AssetSpotEdit } from "@/components/products/asset-spot-edit";
+import { AssetModuleRetry } from "@/components/products/asset-module-retry";
+import { cn } from "@/lib/utils";
 
 type GalleryAsset = {
   id: string;
@@ -27,8 +29,18 @@ export function ProductImageGallery({
 }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
+  const [filter, setFilter] = useState<"all" | "complete" | "failed">("all");
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  const failedCount = assets.filter((a) => a.status === "FAILED").length;
+  const completeCount = assets.filter((a) => a.status === "COMPLETE" && a.imageUrl).length;
+  const filteredAssets =
+    filter === "complete"
+      ? assets.filter((a) => a.status === "COMPLETE" && a.imageUrl)
+      : filter === "failed"
+        ? assets.filter((a) => a.status === "FAILED")
+        : assets;
 
   const viewableAssets = assets.filter((a) => a.imageUrl);
   const lightbox = lightboxIndex != null ? viewableAssets[lightboxIndex] ?? null : null;
@@ -127,12 +139,48 @@ export function ProductImageGallery({
   return (
     <>
       <section>
-        <h2 className="mb-4 font-serif text-xl">Gallery images</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-serif text-xl">Gallery images</h2>
+          {assets.length > 1 && (failedCount > 0 || completeCount > 0) ? (
+            <div className="flex gap-1 rounded-full border border-[var(--border)] bg-[var(--card)] p-1">
+              {(
+                [
+                  { id: "all" as const, label: `All (${assets.length})` },
+                  ...(completeCount > 0
+                    ? [{ id: "complete" as const, label: `Ready (${completeCount})` }]
+                    : []),
+                  ...(failedCount > 0
+                    ? [{ id: "failed" as const, label: `Failed (${failedCount})` }]
+                    : []),
+                ] as const
+              ).map((chip) => (
+                <button
+                  key={chip.id}
+                  type="button"
+                  onClick={() => setFilter(chip.id)}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    filter === chip.id
+                      ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                      : "text-[var(--muted-fg)] hover:text-[var(--foreground)]"
+                  )}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {assets.map((a) => (
+          {filteredAssets.map((a) => (
             <article
               key={a.id}
-              className="group overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]"
+              className={cn(
+                "group overflow-hidden rounded-2xl border bg-[var(--card)] shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]",
+                a.status === "FAILED"
+                  ? "border-[var(--error-border)]"
+                  : "border-[var(--border)]"
+              )}
             >
               <div className="relative aspect-square bg-[var(--muted)]">
                 {a.imageUrl ? (
@@ -152,6 +200,11 @@ export function ProductImageGallery({
                       <ZoomIn className="h-4 w-4" />
                     </span>
                   </button>
+                ) : a.status === "FAILED" ? (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
+                    <span className="text-sm font-medium text-[var(--error)]">Generation failed</span>
+                    <span className="text-xs text-[var(--muted-fg)]">Retry below or spot-edit after success</span>
+                  </div>
                 ) : (
                   <div className="flex h-full items-center justify-center text-sm text-[var(--muted-fg)]">
                     <span className="animate-pulse-soft">Generating…</span>
@@ -172,10 +225,18 @@ export function ProductImageGallery({
                 {a.status === "COMPLETE" && a.imageUrl && !readOnly ? (
                   <AssetSpotEdit productId={productId} assetId={a.id} moduleId={a.moduleId} />
                 ) : null}
+                {a.status === "FAILED" && !readOnly ? (
+                  <AssetModuleRetry productId={productId} assetId={a.id} moduleId={a.moduleId} />
+                ) : null}
               </div>
             </article>
           ))}
         </div>
+        {filteredAssets.length === 0 ? (
+          <p className="mt-4 text-center text-sm text-[var(--muted-fg)]">
+            No {filter === "failed" ? "failed" : filter === "complete" ? "completed" : ""} modules in this view.
+          </p>
+        ) : null}
       </section>
 
       {lightbox?.imageUrl ? (

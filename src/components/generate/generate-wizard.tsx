@@ -28,6 +28,7 @@ import { Camera, Check, Download, Loader2, Sparkles } from "lucide-react";
 import { type MarketplaceId } from "@/lib/marketplaces";
 import { getMarketplace } from "@/lib/marketplaces";
 import { downloadGalleryZip } from "@/lib/download-gallery-zip";
+import { UnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
 
 interface ProductData {
   name: string;
@@ -377,6 +378,14 @@ export function GenerateWizard({
   }, [step]);
 
   const done = pipelineStatus?.phase === "COMPLETE";
+  const pipelineRunning =
+    step === 3 &&
+    Boolean(pipelineStatus?.phase) &&
+    pipelineStatus?.phase !== "COMPLETE" &&
+    pipelineStatus?.phase !== "FAILED" &&
+    !pipelineFailed;
+  const formInProgress = step >= 1 && step <= 2;
+  const navigationBlocked = uploading || analyzing || planningPrompts || formInProgress || pipelineRunning;
   const lacksCredits = credits < 1;
   const resultsLoading = step === 3 && !pipelineStatus?.steps?.length && !pipelineFailed;
   const galleryAssets =
@@ -973,6 +982,16 @@ export function GenerateWizard({
           )}
         </div>
       )}
+
+      <UnsavedNavigationGuard
+        enabled={navigationBlocked}
+        title={pipelineRunning ? "Generation in progress" : "Leave image studio?"}
+        description={
+          pipelineRunning
+            ? "Your gallery is still generating. You can leave safely — check the project page for results."
+            : "You have progress in this run. Leaving now will discard unsaved steps."
+        }
+      />
     </div>
   );
 }
