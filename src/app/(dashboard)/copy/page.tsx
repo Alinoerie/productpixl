@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CopyWorkspace } from "@/components/copy/copy-workspace";
+import { isBrandProfileConfigured } from "@/lib/brand-profile";
 import { type MarketplaceId } from "@/lib/marketplaces";
 
 export default async function CopyPage({
@@ -10,6 +11,10 @@ export default async function CopyPage({
 }) {
   const session = await auth();
   const params = await searchParams;
+
+  const brandConfigured = session?.user?.id
+    ? await isBrandProfileConfigured(session.user.id)
+    : true;
 
   let linkedProduct = null;
   if (params.productId && session?.user?.id) {
@@ -47,6 +52,7 @@ export default async function CopyPage({
       initialCredits={session?.user?.credits ?? 0}
       linkedProduct={linkedProduct}
       missingProductId={missingProductId}
+      brandConfigured={brandConfigured}
     />
   );
 }

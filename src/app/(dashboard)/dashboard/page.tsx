@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 import { QuickActions } from "@/components/dashboard/quick-actions";
+import { BrandSetupNudge } from "@/components/ui/brand-setup-nudge";
+import { isBrandProfileConfigured } from "@/lib/brand-profile";
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +14,7 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) return null;
 
-  const [products, totalProjects, user, activeRuns] = await Promise.all([
+  const [products, totalProjects, user, activeRuns, brandConfigured] = await Promise.all([
     prisma.product.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
@@ -27,6 +29,7 @@ export default async function DashboardPage() {
       take: 3,
       select: { id: true, name: true, status: true },
     }),
+    isBrandProfileConfigured(session.user.id),
   ]);
 
   const credits = user?.credits ?? 0;
@@ -92,6 +95,8 @@ export default async function DashboardPage() {
           </Link>
         </div>
       )}
+
+      <BrandSetupNudge configured={brandConfigured} />
 
       <QuickActions credits={credits} />
 
@@ -190,6 +195,7 @@ export default async function DashboardPage() {
                   status={p.status}
                   createdAt={p.createdAt}
                   hasCopy={Boolean(p.listingCopy?.title)}
+                  hasImages={thumbs.length > 0}
                   thumbs={thumbs}
                 />
               );

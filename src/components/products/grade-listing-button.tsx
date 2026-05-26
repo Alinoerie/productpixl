@@ -6,12 +6,14 @@ import { saveCopyDraft, type CopyDraft } from "@/lib/copy-draft";
 
 export function GradeListingButton({
   listingCopy,
+  productId,
   variant = "outline",
   size = "sm" as const,
   className,
   children = "Grade listing",
 }: {
   listingCopy: CopyDraft;
+  productId?: string;
   variant?: "default" | "outline" | "ghost" | "secondary";
   size?: "sm" | "default" | "lg";
   className?: string;
@@ -26,7 +28,10 @@ export function GradeListingButton({
       size={size}
       className={className}
       onClick={() => {
-        saveCopyDraft(listingCopy);
+        saveCopyDraft({
+          ...listingCopy,
+          productId: productId ?? listingCopy.productId,
+        });
         router.push("/grader");
       }}
     >

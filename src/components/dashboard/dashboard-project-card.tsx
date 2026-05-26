@@ -17,6 +17,7 @@ export function DashboardProjectCard({
   status: initialStatus,
   createdAt,
   hasCopy,
+  hasImages = false,
   thumbs: initialThumbs,
 }: {
   id: string;
@@ -24,6 +25,7 @@ export function DashboardProjectCard({
   status: string;
   createdAt: Date;
   hasCopy: boolean;
+  hasImages?: boolean;
   thumbs: Thumb[];
 }) {
   const router = useRouter();
@@ -115,6 +117,14 @@ export function DashboardProjectCard({
         {status === "FAILED" ? (
           <Button asChild size="sm" variant="outline" className="mt-3 w-full">
             <Link href={`/generate?productId=${id}`}>Retry in Image studio</Link>
+          </Button>
+        ) : status === "COMPLETE" && hasImages && !hasCopy ? (
+          <Button asChild size="sm" className="mt-3 w-full">
+            <Link href={`/copy?productId=${id}`}>Generate copy</Link>
+          </Button>
+        ) : status === "COMPLETE" && hasCopy && !hasImages ? (
+          <Button asChild size="sm" variant="outline" className="mt-3 w-full">
+            <Link href={`/generate?productId=${id}`}>Generate images</Link>
           </Button>
         ) : null}
       </CardContent>

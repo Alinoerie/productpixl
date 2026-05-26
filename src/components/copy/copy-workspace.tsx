@@ -18,6 +18,7 @@ import { StudioStepper } from "@/components/ui/studio-stepper";
 import { fetchJson } from "@/lib/fetch-json";
 import { CharCounter, LimitWarning } from "@/components/ui/char-counter";
 import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-alert";
+import { BrandSetupNudge } from "@/components/ui/brand-setup-nudge";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft } from "@/lib/copy-draft";
@@ -54,10 +55,12 @@ export function CopyWorkspace({
   initialCredits,
   linkedProduct = null,
   missingProductId = false,
+  brandConfigured = true,
 }: {
   initialCredits: number;
   linkedProduct?: LinkedProduct | null;
   missingProductId?: boolean;
+  brandConfigured?: boolean;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -413,6 +416,8 @@ export function CopyWorkspace({
         description="RUFUS-ready title, bullets, description, and backend keywords."
       />
 
+      <BrandSetupNudge configured={brandConfigured} />
+
       <PageHeader
         eyebrow="Copy pipeline"
         title="Listing copy"
@@ -637,7 +642,7 @@ export function CopyWorkspace({
               />
             </CardContent>
           </Card>
-          <div className="flex flex-wrap gap-3">
+          <div className="sticky bottom-0 z-10 -mx-0 flex flex-wrap gap-3 border-t border-[var(--border)] bg-[var(--background)]/95 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-sm md:static md:border-0 md:bg-transparent md:p-0 md:pb-0 md:backdrop-blur-none">
             {!productId && copy?.title ? (
               <Button size="sm" disabled={saving} onClick={saveDraftToProject}>
                 {saving ? (
@@ -712,7 +717,9 @@ export function CopyWorkspace({
                   bullets: (copy.bullets as string[]) ?? [],
                   description: copy.description,
                   backendKeywords: copy.backendKeywords,
+                  productId: productId ?? undefined,
                 }}
+                productId={productId ?? undefined}
                 variant="outline"
               >
                 Grade this copy

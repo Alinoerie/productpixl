@@ -44,6 +44,8 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
   const [error, setError] = useState("");
   const [tipsCopied, setTipsCopied] = useState(false);
   const [fromProject, setFromProject] = useState(false);
+  const [draftProductId, setDraftProductId] = useState<string | null>(null);
+  const scoreSummaryRef = useRef<HTMLDivElement>(null);
 
   const loadSample = () => {
     setTitle(SAMPLE.title);
@@ -72,6 +74,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
       if (!ok) throw new Error((data as { error?: string }).error || "Failed");
       setResult(data as GraderResult);
       requestAnimationFrame(() => {
+        scoreSummaryRef.current?.focus();
         resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     } catch (e) {
@@ -89,6 +92,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
     setBullets([loaded[0] ?? "", loaded[1] ?? "", loaded[2] ?? "", loaded[3] ?? "", loaded[4] ?? ""]);
     setDescription(draft.description ?? "");
     setKeywords(draft.backendKeywords ?? "");
+    setDraftProductId(draft.productId ?? null);
     setFromProject(true);
     setResult(null);
     setError("");
@@ -128,9 +132,12 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
       bullets: bullets.filter((b) => b.trim()),
       description,
       backendKeywords: keywords,
+      productId: draftProductId ?? undefined,
     });
-    router.push("/copy");
+    router.push(draftProductId ? `/copy?productId=${draftProductId}` : "/copy");
   };
+
+  const generateHref = draftProductId ? `/generate?productId=${draftProductId}` : "/generate";
 
   const gradeClass = result ? `grade-${result.grade.toLowerCase()}` : "";
 
@@ -232,10 +239,17 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
               <CardContent className="flex items-center gap-6 p-6">
                 <div
                   className={`flex h-20 w-20 items-center justify-center rounded-2xl font-serif text-4xl font-bold ${gradeClass}`}
+                  aria-hidden="true"
                 >
                   {result.grade}
                 </div>
-                <div>
+                <div
+                  ref={scoreSummaryRef}
+                  tabIndex={-1}
+                  className="outline-none"
+                  role="status"
+                  aria-label={`Listing grade ${result.grade}, score ${result.score} out of 100`}
+                >
                   <p className="text-3xl font-semibold">{result.score}/100</p>
                   <p className="mt-1 text-[var(--muted-fg)]">{result.summary}</p>
                 </div>
@@ -293,7 +307,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
                     Open in Copy studio
                   </Button>
                   <Button asChild variant="outline" className="flex-1">
-                    <Link href="/generate">Generate gallery</Link>
+                    <Link href={generateHref}>Generate gallery</Link>
                   </Button>
                 </>
               ) : (

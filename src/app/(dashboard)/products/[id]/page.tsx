@@ -11,6 +11,7 @@ import { ProductDeleteButton } from "@/components/products/product-delete-button
 import { ProductExportActions } from "@/components/products/product-export-actions";
 import { ProductListingPanel } from "@/components/products/product-listing-panel";
 import { ProductReadiness } from "@/components/products/product-readiness";
+import { ProductMobileActions } from "@/components/products/product-mobile-actions";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { getMarketplace } from "@/lib/marketplaces";
 import {
@@ -46,7 +47,7 @@ export default async function ProductPage({
   }));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-28 md:pb-0">
       <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-[var(--muted-fg)]">
         <Link href="/dashboard" className="hover:text-[var(--foreground)]">
           Studio
@@ -82,11 +83,13 @@ export default async function ProductPage({
           ) : null}
           {product.listingCopy?.title ? (
             <GradeListingButton
+              productId={product.id}
               listingCopy={{
                 title: product.listingCopy.title,
                 bullets,
                 description: product.listingCopy.description ?? undefined,
                 backendKeywords: product.listingCopy.backendKeywords ?? undefined,
+                productId: product.id,
               }}
             />
           ) : null}
@@ -196,6 +199,23 @@ export default async function ProductPage({
       <div className="border-t border-[var(--border)] pt-6">
         <ProductDeleteButton productId={product.id} productName={product.name} />
       </div>
+
+      <ProductMobileActions
+        productId={product.id}
+        hasImages={completedAssets.length > 0}
+        hasCopy={Boolean(product.listingCopy?.title)}
+        status={product.status}
+        listingCopy={
+          product.listingCopy?.title
+            ? {
+                title: product.listingCopy.title,
+                bullets,
+                description: product.listingCopy.description,
+                backendKeywords: product.listingCopy.backendKeywords,
+              }
+            : null
+        }
+      />
     </div>
   );
 }

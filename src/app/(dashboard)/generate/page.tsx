@@ -1,15 +1,20 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { GenerateWizard } from "@/components/generate/generate-wizard";
+import { isBrandProfileConfigured } from "@/lib/brand-profile";
 import { type MarketplaceId } from "@/lib/marketplaces";
 
 export default async function GeneratePage({
   searchParams,
 }: {
-  searchParams: Promise<{ productId?: string }>;
+  searchParams: Promise<{ productId?: string; success?: string }>;
 }) {
   const session = await auth();
   const params = await searchParams;
+
+  const brandConfigured = session?.user?.id
+    ? await isBrandProfileConfigured(session.user.id)
+    : true;
 
   let linkedProduct = null;
   if (params.productId && session?.user?.id) {
@@ -39,6 +44,8 @@ export default async function GeneratePage({
       initialCredits={session?.user?.credits ?? 0}
       linkedProduct={linkedProduct}
       missingProductId={missingProductId}
+      brandConfigured={brandConfigured}
+      paymentSuccess={params.success === "true"}
     />
   );
 }

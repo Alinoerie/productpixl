@@ -109,11 +109,13 @@ export function ProductExportActions({
           ) : null}
           {listingCopy?.title ? (
             <GradeListingButton
+              productId={productId}
               listingCopy={{
                 title: listingCopy.title,
                 bullets: listingCopy.bullets ?? [],
                 description: listingCopy.description ?? undefined,
                 backendKeywords: listingCopy.backendKeywords ?? undefined,
+                productId,
               }}
               size="sm"
             />

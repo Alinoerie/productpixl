@@ -49,7 +49,7 @@ export async function createCheckoutSession(
       package: packageKey,
       credits: String(pkg.credits),
     },
-    success_url: `${baseUrl}/account?success=true`,
+    success_url: `${baseUrl}/generate?success=true`,
     cancel_url: `${baseUrl}/pricing?canceled=true`,
   });
 }

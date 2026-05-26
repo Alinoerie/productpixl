@@ -5,6 +5,7 @@ export type CopyDraft = {
   bullets: string[];
   description?: string;
   backendKeywords?: string;
+  productId?: string;
 };
 
 export function saveCopyDraft(draft: CopyDraft) {

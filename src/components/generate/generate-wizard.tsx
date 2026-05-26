@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-alert";
+import { BrandSetupNudge } from "@/components/ui/brand-setup-nudge";
+import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
 import { MarketplacePicker } from "@/components/ui/marketplace-picker";
 import { StudioStepper } from "@/components/ui/studio-stepper";
@@ -71,10 +73,14 @@ export function GenerateWizard({
   initialCredits,
   linkedProduct = null,
   missingProductId = false,
+  brandConfigured = true,
+  paymentSuccess = false,
 }: {
   initialCredits: number;
   linkedProduct?: LinkedProduct | null;
   missingProductId?: boolean;
+  brandConfigured?: boolean;
+  paymentSuccess?: boolean;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -398,8 +404,12 @@ export function GenerateWizard({
     <div className="space-y-8">
       <WorkflowNotice
         initialCredits={initialCredits}
-        description="Review prompts before any image is generated — PHOILA listing pipeline."
+        description="PHOILA image pipeline — review prompts before any image is generated."
       />
+
+      {paymentSuccess ? <PaymentSuccessBanner /> : null}
+
+      <BrandSetupNudge configured={brandConfigured} />
 
       <PageHeader
         eyebrow="PHOILA pipeline"

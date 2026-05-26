@@ -40,3 +40,11 @@ export function brandContextBlock(profile: BrandProfileData): string {
 ${profile.guidelines ? `— Guidelines: ${profile.guidelines}` : ""}
 Keep all visuals and implied styling consistent with this brand.`;
 }
+
+export async function isBrandProfileConfigured(userId: string): Promise<boolean> {
+  const row = await prisma.brandProfile.findUnique({
+    where: { userId },
+    select: { id: true, displayName: true },
+  });
+  return Boolean(row?.displayName?.trim());
+}

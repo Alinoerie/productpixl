@@ -2,25 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Camera, CreditCard, FileText, LayoutGrid, Palette, User } from "lucide-react";
+import { Camera, ClipboardCheck, CreditCard, FileText, FolderOpen, LayoutGrid, Palette, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/dashboard", label: "Studio", icon: LayoutGrid },
+  { href: "/projects", label: "Projects", icon: FolderOpen },
   { href: "/generate", label: "Images", icon: Camera },
   { href: "/copy", label: "Copy", icon: FileText },
+  { href: "/grader", label: "Grader", icon: ClipboardCheck },
   { href: "/brand", label: "Brand", icon: Palette },
   { href: "/pricing", label: "Credits", icon: CreditCard },
   { href: "/account", label: "Account", icon: User },
 ];
 
-const mobileNav = nav.filter((item) => item.href !== "/account");
+const mobileNav = nav.filter((item) =>
+  ["/dashboard", "/projects", "/generate", "/copy", "/grader"].includes(item.href)
+);
 
 function isActive(pathname: string, href: string) {
   return (
     pathname === href ||
-    (href === "/dashboard" && (pathname.startsWith("/products") || pathname.startsWith("/projects"))) ||
-    (href !== "/dashboard" && pathname.startsWith(href))
+    (href === "/dashboard" && pathname.startsWith("/products")) ||
+    (href === "/projects" && pathname.startsWith("/projects")) ||
+    (href !== "/dashboard" && href !== "/projects" && pathname.startsWith(href))
   );
 }
 
@@ -28,14 +33,17 @@ export function AppShellNav({ className }: { className?: string }) {
   const pathname = usePathname();
 
   return (
-    <nav className={cn("flex items-center gap-1", className)} aria-label="Studio navigation">
+    <nav
+      className={cn("flex max-w-[min(100%,42rem)] items-center gap-1 overflow-x-auto scrollbar-none", className)}
+      aria-label="Studio navigation"
+    >
       {nav.map((item) => (
         <Link
           key={item.href}
           href={item.href}
           aria-current={isActive(pathname, item.href) ? "page" : undefined}
           className={cn(
-            "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+            "shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
             isActive(pathname, item.href)
               ? "bg-[var(--accent-soft)] text-[var(--accent)]"
               : "text-[var(--muted-fg)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"

@@ -95,11 +95,13 @@ export function ProductReadiness({
             return (
               <li key={step.key}>
                 <GradeListingButton
+                  productId={productId}
                   listingCopy={{
                     title: listingCopy.title,
                     bullets: listingCopy.bullets,
                     description: listingCopy.description ?? undefined,
                     backendKeywords: listingCopy.backendKeywords ?? undefined,
+                    productId,
                   }}
                   variant="outline"
                   size="sm"
