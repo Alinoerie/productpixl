@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Copy, Download } from "lucide-react";
+import { useToast } from "@/components/ui/toast-provider";
 
 type CopyPayload = {
   title?: string | null;
@@ -22,12 +23,14 @@ export function ProductExportActions({
   assets: { moduleId: string; imageUrl: string | null }[];
   listingCopy: CopyPayload | null;
 }) {
+  const { toast } = useToast();
   const [copied, setCopied] = useState<string | null>(null);
   const completedImages = assets.filter((a) => a.imageUrl);
 
   const copyText = async (label: string, text: string) => {
     await navigator.clipboard.writeText(text);
     setCopied(label);
+    toast("Copied to clipboard");
     setTimeout(() => setCopied(null), 2000);
   };
 
@@ -56,6 +59,7 @@ export function ProductExportActions({
       a.rel = "noreferrer";
       a.click();
     });
+    toast(`Downloading ${completedImages.length} image${completedImages.length === 1 ? "" : "s"}`);
   };
 
   return (

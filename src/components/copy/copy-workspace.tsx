@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertBanner } from "@/components/ui/alert-banner";
+import { useToast } from "@/components/ui/toast-provider";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
@@ -41,6 +42,7 @@ function CharCounter({ value, max }: { value: string; max: number }) {
 
 export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [imageUrl, setImageUrl] = useState("");
   const [preview, setPreview] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -363,6 +365,7 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
                   ].join("\n")
                 );
                 setCopiedAll(true);
+                toast("Listing copy copied to clipboard");
                 setTimeout(() => setCopiedAll(false), 2000);
               }}
             >

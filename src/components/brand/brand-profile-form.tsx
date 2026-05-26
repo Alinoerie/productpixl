@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/toast-provider";
 import { fetchJson } from "@/lib/fetch-json";
 import type { BrandProfileData } from "@/lib/brand-profile";
 
 export function BrandProfileForm() {
+  const { toast } = useToast();
   const [profile, setProfile] = useState<BrandProfileData>({
     displayName: "",
     primaryColor: "#B45309",
@@ -52,6 +54,7 @@ export function BrandProfileForm() {
       });
       if (!ok) throw new Error(data.error || "Upload failed");
       setProfile((p) => ({ ...p, logoUrl: data.url ?? "" }));
+      toast("Logo uploaded");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Logo upload failed");
     } finally {
@@ -68,9 +71,12 @@ export function BrandProfileForm() {
     });
     if (ok) {
       setSaved(true);
+      toast("Brand profile saved");
       setTimeout(() => setSaved(false), 2500);
     } else {
-      setError(data.error || "Could not save brand profile. Try again.");
+      const msg = data.error || "Could not save brand profile. Try again.";
+      setError(msg);
+      toast(msg, "error");
     }
   };
 

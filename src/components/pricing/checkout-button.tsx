@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/ui/toast-provider";
 import { Button } from "@/components/ui/button";
 
 export function CheckoutButton({
@@ -12,6 +13,7 @@ export function CheckoutButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { toast } = useToast();
 
   return (
     <div className="space-y-2">
@@ -37,7 +39,9 @@ export function CheckoutButton({
             }
             throw new Error("Stripe checkout is not configured yet.");
           } catch (e) {
-            setError(e instanceof Error ? e.message : "Checkout failed");
+            const msg = e instanceof Error ? e.message : "Checkout failed";
+            setError(msg);
+            toast(msg, "error");
           } finally {
             setLoading(false);
           }

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/toast-provider";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatModuleLabel } from "@/lib/status-labels";
 
@@ -20,6 +21,7 @@ export function AssetSpotEdit({
   moduleId: string;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [hint, setHint] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,6 +46,7 @@ export function AssetSpotEdit({
       router.refresh();
       setHint("");
       setOpen(false);
+      toast("Image updated — spot edit complete");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed";
       setError(msg === "INSUFFICIENT_CREDITS" ? "INSUFFICIENT_CREDITS" : msg);

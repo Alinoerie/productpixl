@@ -1,25 +1,60 @@
 "use client";
 
-import { useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Check, Copy, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AMAZON_TITLE_MAX, charCountLabel } from "@/lib/amazon-limits";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/toast-provider";
+import {
+  AMAZON_BULLET_MAX,
+  AMAZON_TITLE_MAX,
+  charCountLabel,
+} from "@/lib/amazon-limits";
 import { cn } from "@/lib/utils";
 
+function CharCounter({ value, max }: { value: string; max: number }) {
+  const { over, label } = charCountLabel(value, max);
+  return (
+    <span className={cn("text-xs tabular-nums", over ? "font-medium text-red-600" : "text-[var(--muted-fg)]")}>
+      {label}
+    </span>
+  );
+}
+
 export function ProductListingPanel({
-  title,
-  bullets,
-  description,
-  keywords,
+  productId,
+  title: initialTitle,
+  bullets: initialBullets,
+  description: initialDescription,
+  keywords: initialKeywords,
 }: {
+  productId: string;
   title: string;
   bullets: string[];
   description?: string | null;
   keywords?: string | null;
 }) {
+  const { toast } = useToast();
+  const [title, setTitle] = useState(initialTitle);
+  const [bullets, setBullets] = useState(initialBullets);
+  const [description, setDescription] = useState(initialDescription ?? "");
+  const [keywords, setKeywords] = useState(initialKeywords ?? "");
+  const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+
   const titleCount = charCountLabel(title, AMAZON_TITLE_MAX);
+
+  const isDirty = useMemo(() => {
+    return (
+      title !== initialTitle ||
+      JSON.stringify(bullets) !== JSON.stringify(initialBullets) ||
+      description !== (initialDescription ?? "") ||
+      keywords !== (initialKeywords ?? "")
+    );
+  }, [title, bullets, description, keywords, initialTitle, initialBullets, initialDescription, initialKeywords]);
 
   const copyAll = async () => {
     const text = [
@@ -27,69 +62,178 @@ export function ProductListingPanel({
       "",
       ...bullets.map((b, i) => `${i + 1}. ${b}`),
       "",
-      description ?? "",
+      description,
       "",
-      `Keywords: ${keywords ?? ""}`,
+      `Keywords: ${keywords}`,
     ].join("\n");
     await navigator.clipboard.writeText(text);
     setCopied(true);
+    toast("Listing copy copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const save = useCallback(async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/products/${productId}/listing-copy`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          bullets,
+          description: description || null,
+          backendKeywords: keywords || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Save failed");
+      toast("Listing copy saved");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Could not save copy", "error");
+    } finally {
+      setSaving(false);
+    }
+  }, [productId, title, bullets, description, keywords, toast]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        if (isDirty && !saving) save();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isDirty, saving, save]);
 
   return (
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-serif text-xl">Listing copy</h2>
-        <Button type="button" variant="outline" size="sm" onClick={copyAll}>
-          {copied ? (
-            <>
-              <Check className="h-4 w-4" /> Copied
-            </>
-          ) : (
-            <>
-              <Copy className="h-4 w-4" /> Copy all
-            </>
-          )}
-        </Button>
+        <div>
+          <h2 className="font-serif text-xl">Listing copy</h2>
+          <p className="mt-1 text-sm text-[var(--muted-fg)]">
+            Edit before export — changes save to this project.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={copyAll}>
+            {copied ? (
+              <>
+                <Check className="h-4 w-4" /> Copied
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4" /> Copy all
+              </>
+            )}
+          </Button>
+          <Button type="button" size="sm" disabled={!isDirty || saving} onClick={save}>
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" /> Save changes
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+
       {titleCount.over && (
         <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           Title is over Amazon&apos;s {AMAZON_TITLE_MAX}-character limit.
         </p>
       )}
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-2">
-          <CardTitle className="text-base leading-snug">{title}</CardTitle>
-          <span
-            className={cn(
-              "shrink-0 text-xs tabular-nums",
-              titleCount.over ? "font-medium text-red-600" : "text-[var(--muted-fg)]"
-            )}
-          >
-            {titleCount.label}
-          </span>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          <ul className="space-y-2">
-            {bullets.map((b, i) => (
-              <li key={`bullet-${i}-${b.slice(0, 12)}`} className="flex gap-2">
-                <span className="shrink-0 font-semibold text-[var(--accent)]">{i + 1}.</span>
-                <span>{b}</span>
-              </li>
-            ))}
-          </ul>
-          {description ? (
-            <p className="whitespace-pre-wrap border-t border-[var(--border)] pt-4 text-[var(--muted-fg)]">
-              {description}
-            </p>
-          ) : null}
-          {keywords ? (
-            <p className="rounded-lg bg-[var(--muted)]/50 px-3 py-2 text-xs">
-              <strong className="text-[var(--foreground)]">Backend keywords:</strong> {keywords}
-            </p>
-          ) : null}
-        </CardContent>
-      </Card>
+
+      <div className="space-y-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+            <CardTitle className="text-base">Title</CardTitle>
+            <CharCounter value={title} max={AMAZON_TITLE_MAX} />
+          </CardHeader>
+          <CardContent>
+            <Label htmlFor="listing-title" className="sr-only">
+              Listing title
+            </Label>
+            <Textarea
+              id="listing-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="min-h-[72px] font-medium"
+            />
+          </CardContent>
+        </Card>
+
+        {bullets.map((b, i) => {
+          const bulletCount = charCountLabel(b, AMAZON_BULLET_MAX);
+          return (
+            <Card key={`bullet-${i}`}>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+                <CardTitle className="text-base">Bullet {i + 1}</CardTitle>
+                <CharCounter value={b} max={AMAZON_BULLET_MAX} />
+              </CardHeader>
+              <CardContent>
+                {bulletCount.over && (
+                  <p className="mb-2 text-xs text-amber-700">Over {AMAZON_BULLET_MAX} characters</p>
+                )}
+                <Label htmlFor={`listing-bullet-${i}`} className="sr-only">
+                  Bullet {i + 1}
+                </Label>
+                <Textarea
+                  id={`listing-bullet-${i}`}
+                  value={b}
+                  onChange={(e) => {
+                    const next = [...bullets];
+                    next[i] = e.target.value;
+                    setBullets(next);
+                  }}
+                />
+              </CardContent>
+            </Card>
+          );
+        })}
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Description</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Label htmlFor="listing-description" className="sr-only">
+              Product description
+            </Label>
+            <Textarea
+              id="listing-description"
+              className="min-h-[160px]"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Backend keywords</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Label htmlFor="listing-keywords" className="sr-only">
+              Backend keywords
+            </Label>
+            <Input
+              id="listing-keywords"
+              value={keywords}
+              onChange={(e) => setKeywords(e.target.value)}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      {isDirty && (
+        <p className="mt-4 text-xs text-[var(--muted-fg)]">
+          Unsaved edits — press Save or use ⌘/Ctrl+S.
+        </p>
+      )}
     </section>
   );
 }

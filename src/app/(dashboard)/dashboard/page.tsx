@@ -4,10 +4,9 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 import { QuickActions } from "@/components/dashboard/quick-actions";
+import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { formatProductStatus, statusBadgeClass } from "@/lib/status-labels";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -129,55 +128,16 @@ export default async function DashboardPage() {
             {products.map((p) => {
               const thumbs = p.assets.filter((a) => a.imageUrl).slice(0, 4);
               return (
-              <Link key={p.id} href={`/products/${p.id}`} className="group">
-                <Card className="overflow-hidden transition-all hover:border-[var(--accent)]/40 hover:shadow-[var(--shadow-md)]">
-                  <div className="relative aspect-[4/3] bg-[var(--muted)]">
-                    {thumbs.length > 1 ? (
-                      <div className="grid h-full grid-cols-2 grid-rows-2 gap-0.5 p-0.5">
-                        {thumbs.map((a) => (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            key={a.id}
-                            src={a.imageUrl!}
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
-                        ))}
-                      </div>
-                    ) : thumbs.length === 1 ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={thumbs[0].imageUrl!}
-                        alt={`${p.name} preview`}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-[1.02]"
-                      />
-                    ) : (
-                      <div className="flex h-full flex-col items-center justify-center gap-2">
-                        <span className="animate-pulse-soft text-sm text-[var(--muted-fg)]">
-                          {formatProductStatus(p.status)}
-                        </span>
-                      </div>
-                    )}
-                    <Badge
-                      variant="secondary"
-                      className={`absolute left-3 top-3 backdrop-blur-sm ${statusBadgeClass(p.status)}`}
-                    >
-                      {formatProductStatus(p.status)}
-                    </Badge>
-                  </div>
-                  <CardContent className="p-4">
-                    <p className="font-semibold leading-snug group-hover:text-[var(--accent)]">
-                      {p.name}
-                    </p>
-                    <p className="mt-1 text-xs text-[var(--muted-fg)]">
-                      {p.assets.length > 0 ? `${p.assets.length} modules · ` : ""}
-                      {new Date(p.createdAt).toLocaleDateString()}
-                      {p.listingCopy ? " · Copy ready" : ""}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
+                <DashboardProjectCard
+                  key={p.id}
+                  id={p.id}
+                  name={p.name}
+                  status={p.status}
+                  createdAt={p.createdAt}
+                  hasCopy={Boolean(p.listingCopy?.title)}
+                  thumbs={thumbs}
+                />
+              );
             })}
           </div>
         )}

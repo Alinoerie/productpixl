@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
+import { StudioProviders } from "@/components/layout/studio-providers";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -14,5 +15,9 @@ export default async function DashboardLayout({
     redirect(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
   }
 
-  return <AppShell>{children}</AppShell>;
+  return (
+    <StudioProviders>
+      <AppShell>{children}</AppShell>
+    </StudioProviders>
+  );
 }

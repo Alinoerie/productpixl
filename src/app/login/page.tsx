@@ -44,7 +44,7 @@ export default async function LoginPage({
           <h2 className="font-serif text-4xl leading-tight">
             One photo.
             <br />
-            <span className="text-orange-300">Full listing studio.</span>
+            <span className="text-[var(--accent-soft)]">Full listing studio.</span>
           </h2>
           <ul className="mt-8 space-y-3 text-sm text-white/75">
             {[
@@ -54,7 +54,7 @@ export default async function LoginPage({
               "Photo in — no ASIN required",
             ].map((item) => (
               <li key={item} className="flex gap-2">
-                <Check className="h-4 w-4 shrink-0 text-orange-300" />
+                <Check className="h-4 w-4 shrink-0 text-[var(--accent-soft)]" />
                 {item}
               </li>
             ))}

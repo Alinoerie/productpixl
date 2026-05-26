@@ -119,6 +119,7 @@ export default async function ProductPage({
 
       {product.listingCopy?.title ? (
         <ProductListingPanel
+          productId={product.id}
           title={product.listingCopy.title}
           bullets={bullets}
           description={product.listingCopy.description}

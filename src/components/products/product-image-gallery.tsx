@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, ZoomIn } from "lucide-react";
 import { formatModuleLabel } from "@/lib/status-labels";
 import { AssetSpotEdit } from "@/components/products/asset-spot-edit";
@@ -24,6 +24,24 @@ export function ProductImageGallery({
   assets: GalleryAsset[];
 }) {
   const [lightbox, setLightbox] = useState<GalleryAsset | null>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!lightbox) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightbox(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [lightbox]);
 
   return (
     <>
@@ -88,6 +106,7 @@ export function ProductImageGallery({
           onClick={() => setLightbox(null)}
         >
           <button
+            ref={closeRef}
             type="button"
             className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
             onClick={() => setLightbox(null)}
