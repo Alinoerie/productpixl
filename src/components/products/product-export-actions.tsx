@@ -79,7 +79,7 @@ export function ProductExportActions({
   };
 
   return (
-    <Card className="border-[var(--border)] bg-[var(--muted)]/30">
+    <Card className="border-[var(--border)] bg-[var(--muted)]/30" id="export">
       <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
         <p className="text-sm font-medium">Export & review</p>
         <div className="flex flex-wrap gap-2">

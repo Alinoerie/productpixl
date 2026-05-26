@@ -14,7 +14,7 @@ import { CharCounter } from "@/components/ui/char-counter";
 import { useToast } from "@/components/ui/toast-provider";
 import { fetchJson } from "@/lib/fetch-json";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
-import { saveCopyDraft } from "@/lib/copy-draft";
+import { loadCopyDraft, saveCopyDraft } from "@/lib/copy-draft";
 import type { GraderResult } from "@/lib/listing-grader";
 
 const SAMPLE = {
@@ -43,6 +43,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
   const [result, setResult] = useState<GraderResult | null>(null);
   const [error, setError] = useState("");
   const [tipsCopied, setTipsCopied] = useState(false);
+  const [fromProject, setFromProject] = useState(false);
 
   const loadSample = () => {
     setTitle(SAMPLE.title);
@@ -79,6 +80,19 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
       setLoading(false);
     }
   }, [title, bullets, description, keywords]);
+
+  useEffect(() => {
+    const draft = loadCopyDraft();
+    if (!draft?.title) return;
+    setTitle(draft.title);
+    const loaded = draft.bullets ?? [];
+    setBullets([loaded[0] ?? "", loaded[1] ?? "", loaded[2] ?? "", loaded[3] ?? "", loaded[4] ?? ""]);
+    setDescription(draft.description ?? "");
+    setKeywords(draft.backendKeywords ?? "");
+    setFromProject(true);
+    setResult(null);
+    setError("");
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -122,6 +136,18 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
+      {fromProject ? (
+        <p className="lg:col-span-2 rounded-xl border border-[var(--teal)]/30 bg-[var(--teal-soft)]/40 px-4 py-3 text-sm">
+          Loaded listing from your project — edit fields and re-grade, or open in Copy studio to apply fixes.
+          <button
+            type="button"
+            className="ml-2 font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+            onClick={() => setFromProject(false)}
+          >
+            Dismiss
+          </button>
+        </p>
+      ) : null}
       <Card className="shadow-[var(--shadow-md)]">
         <CardContent className="space-y-4 p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">

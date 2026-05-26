@@ -67,7 +67,7 @@ export function DashboardProjectCard({
             <div className="grid h-full grid-cols-2 grid-rows-2 gap-0.5 p-0.5">
               {thumbs.map((a) => (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={a.id} src={a.imageUrl!} alt="" className="h-full w-full object-cover" />
+                <img key={a.id} src={a.imageUrl!} alt={`${name} gallery preview`} className="h-full w-full object-cover" />
               ))}
             </div>
           ) : thumbs.length === 1 ? (

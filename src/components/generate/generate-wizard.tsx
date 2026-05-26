@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
+import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-alert";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
 import { MarketplacePicker } from "@/components/ui/marketplace-picker";
 import { StudioStepper } from "@/components/ui/studio-stepper";
@@ -432,6 +433,8 @@ export function GenerateWizard({
         </div>
       ) : null}
 
+      {error === "INSUFFICIENT_CREDITS" ? <InsufficientCreditsAlert /> : null}
+
       {error && error !== "INSUFFICIENT_CREDITS" ? (
         <p className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">{error}</p>
       ) : null}
@@ -467,26 +470,28 @@ export function GenerateWizard({
               emptyHint="JPG, PNG or WEBP · max 20MB · No ASIN needed"
               inputId="generate-upload"
             />
-            <Button
-              onClick={analyze}
-              disabled={!imageUrl || uploading || analyzing}
-              className="h-12 w-full rounded-xl text-base"
-              size="lg"
-            >
-              {uploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Uploading…
-                </>
-              ) : analyzing ? (
-                <>
-                  <Sparkles className="h-4 w-4" /> Analyzing with vision AI…
-                </>
-              ) : (
-                <>
-                  <Camera className="h-4 w-4" /> Analyze & continue
-                </>
-              )}
-            </Button>
+            <div className="sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:static md:mx-0 md:mb-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+              <Button
+                onClick={analyze}
+                disabled={!imageUrl || uploading || analyzing}
+                className="h-12 w-full rounded-xl text-base"
+                size="lg"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Uploading…
+                  </>
+                ) : analyzing ? (
+                  <>
+                    <Sparkles className="h-4 w-4" /> Analyzing with vision AI…
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-4 w-4" /> Analyze & continue
+                  </>
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -544,11 +549,12 @@ export function GenerateWizard({
                 onChange={(e) => setField("targetBuyer", e.target.value)}
               />
             </div>
-            <div className="flex gap-3 md:col-span-2">
+            <div className="sticky bottom-0 z-10 -mx-6 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none md:col-span-2">
               <Button variant="outline" onClick={() => setStep(0)}>
                 Back
               </Button>
               <Button
+                className="flex-1"
                 onClick={() => {
                   setPromptPlan([]);
                   setStep(2);

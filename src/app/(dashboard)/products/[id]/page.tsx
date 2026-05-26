@@ -10,6 +10,7 @@ import { ProductLiveGallery } from "@/components/products/product-live-gallery";
 import { ProductDeleteButton } from "@/components/products/product-delete-button";
 import { ProductExportActions } from "@/components/products/product-export-actions";
 import { ProductListingPanel } from "@/components/products/product-listing-panel";
+import { ProductReadiness } from "@/components/products/product-readiness";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { getMarketplace } from "@/lib/marketplaces";
 import {
@@ -49,6 +50,10 @@ export default async function ProductPage({
       <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-[var(--muted-fg)]">
         <Link href="/dashboard" className="hover:text-[var(--foreground)]">
           Studio
+        </Link>
+        <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
+        <Link href="/projects" className="hover:text-[var(--foreground)]">
+          Projects
         </Link>
         <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
         <span className="truncate text-[var(--foreground)]">{product.name}</span>
@@ -109,6 +114,23 @@ export default async function ProductPage({
           or spot-edit individual modules below.
         </div>
       )}
+
+      <ProductReadiness
+        productId={product.id}
+        imageCount={completedAssets.length}
+        hasCopy={Boolean(product.listingCopy?.title)}
+        listingCopy={
+          product.listingCopy?.title
+            ? {
+                title: product.listingCopy.title,
+                bullets,
+                description: product.listingCopy.description,
+                backendKeywords: product.listingCopy.backendKeywords,
+              }
+            : null
+        }
+        status={product.status}
+      />
 
       <ProductExportActions
         productId={product.id}

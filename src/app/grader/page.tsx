@@ -4,6 +4,9 @@ import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { GraderTool } from "@/components/grader/grader-tool";
 import { ShowcaseSampleStrip } from "@/components/marketing/showcase-sample-strip";
+import { AppShell } from "@/components/layout/app-shell";
+import { StudioProviders } from "@/components/layout/studio-providers";
+import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
@@ -11,10 +14,43 @@ export const metadata = {
   description: "Score your listing A–F. RUFUS-ready tips. No login required.",
 };
 
+function GraderMarketingFooter({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: string }) {
+  return (
+    <div className="mt-16 rounded-2xl bg-[var(--ink)] p-8 text-center text-white md:p-12">
+      <h2 className="font-serif text-2xl">Copy is only half the listing</h2>
+      <p className="mx-auto mt-3 max-w-lg text-white/70">
+        ProductPixl generates gallery images + copy from one photo. No ASIN required.
+      </p>
+      <ShowcaseSampleStrip />
+      <Button asChild size="lg" className="mt-6">
+        <Link href={ctaHref}>{ctaLabel}</Link>
+      </Button>
+    </div>
+  );
+}
+
 export default async function GraderPage() {
   const session = await auth();
-  const ctaHref = session ? "/generate" : "/login";
-  const ctaLabel = session ? "Open image studio" : "Start free — 10 credits";
+  const signedIn = Boolean(session?.user?.id);
+  const ctaHref = signedIn ? "/generate" : "/login";
+  const ctaLabel = signedIn ? "Open image studio" : "Start free — 10 credits";
+
+  if (signedIn) {
+    return (
+      <StudioProviders>
+        <AppShell>
+          <div className="space-y-8">
+            <PageHeader
+              eyebrow="Free tool"
+              title="Amazon Listing Grader"
+              description="Score your copy A–F with RUFUS/COSMO tips — paste from any project or write fresh."
+            />
+            <GraderTool signedIn />
+          </div>
+        </AppShell>
+      </StudioProviders>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-hero-glow">
@@ -31,18 +67,9 @@ export default async function GraderPage() {
           </p>
         </div>
         <div className="mt-12">
-          <GraderTool signedIn={!!session} />
+          <GraderTool signedIn={false} />
         </div>
-        <div className="mt-16 rounded-2xl bg-[var(--ink)] p-8 text-center text-white md:p-12">
-          <h2 className="font-serif text-2xl">Copy is only half the listing</h2>
-          <p className="mx-auto mt-3 max-w-lg text-white/70">
-            ProductPixl generates gallery images + copy from one photo. No ASIN required.
-          </p>
-          <ShowcaseSampleStrip />
-          <Button asChild size="lg" className="mt-6">
-            <Link href={ctaHref}>{ctaLabel}</Link>
-          </Button>
-        </div>
+        <GraderMarketingFooter ctaHref={ctaHref} ctaLabel={ctaLabel} />
       </main>
       <SiteFooter />
     </div>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Check, Save } from "lucide-react";
+import { Loader2, Check, Save, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,8 @@ import { MarketplacePicker } from "@/components/ui/marketplace-picker";
 import { StudioStepper } from "@/components/ui/studio-stepper";
 import { fetchJson } from "@/lib/fetch-json";
 import { CharCounter, LimitWarning } from "@/components/ui/char-counter";
+import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-alert";
+import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft } from "@/lib/copy-draft";
 import { type MarketplaceId, getMarketplace } from "@/lib/marketplaces";
@@ -453,6 +455,8 @@ export function CopyWorkspace({
         </div>
       ) : null}
 
+      {error === "INSUFFICIENT_CREDITS" ? <InsufficientCreditsAlert /> : null}
+
       {error && error !== "INSUFFICIENT_CREDITS" ? (
         <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
           <p>{error}</p>
@@ -543,13 +547,15 @@ export function CopyWorkspace({
                 onChange={(e) => setForm((f) => ({ ...f, keyFeatures: e.target.value }))}
               />
             </div>
-            <Button
-              onClick={generate}
-              disabled={loading || uploading || !form.name.trim() || lacksCredits}
-              className="md:col-span-2"
-            >
-              {lacksCredits ? "Need credits to generate" : loading ? "Generating…" : "Generate copy (1 credit)"}
-            </Button>
+            <div className="sticky bottom-0 z-10 -mx-6 mt-2 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none md:col-span-2">
+              <Button
+                onClick={generate}
+                disabled={loading || uploading || !form.name.trim() || lacksCredits}
+                className="flex-1 md:col-span-2"
+              >
+                {lacksCredits ? "Need credits to generate" : loading ? "Generating…" : "Generate copy (1 credit)"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -687,13 +693,31 @@ export function CopyWorkspace({
               )}
             </Button>
             {productId && (
+              <Button asChild>
+                <Link href={`/generate?productId=${productId}`}>
+                  <Camera className="h-4 w-4" />
+                  Generate gallery images
+                </Link>
+              </Button>
+            )}
+            {productId && (
               <Button variant="outline" onClick={() => router.push(`/products/${productId}`)}>
                 Open project
               </Button>
             )}
-            <Button asChild variant="outline">
-              <Link href="/grader">Grade this copy</Link>
-            </Button>
+            {copy?.title ? (
+              <GradeListingButton
+                listingCopy={{
+                  title: copy.title,
+                  bullets: (copy.bullets as string[]) ?? [],
+                  description: copy.description,
+                  backendKeywords: copy.backendKeywords,
+                }}
+                variant="outline"
+              >
+                Grade this copy
+              </GradeListingButton>
+            ) : null}
             <Button variant="ghost" onClick={startOver}>
               Start over
             </Button>
