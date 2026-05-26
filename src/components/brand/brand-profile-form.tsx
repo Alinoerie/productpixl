@@ -19,6 +19,7 @@ export function BrandProfileForm() {
     guidelines: "",
   });
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +38,8 @@ export function BrandProfileForm() {
   }, []);
 
   const save = async () => {
-    const { ok } = await fetchJson("/api/brand-profile", {
+    setError("");
+    const { ok, data } = await fetchJson<{ error?: string }>("/api/brand-profile", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(profile),
@@ -45,6 +47,8 @@ export function BrandProfileForm() {
     if (ok) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
+    } else {
+      setError(data.error || "Could not save brand profile. Try again.");
     }
   };
 
@@ -109,7 +113,19 @@ export function BrandProfileForm() {
             <Input
               value={profile.logoUrl ?? ""}
               onChange={(e) => setProfile({ ...profile, logoUrl: e.target.value })}
+              placeholder="https://…"
             />
+            {profile.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profile.logoUrl}
+                alt="Brand logo preview"
+                className="mt-3 h-14 max-w-[200px] rounded-lg border border-[var(--border)] bg-white object-contain p-2"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+            ) : null}
           </div>
           <div>
             <Label>Extra guidelines</Label>
@@ -122,6 +138,9 @@ export function BrandProfileForm() {
           <Button onClick={save} className="w-full">
             {saved ? "Saved ✓" : "Save brand profile"}
           </Button>
+          {error ? (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -141,6 +160,14 @@ export function BrandProfileForm() {
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)]">
             Preview
           </p>
+          {profile.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.logoUrl}
+              alt=""
+              className="mt-3 h-10 max-w-[160px] object-contain"
+            />
+          ) : null}
           <h3 className="mt-2 font-serif text-2xl" style={{ color: profile.primaryColor }}>
             {profile.displayName || "Your brand"}
           </h3>

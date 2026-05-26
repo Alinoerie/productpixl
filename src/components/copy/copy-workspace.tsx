@@ -2,19 +2,45 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertBanner } from "@/components/ui/alert-banner";
+import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { fetchJson } from "@/lib/fetch-json";
+import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX, charCountLabel } from "@/lib/amazon-limits";
 import { MARKETPLACES, type MarketplaceId } from "@/lib/marketplaces";
+import { cn } from "@/lib/utils";
 
-export function CopyWorkspace() {
+const FIELD_LABELS: Record<string, string> = {
+  name: "Product name",
+  brandName: "Brand name",
+  category: "Amazon category",
+  materials: "Materials",
+  targetBuyer: "Target buyer",
+};
+
+function CharCounter({ value, max }: { value: string; max: number }) {
+  const { label, over } = charCountLabel(value, max);
+  return (
+    <p className={cn("mt-1 text-right text-xs tabular-nums", over ? "text-red-600" : "text-[var(--muted-fg)]")}>
+      {label}
+    </p>
+  );
+}
+
+export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
   const router = useRouter();
   const [imageUrl, setImageUrl] = useState("");
+  const [preview, setPreview] = useState("");
+  const [dragOver, setDragOver] = useState(false);
   const [marketplace, setMarketplace] = useState<MarketplaceId>("AMAZON_US");
   const [productId, setProductId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copy, setCopy] = useState<{
@@ -34,34 +60,59 @@ export function CopyWorkspace() {
     targetBuyer: "",
   });
 
+  const reset = () => {
+    setCopy(null);
+    setProductId(null);
+    setError("");
+    setLoading(false);
+  };
+
   const upload = async (file: File) => {
-    const fd = new FormData();
-    fd.append("file", file);
-    const { ok, data } = await fetchJson<{ url?: string; error?: string }>("/api/upload", {
-      method: "POST",
-      body: fd,
-    });
-    if (!ok) throw new Error(data.error || "Upload failed");
-    setImageUrl(data.url ?? "");
-    const { ok: aOk, data: aData } = await fetchJson<{ analysis?: Record<string, string> }>(
-      "/api/analyze",
-      {
+    setUploading(true);
+    setError("");
+    const objectUrl = URL.createObjectURL(file);
+    setPreview(objectUrl);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const { ok, data } = await fetchJson<{ url?: string; error?: string }>("/api/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl: data.url }),
-      }
-    );
-    if (aOk && aData.analysis) {
-      const a = aData.analysis;
-      setForm({
-        name: a.productName || "",
-        brandName: a.brandName || "",
-        category: a.amazonCategory || "",
-        materials: a.materials || "",
-        keyFeatures: a.keyObservations || "",
-        targetBuyer: "",
+        body: fd,
       });
+      if (!ok) throw new Error(data.error || "Upload failed");
+      setImageUrl(data.url ?? "");
+      const { ok: aOk, data: aData } = await fetchJson<{ analysis?: Record<string, string> }>(
+        "/api/analyze",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl: data.url }),
+        }
+      );
+      if (aOk && aData.analysis) {
+        const a = aData.analysis;
+        setForm({
+          name: a.productName || "",
+          brandName: a.brandName || "",
+          category: a.amazonCategory || "",
+          materials: a.materials || "",
+          keyFeatures: a.keyObservations || "",
+          targetBuyer: "",
+        });
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+      setPreview("");
+    } finally {
+      setUploading(false);
     }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file?.type.startsWith("image/")) upload(file);
   };
 
   const generate = async () => {
@@ -74,25 +125,35 @@ export function CopyWorkspace() {
         body: JSON.stringify({ inputImageUrl: imageUrl, marketplace, productData: form }),
       });
       const data = await res.json();
-      if (res.status === 402) throw new Error("Insufficient credits");
+      if (res.status === 402) throw new Error("INSUFFICIENT_CREDITS");
       if (!res.ok) throw new Error(data.error);
       setProductId(data.productId);
+      window.dispatchEvent(new Event("credits-updated"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      const msg = e instanceof Error ? e.message : "Failed";
+      setError(msg === "INSUFFICIENT_CREDITS" ? "INSUFFICIENT_CREDITS" : msg);
       setLoading(false);
     }
   };
 
   useEffect(() => {
     if (!productId) return;
+    let attempts = 0;
     const poll = async () => {
+      attempts += 1;
       const res = await fetch(`/api/products/${productId}/status`);
       const data = await res.json();
       if (res.ok && data.listingCopy) {
         setCopy(data.listingCopy);
         if (data.listingCopy.status === "COMPLETE" || data.listingCopy.status === "FAILED") {
           setLoading(false);
+          if (data.listingCopy.status === "FAILED") {
+            setError(data.listingCopy.errorMessage || "Copy generation failed");
+          }
         }
+      } else if (attempts > 90) {
+        setLoading(false);
+        setError("Copy generation timed out. Check Inngest is running.");
       }
     };
     poll();
@@ -109,8 +170,15 @@ export function CopyWorkspace() {
     a.click();
   };
 
+  const titleCount = charCountLabel(copy?.title ?? "", AMAZON_TITLE_MAX);
+
   return (
     <div className="space-y-8">
+      <WorkflowNotice
+        initialCredits={initialCredits}
+        description="RUFUS-ready title, bullets, description, and backend keywords."
+      />
+
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.15em] text-[var(--accent)]">
           Copy pipeline
@@ -122,38 +190,82 @@ export function CopyWorkspace() {
         </p>
       </div>
 
-      {error && (
+      {error === "INSUFFICIENT_CREDITS" ? (
+        <AlertBanner
+          message="You need at least 1 credit to generate listing copy."
+          actionHref="/pricing"
+          actionLabel="Buy credits"
+        />
+      ) : error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
-      )}
+      ) : null}
 
       {!copy?.title && (
         <Card>
           <CardContent className="grid gap-4 pt-6 md:grid-cols-2">
             <div className="md:col-span-2">
               <Label>Product image (optional but improves accuracy)</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
-              />
-            </div>
-            <div>
-              <Label>Marketplace</Label>
-              <select
-                className="h-10 w-full rounded-md border border-[var(--border)] px-3 text-sm"
-                value={marketplace}
-                onChange={(e) => setMarketplace(e.target.value as MarketplaceId)}
+              <label
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={onDrop}
+                className={cn(
+                  "mt-2 flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 transition-colors",
+                  dragOver
+                    ? "border-[var(--accent)] bg-[var(--accent-soft)]/40"
+                    : preview
+                      ? "border-[var(--accent)]/40 bg-[var(--accent-soft)]/20"
+                      : "border-[var(--border)] bg-[var(--muted)]/40 hover:border-[var(--accent)]"
+                )}
               >
+                {preview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={preview} alt="" className="max-h-40 rounded-xl object-contain" />
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8 text-[var(--accent)]" strokeWidth={1.5} />
+                    <p className="mt-3 font-medium">Drop photo or click to browse</p>
+                    <p className="mt-1 text-xs text-[var(--muted-fg)]">Auto-fills product fields from vision AI</p>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
+                />
+              </label>
+              {uploading && (
+                <p className="mt-1 text-xs text-[var(--muted-fg)]">Uploading and analyzing image…</p>
+              )}
+            </div>
+            <div className="md:col-span-2">
+              <Label>Marketplace</Label>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {MARKETPLACES.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setMarketplace(m.id)}
+                    className={cn(
+                      "rounded-xl border px-4 py-3 text-left text-sm transition-colors",
+                      marketplace === m.id
+                        ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                        : "border-[var(--border)] hover:border-[var(--accent)]/50"
+                    )}
+                  >
+                    <span className="font-medium">{m.label}</span>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
             {(["name", "brandName", "category", "materials", "targetBuyer"] as const).map((key) => (
               <div key={key}>
-                <Label>{key}</Label>
+                <Label>{FIELD_LABELS[key] ?? key}</Label>
                 <Input
                   value={form[key]}
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
@@ -167,7 +279,7 @@ export function CopyWorkspace() {
                 onChange={(e) => setForm((f) => ({ ...f, keyFeatures: e.target.value }))}
               />
             </div>
-            <Button onClick={generate} disabled={loading || !form.name} className="md:col-span-2">
+            <Button onClick={generate} disabled={loading || uploading || !form.name.trim()} className="md:col-span-2">
               {loading ? "Generating…" : "Generate copy (1 credit)"}
             </Button>
           </CardContent>
@@ -176,31 +288,44 @@ export function CopyWorkspace() {
 
       {copy?.title && (
         <div className="space-y-4">
+          {titleCount.over && (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Title exceeds Amazon&apos;s {AMAZON_TITLE_MAX}-character limit — trim before publishing.
+            </p>
+          )}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="text-base">Title</CardTitle>
+              <CharCounter value={copy.title} max={AMAZON_TITLE_MAX} />
             </CardHeader>
             <CardContent>
               <Textarea value={copy.title} onChange={(e) => setCopy({ ...copy, title: e.target.value })} />
             </CardContent>
           </Card>
-          {(copy.bullets as string[] | undefined)?.map((b, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <CardTitle className="text-base">Bullet {i + 1}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={b}
-                  onChange={(e) => {
-                    const bullets = [...((copy.bullets as string[]) || [])];
-                    bullets[i] = e.target.value;
-                    setCopy({ ...copy, bullets });
-                  }}
-                />
-              </CardContent>
-            </Card>
-          ))}
+          {(copy.bullets as string[] | undefined)?.map((b, i) => {
+            const bulletCount = charCountLabel(b, AMAZON_BULLET_MAX);
+            return (
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between gap-2">
+                  <CardTitle className="text-base">Bullet {i + 1}</CardTitle>
+                  <CharCounter value={b} max={AMAZON_BULLET_MAX} />
+                </CardHeader>
+                <CardContent>
+                  {bulletCount.over && (
+                    <p className="mb-2 text-xs text-amber-700">Over {AMAZON_BULLET_MAX} characters</p>
+                  )}
+                  <Textarea
+                    value={b}
+                    onChange={(e) => {
+                      const bullets = [...((copy.bullets as string[]) || [])];
+                      bullets[i] = e.target.value;
+                      setCopy({ ...copy, bullets });
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            );
+          })}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Description</CardTitle>
@@ -228,11 +353,33 @@ export function CopyWorkspace() {
             <Button variant="outline" onClick={exportJson}>
               Download JSON
             </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                navigator.clipboard.writeText(
+                  [
+                    copy.title,
+                    "",
+                    ...(copy.bullets ?? []).map((b, i) => `${i + 1}. ${b}`),
+                    "",
+                    copy.description ?? "",
+                  ].join("\n")
+                )
+              }
+            >
+              Copy all text
+            </Button>
             {productId && (
               <Button variant="outline" onClick={() => router.push(`/products/${productId}`)}>
                 Open project
               </Button>
             )}
+            <Button asChild variant="outline">
+              <Link href="/grader">Grade this copy</Link>
+            </Button>
+            <Button variant="ghost" onClick={reset}>
+              Start over
+            </Button>
           </div>
         </div>
       )}

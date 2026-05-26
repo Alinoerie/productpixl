@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatPipelinePhase } from "@/lib/status-labels";
+import { Loader2 } from "lucide-react";
 
 export function ProductLiveStatus({ productId }: { productId: string }) {
   const [phase, setPhase] = useState("…");
@@ -20,8 +22,15 @@ export function ProductLiveStatus({ productId }: { productId: string }) {
   }, [productId]);
 
   return (
-    <p className="rounded-lg border border-[var(--border)] bg-[var(--muted)] px-4 py-3 text-sm">
-      Live status: <strong>{phase}</strong>
-    </p>
+    <div
+      className="flex items-center gap-3 rounded-lg border border-[var(--accent)]/20 bg-[var(--accent-soft)]/40 px-4 py-3 text-sm"
+      role="status"
+      aria-live="polite"
+    >
+      <Loader2 className="h-4 w-4 animate-spin text-[var(--accent)]" />
+      <span>
+        Generating your gallery — <strong>{formatPipelinePhase(phase)}</strong>
+      </span>
+    </div>
   );
 }

@@ -22,9 +22,20 @@ const packs = [
   },
 ];
 
-export default function PricingPage() {
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ canceled?: string }>;
+}) {
+  const params = await searchParams;
+
   return (
     <div className="space-y-12">
+      {params.canceled && (
+        <p className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/40 px-4 py-3 text-sm text-[var(--muted-fg)]">
+          Checkout canceled — no charges were made.
+        </p>
+      )}
       <div className="max-w-2xl">
         <Badge variant="outline" className="mb-4 border-[var(--accent)]/30 text-[var(--accent)]">
           Pay per generation

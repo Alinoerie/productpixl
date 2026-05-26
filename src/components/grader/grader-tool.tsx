@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,9 +9,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchJson } from "@/lib/fetch-json";
 import type { GraderResult } from "@/lib/listing-grader";
-import Link from "next/link";
 
-export function GraderTool() {
+const SAMPLE = {
+  title: "Zealots Energizing Liquid Hand Soap — Greek Olive Oil, Mandarin & Basil — 500ml",
+  bullets: [
+    "Greek bio olive oil base cleanses without stripping natural moisture from busy hands",
+    "Energizing mandarin and basil scent — spa-fresh, not overpowering for daily kitchen use",
+    "Dermatologically tested formula suitable for frequent hand washing in family households",
+    "Recyclable amber bottle with pump — premium look for bathroom or kitchen counter display",
+    "Made with naturally derived ingredients — no parabens, silicones, or artificial colorants",
+  ],
+  description:
+    "Transform your daily hand-washing ritual with Zealots Energizing Liquid Hand Soap. Crafted with Greek bio olive oil and a bright mandarin-basil blend, it leaves skin feeling clean, soft, and refreshed.",
+  keywords: "hand soap liquid olive oil mandarin basil natural energizing 500ml",
+};
+
+export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
   const [title, setTitle] = useState("");
   const [bullets, setBullets] = useState(["", "", "", "", ""]);
   const [description, setDescription] = useState("");
@@ -18,6 +32,15 @@ export function GraderTool() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GraderResult | null>(null);
   const [error, setError] = useState("");
+
+  const loadSample = () => {
+    setTitle(SAMPLE.title);
+    setBullets(SAMPLE.bullets);
+    setDescription(SAMPLE.description);
+    setKeywords(SAMPLE.keywords);
+    setResult(null);
+    setError("");
+  };
 
   const grade = async () => {
     setLoading(true);
@@ -49,15 +72,33 @@ export function GraderTool() {
     <div className="grid gap-8 lg:grid-cols-2">
       <Card className="shadow-[var(--shadow-md)]">
         <CardContent className="space-y-4 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-[var(--muted-fg)]">Paste your Amazon listing copy</p>
+            <Button type="button" variant="outline" size="sm" onClick={loadSample}>
+              Load sample listing
+            </Button>
+          </div>
           <div>
-            <Label>Product title</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Your listing title" />
+            <div className="flex items-center justify-between">
+              <Label>Product title</Label>
+              <span className="text-xs text-[var(--muted-fg)]">{title.length}/200</span>
+            </div>
+            <Input
+              value={title}
+              maxLength={200}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Your listing title"
+            />
           </div>
           {bullets.map((b, i) => (
-            <div key={i}>
-              <Label>Bullet {i + 1}</Label>
+            <div key={`bullet-${i}`}>
+              <div className="flex items-center justify-between">
+                <Label>Bullet {i + 1}</Label>
+                <span className="text-xs text-[var(--muted-fg)]">{b.length}/500</span>
+              </div>
               <Input
                 value={b}
+                maxLength={500}
                 onChange={(e) => {
                   const next = [...bullets];
                   next[i] = e.target.value;
@@ -120,14 +161,16 @@ export function GraderTool() {
               <CardContent className="p-4">
                 <p className="text-sm font-semibold text-[var(--teal)]">RUFUS / COSMO tips</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--ink-muted)]">
-                  {result.rufusTips.map((t) => (
-                    <li key={t}>{t}</li>
+                  {result.rufusTips.map((t, i) => (
+                    <li key={`rufus-${i}`}>{t}</li>
                   ))}
                 </ul>
               </CardContent>
             </Card>
             <Button asChild className="w-full">
-              <Link href="/login">Fix listing with ProductPixl →</Link>
+              <Link href={signedIn ? "/generate" : "/login"}>
+                {signedIn ? "Generate gallery + copy →" : "Fix listing with ProductPixl →"}
+              </Link>
             </Button>
           </>
         ) : (

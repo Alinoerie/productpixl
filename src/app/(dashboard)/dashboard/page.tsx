@@ -2,9 +2,11 @@ import Link from "next/link";
 import { ArrowRight, FileText, ImageIcon, Plus } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatProductStatus, statusBadgeClass } from "@/lib/status-labels";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -70,29 +72,35 @@ export default async function DashboardPage() {
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-serif text-2xl">Recent projects</h2>
           {products.length > 0 && (
-            <Link href="/generate" className="text-sm font-medium text-[var(--accent)] hover:underline">
-              View all runs →
-            </Link>
+            <span className="text-sm text-[var(--muted-fg)]">{products.length} saved</span>
           )}
         </div>
 
         {products.length === 0 ? (
           <Card className="overflow-hidden border-dashed">
-            <CardContent className="flex flex-col items-center py-16 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--accent-soft)]">
-                <ImageIcon className="h-8 w-8 text-[var(--accent)]" strokeWidth={1.25} />
+            <CardContent className="grid gap-10 py-12 md:grid-cols-[minmax(0,1fr)_minmax(0,280px)] md:items-center md:px-10">
+              <div className="text-center md:text-left">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--accent-soft)] md:mx-0">
+                  <ImageIcon className="h-8 w-8 text-[var(--accent)]" strokeWidth={1.25} />
+                </div>
+                <h3 className="mt-6 font-serif text-xl">Your studio is empty</h3>
+                <p className="mt-2 max-w-sm text-sm text-[var(--muted-fg)] md:max-w-md">
+                  Drop a product photo to run the PHOILA image pipeline — L1 hero, L3 lifestyle, L4 detail in one
+                  credit.
+                </p>
+                <Button asChild className="mt-8" size="lg">
+                  <Link href="/generate">
+                    Start first run
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
-              <h3 className="mt-6 font-serif text-xl">Your studio is empty</h3>
-              <p className="mt-2 max-w-sm text-sm text-[var(--muted-fg)]">
-                Drop a product photo to run the PHOILA image pipeline — L1 hero, L3 lifestyle, L4 detail in one
-                credit.
-              </p>
-              <Button asChild className="mt-8" size="lg">
-                <Link href="/generate">
-                  Start first run
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
+              <div>
+                <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)] md:text-left">
+                  Example outputs
+                </p>
+                <ShowcaseMosaic />
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -105,7 +113,7 @@ export default async function DashboardPage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={p.assets[0].imageUrl}
-                        alt=""
+                        alt={`${p.name} preview`}
                         className="h-full w-full object-cover transition-transform group-hover:scale-[1.02]"
                       />
                     ) : (
@@ -117,9 +125,9 @@ export default async function DashboardPage() {
                     )}
                     <Badge
                       variant="secondary"
-                      className="absolute left-3 top-3 bg-[var(--card)]/90 backdrop-blur-sm"
+                      className={`absolute left-3 top-3 backdrop-blur-sm ${statusBadgeClass(p.status)}`}
                     >
-                      {p.status}
+                      {formatProductStatus(p.status)}
                     </Badge>
                   </div>
                   <CardContent className="p-4">

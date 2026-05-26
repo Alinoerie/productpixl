@@ -3,6 +3,7 @@ import { auth, signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 
 function safeCallbackUrl(raw?: string) {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
@@ -57,6 +58,7 @@ export default async function LoginPage({
               </li>
             ))}
           </ul>
+          <ShowcaseMosaic className="mt-10 max-w-sm opacity-95" />
         </div>
         <p className="text-xs text-white/40">Built for Amazon & EU marketplace sellers</p>
       </div>

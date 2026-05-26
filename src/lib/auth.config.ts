@@ -1,16 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 
-const protectedPrefixes = [
-  "/dashboard",
-  "/generate",
-  "/copy",
-  "/products",
-  "/account",
-  "/brand",
-  "/brands",
-];
-
 export const authConfig = {
   trustHost: true,
   pages: {
@@ -25,11 +15,8 @@ export const authConfig = {
     }),
   ],
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isProtected = protectedPrefixes.some((p) =>
-        nextUrl.pathname.startsWith(p)
-      );
-      if (isProtected) return !!auth?.user;
+    authorized() {
+      // Route protection + callbackUrl handled in middleware.ts
       return true;
     },
   },

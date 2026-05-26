@@ -1,15 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AlertBanner } from "@/components/ui/alert-banner";
+import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { fetchJson } from "@/lib/fetch-json";
 import { cn } from "@/lib/utils";
+import { formatPipelinePhase, formatModuleLabel } from "@/lib/status-labels";
 import { Camera, Check, Loader2, Sparkles, Upload } from "lucide-react";
 import { MARKETPLACES, type MarketplaceId } from "@/lib/marketplaces";
 
@@ -43,8 +47,9 @@ interface PromptPlanItem {
 
 const STEPS = ["Upload", "Product info", "Prompt plan", "Results"];
 
-export function GenerateWizard() {
+export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
   const router = useRouter();
+  const previewUrlRef = useRef<string | null>(null);
   const [step, setStep] = useState(0);
   const [imageUrl, setImageUrl] = useState("");
   const [preview, setPreview] = useState("");
@@ -67,6 +72,7 @@ export function GenerateWizard() {
       prompt?: string;
     }[];
   } | null>(null);
+  const [pipelineFailed, setPipelineFailed] = useState(false);
 
   const [form, setForm] = useState<ProductData>({
     name: "",
@@ -84,7 +90,12 @@ export function GenerateWizard() {
 
   const onFile = async (file: File) => {
     setError("");
-    setPreview(URL.createObjectURL(file));
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+    }
+    const objectUrl = URL.createObjectURL(file);
+    previewUrlRef.current = objectUrl;
+    setPreview(objectUrl);
     setUploading(true);
     try {
       const fd = new FormData();
@@ -137,7 +148,13 @@ export function GenerateWizard() {
     }
   };
 
-  const buildPromptPlan = async () => {
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
+
+  const buildPromptPlan = useCallback(async () => {
     setError("");
     setPlanningPrompts(true);
     try {
@@ -161,7 +178,12 @@ export function GenerateWizard() {
     } finally {
       setPlanningPrompts(false);
     }
-  };
+  }, [imageUrl, includePackaging, marketplace, form]);
+
+  useEffect(() => {
+    if (step !== 2 || promptPlan.length || planningPrompts || !imageUrl) return;
+    void buildPromptPlan();
+  }, [step, promptPlan.length, planningPrompts, imageUrl, buildPromptPlan]);
 
   const startGeneration = async () => {
     if (!promptPlan.length) {
@@ -184,12 +206,17 @@ export function GenerateWizard() {
           }),
         }
       );
-      if (status === 402) throw new Error("Insufficient credits. Buy more on the Credits page.");
+      if (status === 402) {
+        throw new Error("INSUFFICIENT_CREDITS");
+      }
       if (!ok) throw new Error(data.error || "Failed to start");
       setProductId(data.productId ?? null);
+      setPipelineFailed(false);
       setStep(3);
+      window.dispatchEvent(new Event("credits-updated"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Generation failed");
+      const msg = e instanceof Error ? e.message : "Generation failed";
+      setError(msg === "INSUFFICIENT_CREDITS" ? "INSUFFICIENT_CREDITS" : msg);
     }
   };
 
@@ -200,6 +227,10 @@ export function GenerateWizard() {
     );
     if (ok) {
       setPipelineStatus(data.pipelineStatus as typeof pipelineStatus);
+      if (data.status === "FAILED") {
+        setPipelineFailed(true);
+        return;
+      }
       if (data.status === "COMPLETE" || data.status === "FAILED") return;
     }
   }, [productId]);
@@ -217,6 +248,11 @@ export function GenerateWizard() {
 
   return (
     <div className="space-y-8">
+      <WorkflowNotice
+        initialCredits={initialCredits}
+        description="Review prompts before any image is generated — PHOILA listing pipeline."
+      />
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Badge variant="outline" className="mb-3 border-[var(--accent)]/30 text-[var(--accent)]">
@@ -231,10 +267,11 @@ export function GenerateWizard() {
       </div>
 
       {/* Stepper */}
-      <div className="flex items-center gap-0 overflow-x-auto pb-2">
+      <nav aria-label="Generation progress" className="flex items-center gap-0 overflow-x-auto pb-2">
         {STEPS.map((label, i) => (
           <div key={label} className="flex items-center">
             <div
+              aria-current={step === i ? "step" : undefined}
               className={cn(
                 "flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap",
                 step === i
@@ -252,11 +289,17 @@ export function GenerateWizard() {
             )}
           </div>
         ))}
-      </div>
+      </nav>
 
-      {error && (
+      {error === "INSUFFICIENT_CREDITS" ? (
+        <AlertBanner
+          message="You need at least 1 credit to start an image run."
+          actionHref="/pricing"
+          actionLabel="Buy credits"
+        />
+      ) : error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
-      )}
+      ) : null}
 
       {step === 0 && (
         <Card className="overflow-hidden shadow-[var(--shadow-md)]">
@@ -351,6 +394,7 @@ export function GenerateWizard() {
                   setPromptPlan([]);
                   setStep(2);
                 }}
+                disabled={!form.name.trim()}
               >
                 Next
               </Button>
@@ -489,19 +533,26 @@ export function GenerateWizard() {
 
       {step === 3 && (
         <div className="space-y-6">
+          {pipelineFailed && (
+            <AlertBanner
+              message="Image generation failed. Check Inngest is running locally, or go back and retry your prompt plan."
+              actionHref="/generate"
+              actionLabel="New run"
+            />
+          )}
           <Card className="border-[var(--accent)]/20 bg-[var(--accent-soft)]/30">
             <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent)]">
                   Pipeline status
                 </p>
-                <p className="font-serif text-xl">{pipelineStatus?.phase ?? "Starting…"}</p>
+                <p className="font-serif text-xl">{formatPipelinePhase(pipelineStatus?.phase ?? "RECEIVING")}</p>
               </div>
               {!done && <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />}
             </CardContent>
           </Card>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" aria-label="Pipeline phases">
             {PHASES.map((ph) => {
               const current = pipelineStatus?.phase;
               const idx = PHASES.indexOf(current ?? "");
@@ -517,6 +568,7 @@ export function GenerateWizard() {
               return (
                 <span
                   key={ph}
+                  title={ph}
                   className={cn(
                     "rounded-full px-2.5 py-1 text-xs font-medium",
                     state === "done" && "bg-[var(--success-bg)] text-[var(--success)]",
@@ -524,7 +576,7 @@ export function GenerateWizard() {
                     state === "pending" && "bg-[var(--muted)] text-[var(--muted-fg)]"
                   )}
                 >
-                  {ph}
+                  {formatPipelinePhase(ph)}
                 </span>
               );
             })}
@@ -547,7 +599,8 @@ export function GenerateWizard() {
                   <div className="p-4">
                     <div className="flex items-center justify-between">
                       <p className="font-semibold">
-                        {s.id} — {s.label}
+                        {formatModuleLabel(s.id)}
+                        {s.label ? ` — ${s.label}` : ""}
                       </p>
                       {s.qaScore != null && (
                         <Badge variant="secondary">QA {s.qaScore}/10</Badge>
@@ -567,9 +620,14 @@ export function GenerateWizard() {
             ))}
           </div>
           {done && productId && (
-            <Button size="lg" className="rounded-xl" onClick={() => router.push(`/products/${productId}`)}>
-              View full project
-            </Button>
+            <div className="flex flex-wrap gap-3">
+              <Button size="lg" className="rounded-xl" onClick={() => router.push(`/products/${productId}`)}>
+                View full project
+              </Button>
+              <Button asChild size="lg" variant="outline" className="rounded-xl">
+                <Link href="/copy">Generate listing copy</Link>
+              </Button>
+            </div>
           )}
         </div>
       )}

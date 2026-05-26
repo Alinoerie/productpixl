@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { Badge } from "@/components/ui/badge";
+import { CreditBadge } from "@/components/layout/credit-badge";
 import { Button } from "@/components/ui/button";
 import { AppShellMobileNav, AppShellNav } from "@/components/layout/app-shell-nav";
 
@@ -22,14 +22,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <AppShellNav className="hidden md:flex" />
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/pricing">
-              <Badge
-                variant="outline"
-                className="cursor-pointer border-[var(--accent)]/30 bg-[var(--accent-soft)] px-3 py-1 text-[var(--accent)]"
-              >
-                {credits} credits
-              </Badge>
-            </Link>
+            <CreditBadge initialCredits={credits} />
             <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
               <Link href="/account">Account</Link>
             </Button>

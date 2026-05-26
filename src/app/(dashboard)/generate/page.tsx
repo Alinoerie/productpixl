@@ -1,5 +1,7 @@
+import { auth } from "@/lib/auth";
 import { GenerateWizard } from "@/components/generate/generate-wizard";
 
-export default function GeneratePage() {
-  return <GenerateWizard />;
+export default async function GeneratePage() {
+  const session = await auth();
+  return <GenerateWizard initialCredits={session?.user?.credits ?? 0} />;
 }

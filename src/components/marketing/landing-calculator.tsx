@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 
 const PIXII_MONTHLY = 207;
 const AGENCY_PER_SKU = 150;
-const CREDIT_PACK = 0.99; // illustrative per credit at volume
+const CREDIT_PACK = 2.63; // Growth pack per-credit price (€79 / 30)
 
 export function LandingCalculator() {
   const [skus, setSkus] = useState(12);
@@ -58,7 +58,7 @@ export function LandingCalculator() {
               </div>
             </div>
             <p className="mt-4 text-xs text-[var(--muted-fg)]">
-              Assumes ~€{CREDIT_PACK}/credit at volume. You start with 10 free credits.
+              Uses Growth pack pricing (~€{CREDIT_PACK}/credit). You start with 10 free credits.
             </p>
           </div>
           <div className="grid gap-4">

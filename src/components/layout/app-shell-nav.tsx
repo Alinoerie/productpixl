@@ -10,6 +10,7 @@ const nav = [
   { href: "/copy", label: "Copy" },
   { href: "/brand", label: "Brand" },
   { href: "/pricing", label: "Credits" },
+  { href: "/account", label: "Account" },
 ];
 
 export function AppShellNav({ className }: { className?: string }) {
@@ -20,6 +21,7 @@ export function AppShellNav({ className }: { className?: string }) {
       {nav.map((item) => {
         const active =
           pathname === item.href ||
+          (item.href === "/dashboard" && pathname.startsWith("/products")) ||
           (item.href !== "/dashboard" && pathname.startsWith(item.href));
         return (
           <Link
@@ -46,7 +48,10 @@ export function AppShellMobileNav() {
   return (
     <nav className="flex gap-1 overflow-x-auto border-t border-[var(--border)] px-4 py-2 md:hidden">
       {nav.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(item.href);
+        const active =
+          pathname === item.href ||
+          (item.href === "/dashboard" && pathname.startsWith("/products")) ||
+          (item.href !== "/dashboard" && pathname.startsWith(item.href));
         return (
           <Link
             key={item.href}

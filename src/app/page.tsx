@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -6,7 +7,6 @@ import {
   Clock,
   CreditCard,
   Globe,
-  ImageIcon,
   Layers,
   Sparkles,
   Zap,
@@ -17,8 +17,10 @@ import { LandingGallery } from "@/components/marketing/landing-gallery";
 import { LandingBol } from "@/components/marketing/landing-bol";
 import { LandingCalculator } from "@/components/marketing/landing-calculator";
 import { LandingFaq } from "@/components/marketing/landing-faq";
+import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SHOWCASE_MODULE_SAMPLES } from "@/lib/showcase";
 
 const MODULES = [
   { id: "L1", label: "Main hero", desc: "White-background hero, Amazon-compliant 1:1" },
@@ -69,33 +71,45 @@ export default async function HomePage() {
       <section className="relative overflow-hidden px-4 pb-20 pt-16 md:pb-28 md:pt-24">
         <div className="bg-grid absolute inset-0 opacity-40" />
         <div className="relative mx-auto max-w-6xl">
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="outline" className="mb-6 border-[var(--border-strong)] bg-[var(--card)] px-3 py-1">
-              Amazon · Bol.com · EU & US sellers
-            </Badge>
-            <h1 className="animate-fade-up font-serif text-4xl leading-[1.08] tracking-tight text-balance md:text-6xl lg:text-7xl">
-              One product photo.
-              <br />
-              <span className="text-[var(--accent)]">A complete listing studio.</span>
-            </h1>
-            <p className="animate-fade-up mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-[var(--muted-fg)] [animation-delay:80ms]">
-              ProductPixl turns a single shot into marketplace gallery images and conversion-focused copy —
-              researched, generated, and QA-scored. No photoshoot. No $207/mo subscription. No prompt engineering.
-            </p>
-            <div className="animate-fade-up mt-10 flex flex-wrap items-center justify-center gap-3 [animation-delay:160ms]">
-              <Button asChild size="lg" className="rounded-xl px-8">
-                <Link href={cta}>
-                  Start generating
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-xl">
-                <Link href="/grader">Free listing grader</Link>
-              </Button>
+          <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16">
+            <div className="text-center lg:text-left">
+              <Badge variant="outline" className="mb-6 border-[var(--border-strong)] bg-[var(--card)] px-3 py-1">
+                Amazon · Bol.com · EU & US sellers
+              </Badge>
+              <h1 className="animate-fade-up font-serif text-4xl leading-[1.08] tracking-tight text-balance md:text-6xl lg:text-6xl xl:text-7xl">
+                One product photo.
+                <br />
+                <span className="text-[var(--accent)]">A complete listing studio.</span>
+              </h1>
+              <p className="animate-fade-up mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-[var(--muted-fg)] [animation-delay:80ms] lg:mx-0">
+                ProductPixl turns a single shot into marketplace gallery images and conversion-focused copy —
+                researched, generated, and QA-scored. No photoshoot. No $207/mo subscription. No prompt engineering.
+              </p>
+              <div className="animate-fade-up mt-10 flex flex-wrap items-center justify-center gap-3 [animation-delay:160ms] lg:justify-start">
+                <Button asChild size="lg" className="rounded-xl px-8">
+                  <Link href={cta}>
+                    Start generating
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="rounded-xl">
+                  <Link href="/grader">Free listing grader</Link>
+                </Button>
+              </div>
+              <p className="mt-6 text-sm text-[var(--muted-fg)]">
+                10 free credits · No credit card · Pay per generation, not per month
+              </p>
             </div>
-            <p className="mt-6 text-sm text-[var(--muted-fg)]">
-              10 free credits · No credit card · Pay per generation, not per month
-            </p>
+
+            <div className="animate-fade-up mx-auto w-full max-w-md [animation-delay:120ms] lg:max-w-none">
+              <div className="relative">
+                <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-[var(--accent-soft)] to-[var(--teal-soft)] opacity-70 blur-2xl" />
+                <ShowcaseMosaic priority className="relative rotate-1 lg:rotate-2" />
+              </div>
+              <p className="mt-4 text-center text-xs text-[var(--muted-fg)] lg:text-left">
+                Real PHOILA outputs — hand soap, skincare, furniture
+              </p>
+            </div>
           </div>
 
           {/* Stats */}
@@ -161,23 +175,35 @@ export default async function HomePage() {
             <Badge variant="secondary">1 credit · full image run</Badge>
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {MODULES.map((m) => (
-              <div
-                key={m.id}
-                className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-sm)]"
-              >
-                <div className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-[var(--muted)] to-[var(--accent-soft)]">
-                  <div className="text-center">
-                    <ImageIcon className="mx-auto h-10 w-10 text-[var(--accent)]/60" strokeWidth={1.25} />
-                    <span className="mt-2 block font-serif text-3xl text-[var(--ink)]">{m.id}</span>
+            {MODULES.map((m) => {
+              const sample = SHOWCASE_MODULE_SAMPLES[m.id as keyof typeof SHOWCASE_MODULE_SAMPLES];
+              return (
+                <div
+                  key={m.id}
+                  className="group overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]"
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden bg-[var(--muted)]">
+                    <Image
+                      src={sample.image}
+                      alt={sample.alt}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 280px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                    <span className="absolute left-3 top-3 rounded-full bg-[var(--ink)]/80 px-2.5 py-1 font-serif text-sm text-white">
+                      {m.id}
+                    </span>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold">{m.label}</h3>
+                    <p className="mt-1 text-sm text-[var(--muted-fg)]">{m.desc}</p>
+                    <p className="mt-2 text-[10px] font-medium uppercase tracking-wide text-[var(--teal)]">
+                      Sample · {sample.product}
+                    </p>
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold">{m.label}</h3>
-                  <p className="mt-1 text-sm text-[var(--muted-fg)]">{m.desc}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <p className="mt-8 text-center text-sm text-[var(--muted-fg)]">
             Plus listing copy: title, 5 bullets, description, backend keywords — optimized for A9 + semantic

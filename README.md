@@ -17,6 +17,8 @@ Listing studio for marketplace sellers: one product photo → gallery images + c
 
 See **[docs/BRAND.md](docs/BRAND.md)** — **Copper Horizon** palette (copper CTA, linen background, teal for EU/RUFUS story). Positioning: photo-first, pay-per-credit, Amazon + Bol.com.
 
+Marketing pages use real PHOILA pipeline samples in **`public/showcase/`** (Zealots hand soap, skincare, Danish chair) — sourced from local generation runs.
+
 ## Setup
 
 1. Copy `.env.example` to `.env.local` and fill in credentials.
@@ -30,8 +32,10 @@ pnpm dev
 pnpm inngest:dev
 ```
 
-5. Google OAuth redirect: `http://localhost:3001/api/auth/callback/google`
-6. Set `AUTH_URL=http://localhost:3001` in `.env.local`
+5. Google OAuth redirect URIs (Google Cloud Console → Credentials → your OAuth client):
+   - Local: `http://localhost:3001/api/auth/callback/google`
+   - Production: `https://productpixl.vercel.app/api/auth/callback/google`
+6. Set `AUTH_URL=http://localhost:3001` in `.env.local` (production Vercel: `AUTH_URL=https://productpixl.vercel.app`)
 
 ## Features
 
