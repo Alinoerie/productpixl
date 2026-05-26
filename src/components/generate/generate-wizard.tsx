@@ -11,12 +11,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
+import { UploadDropzone } from "@/components/ui/upload-dropzone";
+import { MarketplacePicker } from "@/components/ui/marketplace-picker";
+import { StudioStepper } from "@/components/ui/studio-stepper";
 import { fetchJson } from "@/lib/fetch-json";
 import { cn } from "@/lib/utils";
 import { formatPipelinePhase, formatModuleLabel } from "@/lib/status-labels";
 import { PageHeader } from "@/components/ui/page-header";
-import { Camera, Check, Loader2, Sparkles, Upload } from "lucide-react";
-import { MARKETPLACES, type MarketplaceId } from "@/lib/marketplaces";
+import { Camera, Check, Loader2, Sparkles } from "lucide-react";
+import { type MarketplaceId } from "@/lib/marketplaces";
 
 interface ProductData {
   name: string;
@@ -267,46 +270,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
         }
       />
 
-      {/* Stepper */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs font-medium text-[var(--muted-fg)]">
-          <span>
-            Step {step + 1} of {STEPS.length}
-          </span>
-          <span className="text-[var(--foreground)]">{STEPS[step]}</span>
-        </div>
-        <div
-          className="h-1.5 overflow-hidden rounded-full bg-[var(--muted)]"
-          role="progressbar"
-          aria-valuenow={step + 1}
-          aria-valuemin={1}
-          aria-valuemax={STEPS.length}
-        >
-          <div
-            className="h-full rounded-full bg-[var(--accent)] transition-all duration-500 ease-out"
-            style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
-          />
-        </div>
-        <nav aria-label="Generation progress" className="flex flex-wrap gap-2">
-          {STEPS.map((label, i) => (
-            <span
-              key={label}
-              aria-current={step === i ? "step" : undefined}
-              className={cn(
-                "rounded-full px-2.5 py-1 text-xs font-medium",
-                step === i
-                  ? "bg-[var(--accent)] text-white"
-                  : step > i
-                    ? "bg-[var(--success-bg)] text-[var(--success)]"
-                    : "bg-[var(--muted)] text-[var(--muted-fg)]"
-              )}
-            >
-              {step > i ? "✓ " : ""}
-              {label}
-            </span>
-          ))}
-        </nav>
-      </div>
+      <StudioStepper steps={STEPS} currentStep={step} label="Generation progress" />
 
       {error === "INSUFFICIENT_CREDITS" ? (
         <AlertBanner
@@ -321,7 +285,10 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
       {step === 0 && (
         <Card className="overflow-hidden shadow-[var(--shadow-md)]">
           <CardContent className="space-y-6 p-6 md:p-8">
-            <label
+            <UploadDropzone
+              preview={preview}
+              previewAlt="Product photo preview"
+              dragOver={dragOver}
               onDragOver={(e) => {
                 e.preventDefault();
                 setDragOver(true);
@@ -333,35 +300,13 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
                 const file = e.dataTransfer.files?.[0];
                 if (file?.type.startsWith("image/")) onFile(file);
               }}
-              className={cn(
-                "flex min-h-[280px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-colors",
-                dragOver
-                  ? "border-[var(--accent)] bg-[var(--accent-soft)]/50"
-                  : preview
-                    ? "border-[var(--accent)]/40 bg-[var(--accent-soft)]/30"
-                    : "border-[var(--border)] bg-[var(--muted)]/40 hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]/20"
-              )}
-            >
-              {preview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={preview} alt="" className="max-h-56 rounded-xl object-contain shadow-[var(--shadow-md)]" />
-              ) : (
-                <>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--card)] shadow-[var(--shadow-sm)]">
-                    <Upload className="h-7 w-7 text-[var(--accent)]" strokeWidth={1.5} />
-                  </div>
-                  <p className="mt-4 font-medium">Drop your product photo</p>
-                  <p className="mt-1 text-sm text-[var(--muted-fg)]">JPG, PNG or WEBP · max 20MB</p>
-                  <p className="mt-4 text-xs text-[var(--muted-fg)]">No ASIN needed — works for new launches</p>
-                </>
-              )}
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
-              />
-            </label>
+              onFileSelect={onFile}
+              disabled={uploading || analyzing}
+              minHeight="min-h-[280px]"
+              emptyTitle="Drop your product photo"
+              emptyHint="JPG, PNG or WEBP · max 20MB · No ASIN needed"
+              inputId="generate-upload"
+            />
             <Button
               onClick={analyze}
               disabled={!imageUrl || uploading || analyzing}
@@ -438,36 +383,15 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
           <CardContent className="space-y-6 p-6 md:p-8">
             <div>
               <Label className="mb-2 block">Marketplace</Label>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {MARKETPLACES.map((m) => (
-                  <label
-                    key={m.id}
-                    className={cn(
-                      "flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors",
-                      marketplace === m.id
-                        ? "border-[var(--accent)] bg-[var(--accent-soft)]/40"
-                        : "border-[var(--border)] hover:border-[var(--accent)]/40"
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="marketplace"
-                      className="mt-1"
-                      checked={marketplace === m.id}
-                      onChange={() => {
-                        setMarketplace(m.id);
-                        setPromptPlan([]);
-                      }}
-                    />
-                    <div>
-                      <p className="text-sm font-medium">
-                        {m.flag} {m.label}
-                      </p>
-                      <p className="mt-0.5 text-xs text-[var(--muted-fg)]">{m.imageNote}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
+              <MarketplacePicker
+                value={marketplace}
+                onChange={(id) => {
+                  setMarketplace(id);
+                  setPromptPlan([]);
+                }}
+                noteField="imageNote"
+                name="generate-marketplace"
+              />
             </div>
             <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/40 p-4">
               <label className="flex cursor-pointer items-start gap-3">
@@ -620,7 +544,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
                   <div className="aspect-square bg-[var(--muted)]">
                     {s.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={s.imageUrl} alt="" className="h-full w-full object-cover" />
+                      <img src={s.imageUrl} alt={`Generated ${formatModuleLabel(s.id)}`} className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-sm text-[var(--muted-fg)]">
                         {s.status}

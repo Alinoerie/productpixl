@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Upload, Loader2 } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +12,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { PageHeader } from "@/components/ui/page-header";
+import { UploadDropzone } from "@/components/ui/upload-dropzone";
+import { MarketplacePicker } from "@/components/ui/marketplace-picker";
+import { StudioStepper } from "@/components/ui/studio-stepper";
 import { fetchJson } from "@/lib/fetch-json";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX, charCountLabel } from "@/lib/amazon-limits";
-import { MARKETPLACES, type MarketplaceId } from "@/lib/marketplaces";
+import { type MarketplaceId } from "@/lib/marketplaces";
 import { cn } from "@/lib/utils";
+
+const COPY_STEPS = ["Details", "Generate", "Edit copy"];
 
 const FIELD_LABELS: Record<string, string> = {
   name: "Product name",
@@ -44,6 +49,7 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [copiedAll, setCopiedAll] = useState(false);
   const [copy, setCopy] = useState<{
     title?: string;
     bullets?: string[];
@@ -172,6 +178,7 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
   };
 
   const titleCount = charCountLabel(copy?.title ?? "", AMAZON_TITLE_MAX);
+  const copyStep = copy?.title ? 2 : loading ? 1 : 0;
 
   return (
     <div className="space-y-8">
@@ -191,6 +198,8 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
         }
       />
 
+      <StudioStepper steps={COPY_STEPS} currentStep={copyStep} label="Copy pipeline progress" />
+
       {error === "INSUFFICIENT_CREDITS" ? (
         <AlertBanner
           message="You need at least 1 credit to generate listing copy."
@@ -205,77 +214,50 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
         <Card>
           <CardContent className="grid gap-4 pt-6 md:grid-cols-2">
             <div className="md:col-span-2">
-              <Label>Product image (optional but improves accuracy)</Label>
-              <label
+              <Label htmlFor="copy-upload">Product image (optional but improves accuracy)</Label>
+              <UploadDropzone
+                preview={preview}
+                previewAlt="Product photo for copy generation"
+                dragOver={dragOver}
                 onDragOver={(e) => {
                   e.preventDefault();
                   setDragOver(true);
                 }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={onDrop}
-                className={cn(
-                  "mt-2 flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 transition-colors",
-                  dragOver
-                    ? "border-[var(--accent)] bg-[var(--accent-soft)]/40"
-                    : preview
-                      ? "border-[var(--accent)]/40 bg-[var(--accent-soft)]/20"
-                      : "border-[var(--border)] bg-[var(--muted)]/40 hover:border-[var(--accent)]"
-                )}
-              >
-                {preview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={preview} alt="" className="max-h-40 rounded-xl object-contain" />
-                ) : (
-                  <>
-                    <Upload className="h-8 w-8 text-[var(--accent)]" strokeWidth={1.5} />
-                    <p className="mt-3 font-medium">Drop photo or click to browse</p>
-                    <p className="mt-1 text-xs text-[var(--muted-fg)]">Auto-fills product fields from vision AI</p>
-                  </>
-                )}
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  disabled={uploading}
-                  onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
-                />
-              </label>
+                onFileSelect={upload}
+                disabled={uploading}
+                minHeight="min-h-[180px]"
+                emptyHint="Auto-fills product fields from vision AI"
+                inputId="copy-upload"
+              />
               {uploading && (
                 <p className="mt-1 text-xs text-[var(--muted-fg)]">Uploading and analyzing image…</p>
               )}
             </div>
             <div className="md:col-span-2">
-              <Label>Marketplace</Label>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {MARKETPLACES.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setMarketplace(m.id)}
-                    className={cn(
-                      "rounded-xl border px-4 py-3 text-left text-sm transition-colors",
-                      marketplace === m.id
-                        ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
-                        : "border-[var(--border)] hover:border-[var(--accent)]/50"
-                    )}
-                  >
-                    <span className="font-medium">{m.label}</span>
-                  </button>
-                ))}
-              </div>
+              <Label className="mb-2 block">Marketplace</Label>
+              <MarketplacePicker
+                value={marketplace}
+                onChange={setMarketplace}
+                noteField="copyNote"
+                name="copy-marketplace"
+              />
             </div>
             {(["name", "brandName", "category", "materials", "targetBuyer"] as const).map((key) => (
               <div key={key}>
-                <Label>{FIELD_LABELS[key] ?? key}</Label>
+                <Label htmlFor={`copy-${key}`}>{FIELD_LABELS[key] ?? key}</Label>
                 <Input
+                  id={`copy-${key}`}
                   value={form[key]}
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                 />
               </div>
             ))}
             <div className="md:col-span-2">
-              <Label>Key features</Label>
+              <Label htmlFor="copy-features">Key features</Label>
               <Textarea
+                id="copy-features"
                 value={form.keyFeatures}
                 onChange={(e) => setForm((f) => ({ ...f, keyFeatures: e.target.value }))}
               />
@@ -288,7 +270,7 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
       )}
 
       {loading && !copy?.title && (
-        <Card className="border-[var(--accent)]/20 bg-[var(--accent-soft)]/20">
+        <Card className="border-[var(--accent)]/20 bg-[var(--accent-soft)]/20" aria-busy="true">
           <CardContent className="flex items-center gap-4 py-10">
             <Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
             <div>
@@ -370,8 +352,8 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
             </Button>
             <Button
               variant="outline"
-              onClick={() =>
-                navigator.clipboard.writeText(
+              onClick={async () => {
+                await navigator.clipboard.writeText(
                   [
                     copy.title,
                     "",
@@ -379,10 +361,18 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
                     "",
                     copy.description ?? "",
                   ].join("\n")
-                )
-              }
+                );
+                setCopiedAll(true);
+                setTimeout(() => setCopiedAll(false), 2000);
+              }}
             >
-              Copy all text
+              {copiedAll ? (
+                <>
+                  <Check className="h-4 w-4" /> Copied
+                </>
+              ) : (
+                "Copy all text"
+              )}
             </Button>
             {productId && (
               <Button variant="outline" onClick={() => router.push(`/products/${productId}`)}>

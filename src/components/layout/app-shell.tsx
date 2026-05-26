@@ -30,7 +30,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <AppShellMobileNav />
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8 md:py-12">{children}</main>
+      <main id="main" className="mx-auto max-w-6xl px-4 py-8 pb-24 md:py-12 md:pb-12">
+        {children}
+      </main>
     </div>
   );
 }

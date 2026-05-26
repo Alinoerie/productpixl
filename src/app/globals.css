@@ -107,6 +107,22 @@ html {
   animation: pulse-soft 2s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-fade-up,
+  .animate-pulse-soft,
+  .animate-pulse {
+    animation: none !important;
+  }
+
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .studio-panel {
   border-radius: var(--radius-xl);
   border: 1px solid var(--border);

@@ -19,7 +19,7 @@ export default async function GraderPage() {
   return (
     <div className="min-h-screen bg-hero-glow">
       <SiteHeader />
-      <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+      <main id="main" className="mx-auto max-w-6xl px-4 py-12 md:py-16">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--teal)]">
             Free tool
@@ -43,7 +43,7 @@ export default async function GraderPage() {
             <Link href={ctaHref}>{ctaLabel}</Link>
           </Button>
         </div>
-      </div>
+      </main>
       <SiteFooter />
     </div>
   );

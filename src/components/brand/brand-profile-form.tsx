@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { fetchJson } from "@/lib/fetch-json";
 import type { BrandProfileData } from "@/lib/brand-profile";
 
@@ -52,7 +53,25 @@ export function BrandProfileForm() {
     }
   };
 
-  if (loading) return <p className="text-[var(--muted-fg)]">Loading brand profile…</p>;
+  if (loading) {
+    return (
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardContent className="space-y-4 p-6">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-11 w-full" />
+            <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="h-11 w-full" />
+              <Skeleton className="h-11 w-full" />
+            </div>
+            <Skeleton className="h-11 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </CardContent>
+        </Card>
+        <Skeleton className="min-h-[280px] w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">

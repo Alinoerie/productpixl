@@ -68,6 +68,7 @@ export default async function HomePage() {
     <div className="min-h-screen bg-hero-glow">
       <SiteHeader />
 
+      <main id="main">
       {/* Hero */}
       <section className="relative overflow-hidden px-4 pb-20 pt-16 md:pb-28 md:pt-24">
         <div className="bg-grid absolute inset-0 opacity-40" />
@@ -221,7 +222,7 @@ export default async function HomePage() {
       <section id="compare" className="border-y border-[var(--border)] bg-[var(--ink)] px-4 py-20 text-white">
         <div className="mx-auto max-w-6xl">
           <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-300">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
               Why ProductPixl
             </p>
             <h2 className="mt-3 font-serif text-3xl md:text-4xl">
@@ -246,8 +247,8 @@ export default async function HomePage() {
                 </li>
               </ul>
             </div>
-            <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 p-6">
-              <p className="text-sm font-medium text-orange-200">ProductPixl</p>
+            <div className="rounded-2xl border border-[var(--accent)]/30 bg-[var(--accent)]/10 p-6">
+              <p className="text-sm font-medium text-[var(--accent-soft)]">ProductPixl</p>
               <ul className="mt-4 space-y-3 text-sm">
                 {[
                   "Pay per generation — 10 free credits to start",
@@ -257,7 +258,7 @@ export default async function HomePage() {
                   "Amazon-first with EU / Bol.com positioning",
                 ].map((item) => (
                   <li key={item} className="flex gap-2">
-                    <Check className="h-4 w-4 shrink-0 text-orange-300" />
+                    <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
                     {item}
                   </li>
                 ))}
@@ -271,7 +272,7 @@ export default async function HomePage() {
               { icon: Clock, title: "Hours → minutes", body: "Traditional listing creative: 5–6 hours per SKU. We target a fraction of that." },
             ].map((item) => (
               <div key={item.title} className="flex gap-4 rounded-xl border border-white/10 p-4">
-                <item.icon className="h-6 w-6 shrink-0 text-orange-300" strokeWidth={1.5} />
+                <item.icon className="h-6 w-6 shrink-0 text-[var(--accent)]" strokeWidth={1.5} />
                 <div>
                   <p className="font-semibold">{item.title}</p>
                   <p className="mt-1 text-sm text-white/70">{item.body}</p>
@@ -301,6 +302,7 @@ export default async function HomePage() {
       </section>
 
       <SiteFooter />
+      </main>
     </div>
   );
 }

@@ -160,24 +160,29 @@ export function LandingGallery() {
           </p>
         </div>
 
-        <div className="mt-8 flex flex-wrap gap-2">
-          {SHOWCASE_CASE_STUDIES.map((study) => (
-            <button
-              key={study.id}
-              type="button"
-              onClick={() => setActiveId(study.id)}
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                study.id === activeId
-                  ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--ink)]"
-                  : "border-[var(--border)] bg-[var(--background)] text-[var(--muted-fg)] hover:border-[var(--border-strong)]"
-              }`}
-            >
-              {study.product}
-            </button>
-          ))}
+        <div className="mt-8 flex flex-wrap gap-2" role="tablist" aria-label="Showcase case studies">
+          {SHOWCASE_CASE_STUDIES.map((study) => {
+            const selected = study.id === activeId;
+            return (
+              <button
+                key={study.id}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                onClick={() => setActiveId(study.id)}
+                className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                  selected
+                    ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--ink)]"
+                    : "border-[var(--border)] bg-[var(--background)] text-[var(--muted-fg)] hover:border-[var(--border-strong)]"
+                }`}
+              >
+                {study.product}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="mt-10">
+        <div className="mt-10 transition-opacity duration-300" role="tabpanel">
           <CaseStudyPanel study={active} />
         </div>
       </div>

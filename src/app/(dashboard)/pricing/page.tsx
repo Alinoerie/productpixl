@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { CheckoutButton } from "@/components/pricing/checkout-button";
+import { CreditCalculator } from "@/components/pricing/credit-calculator";
 
 const packs = [
   {
@@ -82,6 +83,14 @@ export default async function PricingPage({
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--muted)]/20 p-6 md:p-8">
+        <h2 className="font-serif text-xl">Estimate your catalog cost</h2>
+        <p className="mt-2 text-sm text-[var(--muted-fg)]">
+          See how pay-per-credit pricing compares before you buy a pack.
+        </p>
+        <CreditCalculator compact />
       </div>
 
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 md:p-8">

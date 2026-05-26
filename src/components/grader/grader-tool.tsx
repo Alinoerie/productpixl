@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { fetchJson } from "@/lib/fetch-json";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX, charCountLabel } from "@/lib/amazon-limits";
 import type { GraderResult } from "@/lib/listing-grader";
@@ -34,6 +36,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GraderResult | null>(null);
   const [error, setError] = useState("");
+  const [tipsCopied, setTipsCopied] = useState(false);
 
   const loadSample = () => {
     setTitle(SAMPLE.title);
@@ -68,6 +71,22 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
     }
   };
 
+  const copyTips = async () => {
+    if (!result) return;
+    const text = [
+      `Grade: ${result.grade} (${result.score}/100)`,
+      result.summary,
+      "",
+      ...result.checks.map((c) => `• ${c.label}: ${c.tip}`),
+      "",
+      "RUFUS tips:",
+      ...result.rufusTips.map((t) => `• ${t}`),
+    ].join("\n");
+    await navigator.clipboard.writeText(text);
+    setTipsCopied(true);
+    setTimeout(() => setTipsCopied(false), 2000);
+  };
+
   const gradeClass = result ? `grade-${result.grade.toLowerCase()}` : "";
   const titleCount = charCountLabel(title, AMAZON_TITLE_MAX);
 
@@ -83,7 +102,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
           </div>
           <div>
             <div className="flex items-center justify-between">
-              <Label>Product title</Label>
+              <Label htmlFor="grader-title">Product title</Label>
               <span
                 className={cn(
                   "text-xs tabular-nums",
@@ -94,6 +113,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
               </span>
             </div>
             <Input
+              id="grader-title"
               value={title}
               maxLength={200}
               onChange={(e) => setTitle(e.target.value)}
@@ -105,7 +125,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
             return (
               <div key={`bullet-${i}`}>
                 <div className="flex items-center justify-between">
-                  <Label>Bullet {i + 1}</Label>
+                  <Label htmlFor={`grader-bullet-${i}`}>Bullet {i + 1}</Label>
                   <span
                     className={cn(
                       "text-xs tabular-nums",
@@ -115,9 +135,11 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
                     {bulletCount.label}
                   </span>
                 </div>
-                <Input
+                <Textarea
+                  id={`grader-bullet-${i}`}
                   value={b}
                   maxLength={500}
+                  rows={2}
                   onChange={(e) => {
                     const next = [...bullets];
                     next[i] = e.target.value;
@@ -142,8 +164,14 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        {result ? (
+      <div className="space-y-4" aria-live="polite" aria-busy={loading}>
+        {loading ? (
+          <>
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </>
+        ) : result ? (
           <>
             <Card className="overflow-hidden">
               <CardContent className="flex items-center gap-6 p-6">
@@ -167,7 +195,14 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
                       {c.score}/{c.max}
                     </span>
                   </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--muted)]">
+                  <div
+                    className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--muted)]"
+                    role="progressbar"
+                    aria-valuenow={c.score}
+                    aria-valuemin={0}
+                    aria-valuemax={c.max}
+                    aria-label={c.label}
+                  >
                     <div
                       className="h-full rounded-full bg-[var(--accent)]"
                       style={{ width: `${(c.score / c.max) * 100}%` }}
@@ -187,11 +222,22 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
                 </ul>
               </CardContent>
             </Card>
-            <Button asChild className="w-full">
-              <Link href={signedIn ? "/generate" : "/login"}>
-                {signedIn ? "Generate gallery + copy →" : "Fix listing with ProductPixl →"}
-              </Link>
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button type="button" variant="outline" className="flex-1" onClick={copyTips}>
+                {tipsCopied ? (
+                  <>
+                    <Check className="h-4 w-4" /> Copied checklist
+                  </>
+                ) : (
+                  "Copy improvement checklist"
+                )}
+              </Button>
+              <Button asChild className="flex-1">
+                <Link href={signedIn ? "/generate" : "/login"}>
+                  {signedIn ? "Generate gallery + copy →" : "Fix listing with ProductPixl →"}
+                </Link>
+              </Button>
+            </div>
           </>
         ) : (
           <Card className="border-dashed">
