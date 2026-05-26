@@ -52,7 +52,7 @@ pnpm inngest:dev
 
 **Credits:** 10 free on signup · 1 credit per image run, copy run, or spot-edit.
 
-**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready and failed-project filters, marketplace-aware export (txt/csv/json + gallery ZIP), in-app unsaved guards on project/copy/brand pages, failed-module retry in gallery, payment success polling after Stripe checkout, grader → copy draft flow with persisted grades, marketplace guidance in generate/copy studios, smart pack recommendations on pricing, and collapsible listing bullets on mobile.
+**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready and failed-project filters, marketplace-aware export (txt/csv/json + gallery ZIP), in-app unsaved guards on project/copy/brand pages, failed-module retry in gallery, payment success polling after Stripe checkout, grader → copy draft flow with persisted grades, marketplace guidance in generate/copy studios, smart pack recommendations on pricing, collapsible listing bullets on mobile, mobile More menu for Brand/Credits, debounced project search, and re-grade from readiness checklist.
 
 ## Pipeline docs
 
@@ -63,14 +63,14 @@ pnpm inngest:dev
 
 - [ ] Sign in with Google → dashboard shows 10 credits
 - [ ] `/dashboard` — hero stats link to projects, export-ready, and failed runs when present
-- [ ] `/projects` — search/filter (failed, export-ready, queued), open generate or copy handoffs
+- [ ] `/projects` — search/filter (debounced search, failed, export-ready, queued), open generate or copy handoffs
 - [ ] `/grader` — grade listing without login; hand off to copy studio when signed in
 - [ ] `/brand` — save colors/tone, mobile save bar, unsaved navigation guard
 - [ ] `/generate` — marketplace picker + pipeline completes → export/copy CTAs
 - [ ] `/copy` — regenerate copy, bullet add/remove, per-field copy, marketplace guidance, fixed mobile save bar, unsaved guard
 - [ ] `/generate` — marketplace guidance, navigation guard during multi-step runs, gallery ZIP on completion
-- [ ] `/products/[id]` — readiness checklist, section nav, collapsible bullets on mobile, marketplace export (ZIP + txt/csv/json), gallery filters + failed-module retry, spot-edit on completed assets
-- [ ] `/account` — balance, credit usage guide, order history, payment return banner
+- [ ] `/products/[id]` — readiness checklist with re-grade, section nav below header, collapsible bullets on mobile, marketplace export (ZIP + txt/csv/json), gallery filters + failed-module retry, spot-edit on completed assets
+- [ ] `/account` — balance, credit usage guide, order history, sign out, payment return banner
 - [ ] `/pricing` — current balance, smart pack recommendation tied to calculator, checkout return banner
 
 ## Stub mode

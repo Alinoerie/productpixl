@@ -149,12 +149,24 @@ export function ProductReadiness({
           if (step.isGrade && listingCopy) {
             if (step.done) {
               return (
-                <li
-                  key={step.key}
-                  className="inline-flex items-center gap-2 rounded-full border border-[var(--success-border)] bg-[var(--success-bg)] px-3 py-2 text-xs font-medium"
-                >
-                  <Check className="h-4 w-4 shrink-0 text-[var(--success)]" strokeWidth={2.5} />
-                  <span className="text-[var(--foreground)]">{gradeLabel}</span>
+                <li key={step.key}>
+                  <GradeListingButton
+                    productId={productId}
+                    listingCopy={{
+                      title: listingCopy.title,
+                      bullets: listingCopy.bullets,
+                      description: listingCopy.description ?? undefined,
+                      backendKeywords: listingCopy.backendKeywords ?? undefined,
+                      productId,
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="h-auto gap-2 rounded-full border-[var(--success-border)] bg-[var(--success-bg)] px-3 py-2 text-xs font-medium hover:bg-[var(--success-bg)]"
+                  >
+                    <Check className="h-4 w-4 shrink-0 text-[var(--success)]" strokeWidth={2.5} />
+                    {gradeLabel}
+                    <span className="text-[var(--accent)]">· Review tips</span>
+                  </GradeListingButton>
                 </li>
               );
             }

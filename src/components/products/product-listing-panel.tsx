@@ -178,7 +178,7 @@ export function ProductListingPanel({
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-base">Title</CardTitle>
             <div className="flex items-center gap-2">
-              <CharCounter value={title} max={AMAZON_TITLE_MAX} />
+              <CharCounter id="listing-title-counter" value={title} max={AMAZON_TITLE_MAX} />
               <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => copyField("Title", title)}>
                 <Copy className="h-3.5 w-3.5" />
                 <span className="sr-only">Copy title</span>
@@ -194,6 +194,8 @@ export function ProductListingPanel({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="min-h-[72px] font-medium"
+              aria-describedby="listing-title-counter"
+              aria-invalid={titleOver || undefined}
             />
           </CardContent>
         </Card>
@@ -235,7 +237,7 @@ export function ProductListingPanel({
               <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
                 <CardTitle className="text-base">Bullet {i + 1}</CardTitle>
                 <div className="flex items-center gap-1">
-                  <CharCounter value={b} max={AMAZON_BULLET_MAX} />
+                  <CharCounter id={`listing-bullet-${i}-counter`} value={b} max={AMAZON_BULLET_MAX} />
                   <Button
                     type="button"
                     variant="ghost"
@@ -262,7 +264,10 @@ export function ProductListingPanel({
               </CardHeader>
               <CardContent>
                 {bulletOver ? (
-                  <LimitWarning message={`Over ${AMAZON_BULLET_MAX} characters — trim before publishing.`} />
+                  <LimitWarning
+                    id={`listing-bullet-${i}-warning`}
+                    message={`Over ${AMAZON_BULLET_MAX} characters — trim before publishing.`}
+                  />
                 ) : null}
                 <Label htmlFor={`listing-bullet-${i}`} className="sr-only">
                   Bullet {i + 1}
@@ -275,6 +280,12 @@ export function ProductListingPanel({
                     next[i] = e.target.value;
                     setBullets(next);
                   }}
+                  aria-describedby={
+                    bulletOver
+                      ? `listing-bullet-${i}-counter listing-bullet-${i}-warning`
+                      : `listing-bullet-${i}-counter`
+                  }
+                  aria-invalid={bulletOver || undefined}
                 />
               </CardContent>
             </Card>

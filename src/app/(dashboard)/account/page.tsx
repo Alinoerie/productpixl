@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { CreditUsageGuide } from "@/components/account/credit-usage-guide";
+import { SignOutButton } from "@/components/account/sign-out-button";
 import { formatOrderStatus } from "@/lib/status-labels";
 
 function formatAmount(cents: number) {
@@ -125,6 +126,16 @@ export default async function AccountPage({
           )}
         </CardContent>
       </Card>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
+        <div>
+          <p className="text-sm font-medium">Session</p>
+          <p className="mt-1 text-sm text-[var(--muted-fg)]">
+            Signed in with Google. Sign out to switch accounts on this device.
+          </p>
+        </div>
+        <SignOutButton />
+      </div>
     </div>
   );
 }

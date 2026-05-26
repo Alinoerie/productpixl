@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
@@ -49,11 +50,17 @@ export function ProjectsFilterBar({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
   const status = searchParams.get("status") ?? "";
   const copy = searchParams.get("copy") ?? "";
   const images = searchParams.get("images") ?? "";
   const ready = searchParams.get("ready") ?? "";
   const q = searchParams.get("q") ?? "";
+  const [search, setSearch] = useState(q);
+
+  useEffect(() => {
+    setSearch(q);
+  }, [q]);
 
   const push = (next: Record<string, string>) => {
     const merged = {
@@ -63,8 +70,20 @@ export function ProjectsFilterBar({
       ready: next.ready ?? ready,
       q: next.q ?? q,
     };
-    router.push(`/projects${buildProjectsQuery({ ...merged, page: "1" })}`);
+    startTransition(() => {
+      router.push(`/projects${buildProjectsQuery({ ...merged, page: "1" })}`);
+    });
   };
+
+  useEffect(() => {
+    const trimmed = search.trim();
+    if (trimmed === q) return;
+    const timer = window.setTimeout(() => {
+      push({ q: trimmed });
+    }, 300);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- debounce only when search text changes
+  }, [search]);
 
   return (
     <div className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-[var(--shadow-sm)]">
@@ -72,6 +91,12 @@ export function ProjectsFilterBar({
         <p className="text-sm text-[var(--muted-fg)]">
           Showing <strong className="text-[var(--foreground)]">{filtered}</strong>
           {filtered !== total ? ` of ${total}` : ""} project{filtered === 1 ? "" : "s"}
+          {isPending ? (
+            <span className="ml-2 inline-flex items-center gap-1 text-[var(--accent)]">
+              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+              Updating…
+            </span>
+          ) : null}
         </p>
         {(status || copy || images || ready || q) ? (
           <Link
@@ -82,24 +107,23 @@ export function ProjectsFilterBar({
           </Link>
         ) : null}
       </div>
-      <form
-        className="relative max-w-md"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const fd = new FormData(e.currentTarget);
-          push({ q: String(fd.get("q") ?? "").trim() });
-        }}
-      >
+      <div className="relative max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-fg)]" />
         <Input
-          key={q}
           name="q"
-          defaultValue={q}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              push({ q: search.trim() });
+            }
+          }}
           placeholder="Search by product name…"
           className="pl-9"
           aria-label="Search projects"
         />
-      </form>
+      </div>
       <div className="flex flex-wrap gap-2">
         {STATUS_OPTIONS.map((opt) => (
           <button

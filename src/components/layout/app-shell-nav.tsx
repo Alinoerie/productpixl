@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Camera, ClipboardCheck, CreditCard, FileText, FolderOpen, LayoutGrid, Palette, User } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Camera,
+  ClipboardCheck,
+  CreditCard,
+  FileText,
+  FolderOpen,
+  LayoutGrid,
+  MoreHorizontal,
+  Palette,
+  User,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -17,8 +28,15 @@ const nav = [
 ];
 
 const mobileNav = nav.filter((item) =>
-  ["/dashboard", "/projects", "/generate", "/copy", "/grader"].includes(item.href)
+  ["/dashboard", "/projects", "/generate", "/copy"].includes(item.href)
 );
+
+const moreLinks = [
+  { href: "/grader", label: "Grader", icon: ClipboardCheck },
+  { href: "/brand", label: "Brand", icon: Palette },
+  { href: "/pricing", label: "Credits", icon: CreditCard },
+  { href: "/account", label: "Account", icon: User },
+];
 
 function isActive(pathname: string, href: string) {
   return (
@@ -56,6 +74,77 @@ export function AppShellNav({ className }: { className?: string }) {
   );
 }
 
+function MobileMoreMenu() {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const moreActive = moreLinks.some((item) => isActive(pathname, item.href));
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [open]);
+
+  return (
+    <div ref={panelRef} className="relative">
+      {open ? (
+        <div
+          className="absolute bottom-full left-1/2 z-50 mb-2 w-44 -translate-x-1/2 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1 shadow-[var(--shadow-md)]"
+          role="menu"
+          aria-label="More studio links"
+        >
+          {moreLinks.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              aria-current={isActive(pathname, item.href) ? "page" : undefined}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                isActive(pathname, item.href)
+                  ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                  : "text-[var(--foreground)] hover:bg-[var(--muted)]"
+              )}
+            >
+              <item.icon className="h-4 w-4" strokeWidth={1.5} />
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label="More"
+        title="More"
+        onClick={() => setOpen((value) => !value)}
+        className={cn(
+          "flex min-h-[44px] w-full flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors",
+          open || moreActive ? "text-[var(--accent)]" : "text-[var(--muted-fg)]"
+        )}
+      >
+        <MoreHorizontal className={cn("h-5 w-5", (open || moreActive) && "stroke-[2.5px]")} strokeWidth={1.5} />
+        <span>More</span>
+      </button>
+    </div>
+  );
+}
+
 export function AppShellMobileNav() {
   const pathname = usePathname();
 
@@ -84,6 +173,7 @@ export function AppShellMobileNav() {
             </Link>
           );
         })}
+        <MobileMoreMenu />
       </div>
     </nav>
   );

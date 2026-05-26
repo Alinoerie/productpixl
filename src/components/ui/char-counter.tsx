@@ -28,9 +28,10 @@ export function CharCounter({
   );
 }
 
-export function LimitWarning({ message }: { message: string }) {
+export function LimitWarning({ message, id }: { message: string; id?: string }) {
   return (
     <p
+      id={id}
       role="alert"
       aria-live="polite"
       className="rounded-lg border border-[var(--warning-border)] bg-[var(--warning-bg)] px-3 py-2 text-sm text-[var(--warning)]"
