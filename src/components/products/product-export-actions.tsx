@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Copy, Download, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast-provider";
+import { GradeListingButton } from "@/components/products/grade-listing-button";
 
 type CopyPayload = {
   title?: string | null;
@@ -106,9 +107,21 @@ export function ProductExportActions({
               <Link href={`/copy?productId=${productId}`}>Generate copy</Link>
             </Button>
           ) : null}
-          <Button asChild variant="outline" size="sm">
-            <Link href="/grader">Grade listing copy</Link>
-          </Button>
+          {listingCopy?.title ? (
+            <GradeListingButton
+              listingCopy={{
+                title: listingCopy.title,
+                bullets: listingCopy.bullets ?? [],
+                description: listingCopy.description ?? undefined,
+                backendKeywords: listingCopy.backendKeywords ?? undefined,
+              }}
+              size="sm"
+            />
+          ) : (
+            <Button asChild variant="outline" size="sm">
+              <Link href="/grader">Grade listing copy</Link>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

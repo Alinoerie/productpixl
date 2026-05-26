@@ -18,6 +18,7 @@ export default async function CopyPage({
       include: { listingCopy: true },
     });
     if (product) {
+      const bullets = (product.listingCopy?.bullets as string[] | null) ?? [];
       linkedProduct = {
         id: product.id,
         name: product.name,
@@ -27,14 +28,25 @@ export default async function CopyPage({
         keyFeatures: product.keyFeatures,
         targetBuyer: product.targetBuyer,
         amazonCategory: product.amazonCategory,
+        listingCopy: product.listingCopy?.title
+          ? {
+              title: product.listingCopy.title,
+              bullets,
+              description: product.listingCopy.description ?? undefined,
+              backendKeywords: product.listingCopy.backendKeywords ?? undefined,
+            }
+          : null,
       };
     }
   }
+
+  const missingProductId = Boolean(params.productId && session?.user?.id && !linkedProduct);
 
   return (
     <CopyWorkspace
       initialCredits={session?.user?.credits ?? 0}
       linkedProduct={linkedProduct}
+      missingProductId={missingProductId}
     />
   );
 }

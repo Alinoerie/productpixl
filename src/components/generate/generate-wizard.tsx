@@ -53,12 +53,34 @@ interface PromptPlanItem {
 
 const STEPS = ["Upload", "Product info", "Prompt plan", "Results"];
 
-export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
+type LinkedProduct = {
+  id: string;
+  name: string;
+  inputImageUrl: string;
+  marketplace: MarketplaceId;
+  dimensions?: string | null;
+  materials?: string | null;
+  colors?: string | null;
+  keyFeatures?: string | null;
+  targetBuyer?: string | null;
+  amazonCategory?: string | null;
+};
+
+export function GenerateWizard({
+  initialCredits,
+  linkedProduct = null,
+  missingProductId = false,
+}: {
+  initialCredits: number;
+  linkedProduct?: LinkedProduct | null;
+  missingProductId?: boolean;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const previewUrlRef = useRef<string | null>(null);
   const stepperRef = useRef<HTMLDivElement>(null);
   const completionRef = useRef<HTMLDivElement>(null);
+  const [linkedProductId, setLinkedProductId] = useState<string | null>(linkedProduct?.id ?? null);
   const [step, setStep] = useState(0);
   const [imageUrl, setImageUrl] = useState("");
   const [preview, setPreview] = useState("");
@@ -165,6 +187,27 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!linkedProduct) return;
+    setLinkedProductId(linkedProduct.id);
+    setMarketplace(linkedProduct.marketplace);
+    setForm({
+      name: linkedProduct.name,
+      brandName: "",
+      category: linkedProduct.amazonCategory ?? "",
+      dimensions: linkedProduct.dimensions ?? "",
+      materials: linkedProduct.materials ?? "",
+      colors: linkedProduct.colors ?? "",
+      keyFeatures: linkedProduct.keyFeatures ?? "",
+      targetBuyer: linkedProduct.targetBuyer ?? "",
+    });
+    if (linkedProduct.inputImageUrl) {
+      setImageUrl(linkedProduct.inputImageUrl);
+      setPreview(linkedProduct.inputImageUrl);
+      setStep(1);
+    }
+  }, [linkedProduct]);
+
   const buildPromptPlan = useCallback(async () => {
     setError("");
     setPlanningPrompts(true);
@@ -209,6 +252,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            existingProductId: linkedProductId ?? undefined,
             inputImageUrl: imageUrl,
             includePackaging,
             marketplace,
@@ -221,7 +265,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
         throw new Error("INSUFFICIENT_CREDITS");
       }
       if (!ok) throw new Error(data.error || "Failed to start");
-      setProductId(data.productId ?? null);
+      setProductId(data.productId ?? linkedProductId ?? null);
       setPipelineFailed(false);
       setStep(3);
       window.dispatchEvent(new Event("credits-updated"));
@@ -291,10 +335,11 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
   const resetWizard = useCallback((mode: "prompt" | "fresh") => {
     setPipelineFailed(false);
     setPipelineStatus(null);
-    setProductId(null);
     setError("");
     setDownloading(false);
     if (mode === "fresh") {
+      setProductId(null);
+      setLinkedProductId(null);
       setStep(0);
       setPromptPlan([]);
       setImageUrl("");
@@ -370,6 +415,22 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
       <div ref={stepperRef}>
         <StudioStepper steps={STEPS} currentStep={step} label="Generation progress" />
       </div>
+
+      {missingProductId ? (
+        <p className="rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]">
+          That project link is invalid or no longer exists. Start a new run below or return to{" "}
+          <Link href="/projects" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
+            all projects
+          </Link>
+          .
+        </p>
+      ) : null}
+
+      {linkedProduct ? (
+        <div className="rounded-xl border border-[var(--teal)]/30 bg-[var(--teal-soft)]/40 px-4 py-3 text-sm">
+          Continuing run for <strong>{linkedProduct.name}</strong> — product photo and details are pre-filled.
+        </div>
+      ) : null}
 
       {error && error !== "INSUFFICIENT_CREDITS" ? (
         <p className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">{error}</p>
@@ -583,7 +644,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
                 </div>
               )}
             </div>
-            <div className="flex gap-3">
+            <div className="sticky bottom-0 z-10 -mx-6 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
               <Button variant="outline" onClick={() => setStep(1)}>
                 Back
               </Button>
@@ -711,7 +772,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
                 View full project
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-xl">
-                <Link href="/copy">Generate listing copy</Link>
+                <Link href={productId ? `/copy?productId=${productId}` : "/copy"}>Generate listing copy</Link>
               </Button>
             </div>
           )}

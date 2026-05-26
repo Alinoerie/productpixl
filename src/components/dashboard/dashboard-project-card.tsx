@@ -114,7 +114,7 @@ export function DashboardProjectCard({
         </Link>
         {status === "FAILED" ? (
           <Button asChild size="sm" variant="outline" className="mt-3 w-full">
-            <Link href="/generate">Retry in Image studio</Link>
+            <Link href={`/generate?productId=${id}`}>Retry in Image studio</Link>
           </Button>
         ) : null}
       </CardContent>

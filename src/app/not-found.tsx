@@ -24,9 +24,17 @@ export default async function NotFound() {
           </Link>
         </Button>
         {signedIn ? (
-          <Button asChild>
-            <Link href="/dashboard">Open studio</Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href="/generate">Image studio</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/projects">All projects</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/dashboard">Open studio</Link>
+            </Button>
+          </>
         ) : (
           <Button asChild>
             <Link href="/login">Sign in</Link>

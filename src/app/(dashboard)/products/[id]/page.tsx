@@ -10,6 +10,7 @@ import { ProductLiveGallery } from "@/components/products/product-live-gallery";
 import { ProductDeleteButton } from "@/components/products/product-delete-button";
 import { ProductExportActions } from "@/components/products/product-export-actions";
 import { ProductListingPanel } from "@/components/products/product-listing-panel";
+import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { getMarketplace } from "@/lib/marketplaces";
 import {
   formatProductStatus,
@@ -75,17 +76,22 @@ export default async function ProductPage({
             </Button>
           ) : null}
           {product.listingCopy?.title ? (
-            <Button asChild variant="outline">
-              <Link href="/grader">Grade listing</Link>
-            </Button>
+            <GradeListingButton
+              listingCopy={{
+                title: product.listingCopy.title,
+                bullets,
+                description: product.listingCopy.description ?? undefined,
+                backendKeywords: product.listingCopy.backendKeywords ?? undefined,
+              }}
+            />
           ) : null}
           {product.status === "FAILED" ? (
             <Button asChild>
-              <Link href="/generate">Retry run</Link>
+              <Link href={`/generate?productId=${product.id}`}>Retry run</Link>
             </Button>
           ) : (
             <Button asChild variant="outline">
-              <Link href="/generate">New image run</Link>
+              <Link href={`/generate?productId=${product.id}`}>New image run</Link>
             </Button>
           )}
           <Button asChild variant="outline">
@@ -97,7 +103,7 @@ export default async function ProductPage({
       {product.status === "FAILED" && (
         <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
           Generation failed. Try a new run from{" "}
-          <Link href="/generate" className="font-medium underline">
+          <Link href={`/generate?productId=${product.id}`} className="font-medium underline">
             Image studio
           </Link>{" "}
           or spot-edit individual modules below.
@@ -135,7 +141,7 @@ export default async function ProductPage({
               Start an image pipeline to populate this project.
             </p>
             <Button asChild className="mt-6">
-              <Link href="/generate">Run image studio</Link>
+              <Link href={`/generate?productId=${product.id}`}>Run image studio</Link>
             </Button>
           </CardContent>
         </Card>

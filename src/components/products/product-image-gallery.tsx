@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, X, ZoomIn } from "lucide-react";
 import { formatModuleLabel } from "@/lib/status-labels";
 import { AssetSpotEdit } from "@/components/products/asset-spot-edit";
 
@@ -58,6 +58,23 @@ export function ProductImageGallery({
       return i === viewableAssets.length - 1 ? 0 : i + 1;
     });
   }, [viewableAssets.length]);
+
+  const downloadLightboxImage = useCallback(async () => {
+    if (!lightbox?.imageUrl) return;
+    try {
+      const res = await fetch(lightbox.imageUrl);
+      if (!res.ok) throw new Error("Fetch failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${productName.replace(/\s+/g, "-").toLowerCase()}-${lightbox.moduleId}.jpg`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(lightbox.imageUrl, "_blank", "noopener,noreferrer");
+    }
+  }, [lightbox, productName]);
 
   useEffect(() => {
     if (lightboxIndex == null) return;
@@ -131,7 +148,7 @@ export function ProductImageGallery({
                       alt={`${productName} — ${formatModuleLabel(a.moduleId)}`}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                     />
-                    <span className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    <span className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                       <ZoomIn className="h-4 w-4" />
                     </span>
                   </button>
@@ -212,13 +229,23 @@ export function ProductImageGallery({
               alt={`${productName} — ${formatModuleLabel(lightbox.moduleId)}`}
               className="max-h-[85vh] w-auto rounded-xl object-contain shadow-2xl"
             />
-            <p className="mt-3 text-center text-sm text-white/80">
-              {formatModuleLabel(lightbox.moduleId)}
-              {lightbox.qaScore != null ? ` · QA ${lightbox.qaScore}/10` : ""}
-              {viewableAssets.length > 1 ? (
-                <> · {lightboxIndex! + 1} of {viewableAssets.length}</>
-              ) : null}
-            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+              <p className="text-center text-sm text-white/80">
+                {formatModuleLabel(lightbox.moduleId)}
+                {lightbox.qaScore != null ? ` · QA ${lightbox.qaScore}/10` : ""}
+                {viewableAssets.length > 1 ? (
+                  <> · {lightboxIndex! + 1} of {viewableAssets.length}</>
+                ) : null}
+              </p>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
+                onClick={() => void downloadLightboxImage()}
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

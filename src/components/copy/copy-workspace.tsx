@@ -30,6 +30,12 @@ type LinkedProduct = {
   keyFeatures?: string | null;
   targetBuyer?: string | null;
   amazonCategory?: string | null;
+  listingCopy?: {
+    title: string;
+    bullets: string[];
+    description?: string;
+    backendKeywords?: string;
+  } | null;
 };
 
 const COPY_STEPS = ["Details", "Generate", "Edit copy"];
@@ -45,9 +51,11 @@ const FIELD_LABELS: Record<string, string> = {
 export function CopyWorkspace({
   initialCredits,
   linkedProduct = null,
+  missingProductId = false,
 }: {
   initialCredits: number;
   linkedProduct?: LinkedProduct | null;
+  missingProductId?: boolean;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -139,6 +147,23 @@ export function CopyWorkspace({
     if (linkedProduct.inputImageUrl) {
       setImageUrl(linkedProduct.inputImageUrl);
       setPreview(linkedProduct.inputImageUrl);
+    }
+    if (linkedProduct.listingCopy?.title) {
+      const baseline = {
+        title: linkedProduct.listingCopy.title,
+        bullets: linkedProduct.listingCopy.bullets,
+        description: linkedProduct.listingCopy.description ?? "",
+        backendKeywords: linkedProduct.listingCopy.backendKeywords ?? "",
+      };
+      setProductId(linkedProduct.id);
+      setCopy({
+        title: baseline.title,
+        bullets: baseline.bullets,
+        description: baseline.description,
+        backendKeywords: baseline.backendKeywords,
+        status: "COMPLETE",
+      });
+      setSavedBaseline(baseline);
     }
   }, [linkedProduct]);
 
@@ -399,9 +424,28 @@ export function CopyWorkspace({
 
       <StudioStepper steps={COPY_STEPS} currentStep={copyStep} label="Copy pipeline progress" />
 
+      {missingProductId ? (
+        <p className="rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]">
+          That project link is invalid or no longer exists. Start a new copy run below or return to{" "}
+          <Link href="/projects" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
+            all projects
+          </Link>
+          .
+        </p>
+      ) : null}
+
       {linkedProduct ? (
         <div className="rounded-xl border border-[var(--teal)]/30 bg-[var(--teal-soft)]/40 px-4 py-3 text-sm">
-          Generating copy for <strong>{linkedProduct.name}</strong> — saves to your existing project.
+          {linkedProduct.listingCopy?.title ? (
+            <>
+              Editing existing copy for <strong>{linkedProduct.name}</strong>. Regenerating costs 1 credit and
+              replaces the current listing.
+            </>
+          ) : (
+            <>
+              Generating copy for <strong>{linkedProduct.name}</strong> — saves to your existing project.
+            </>
+          )}
         </div>
       ) : fromGrader && copy?.title && !productId ? (
         <div className="rounded-xl border border-[var(--accent)]/20 bg-[var(--accent-soft)]/30 px-4 py-3 text-sm text-[var(--foreground)]">
@@ -432,6 +476,14 @@ export function CopyWorkspace({
       {!copy?.title && !loading && (
         <Card>
           <CardContent className="grid gap-4 pt-6 md:grid-cols-2">
+            {linkedProduct?.listingCopy?.title ? (
+              <div className="md:col-span-2 rounded-xl border border-[var(--border)] bg-[var(--muted)]/40 p-4 text-sm">
+                <p className="font-medium">This project already has listing copy.</p>
+                <p className="mt-1 text-[var(--muted-fg)]">
+                  Scroll down to edit, or regenerate below to replace it with fresh AI copy (1 credit).
+                </p>
+              </div>
+            ) : null}
             <div className="md:col-span-2">
               <Label htmlFor="copy-upload">Product image (optional but improves accuracy)</Label>
               <UploadDropzone

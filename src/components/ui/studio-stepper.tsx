@@ -12,6 +12,7 @@ export function StudioStepper({
   label?: string;
 }) {
   const progress = ((currentStep + 1) / steps.length) * 100;
+  const stepLabel = steps[currentStep] ?? "";
 
   return (
     <div className="space-y-3">
@@ -19,7 +20,7 @@ export function StudioStepper({
         <span>
           Step {currentStep + 1} of {steps.length}
         </span>
-        <span className="text-[var(--foreground)]">{steps[currentStep]}</span>
+        <span className="text-[var(--foreground)]">{stepLabel}</span>
       </div>
       <div
         className="h-1.5 overflow-hidden rounded-full bg-[var(--muted)]"
@@ -28,6 +29,7 @@ export function StudioStepper({
         aria-valuenow={currentStep + 1}
         aria-valuemin={1}
         aria-valuemax={steps.length}
+        aria-valuetext={`${label}: step ${currentStep + 1} of ${steps.length}, ${stepLabel}`}
       >
         <div
           className="h-full rounded-full bg-[var(--accent)] transition-all duration-500 ease-out"
