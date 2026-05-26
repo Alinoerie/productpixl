@@ -41,14 +41,18 @@ pnpm inngest:dev
 
 | Feature | Route |
 |--------|--------|
+| Dashboard & projects | `/dashboard`, `/projects` |
 | Image pipeline (L1/L3/L4/L8) | `/generate` |
 | Listing copy | `/copy` |
-| Brand profile (colors, tone) | `/brand` |
+| Brand profile (colors, tone, logo) | `/brand` |
 | Free listing grader (A–F) | `/grader` |
 | Spot-edit single module | Product page → 1 credit |
+| Export hub (images + copy JSON) | `/products/[id]#export` |
 | Marketplaces | Amazon US/UK/DE, Bol.com, Shopify |
 
 **Credits:** 10 free on signup · 1 credit per image run, copy run, or spot-edit.
+
+**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist, payment success polling after Stripe checkout, and grader → copy draft flow.
 
 ## Pipeline docs
 
@@ -58,11 +62,13 @@ pnpm inngest:dev
 ## Manual test checklist
 
 - [ ] Sign in with Google → dashboard shows 10 credits
-- [ ] `/grader` — grade listing without login
+- [ ] `/projects` — search/filter projects, open generate or copy handoffs
+- [ ] `/grader` — grade listing without login; hand off to copy studio when signed in
 - [ ] `/brand` — save colors/tone → reflected in generation
-- [ ] `/generate` — marketplace picker + pipeline completes
-- [ ] `/products/[id]` — spot-edit on completed asset
-- [ ] `/copy` — Bol.com or EU marketplace copy
+- [ ] `/generate` — marketplace picker + pipeline completes → export/copy CTAs
+- [ ] `/copy` — regenerate copy, completion handoff, save to project
+- [ ] `/products/[id]` — readiness checklist, export hub, spot-edit on completed asset
+- [ ] `/pricing` — Stripe checkout return shows credit refresh banner
 
 ## Stub mode
 

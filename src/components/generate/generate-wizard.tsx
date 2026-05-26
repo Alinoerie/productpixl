@@ -790,13 +790,30 @@ export function GenerateWizard({
             </>
           ) : null}
           {done && productId && (
-            <div ref={completionRef} className="flex flex-wrap gap-3">
-              <Button size="lg" className="rounded-xl" onClick={() => router.push(`/products/${productId}`)}>
-                View full project
-              </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-xl">
-                <Link href={productId ? `/copy?productId=${productId}` : "/copy"}>Generate listing copy</Link>
-              </Button>
+            <div
+              ref={completionRef}
+              className="scroll-mt-24 space-y-4 rounded-2xl border border-[var(--success-border)] bg-[var(--success-bg)]/40 p-5"
+            >
+              <div>
+                <p className="font-semibold">Gallery complete — finish your listing</p>
+                <p className="mt-1 text-sm text-[var(--muted-fg)]">
+                  Download images, write copy, grade, and export from your project hub.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button size="lg" className="rounded-xl" onClick={() => router.push(`/products/${productId}`)}>
+                  View full project
+                </Button>
+                <Button asChild size="lg" variant="outline" className="rounded-xl">
+                  <Link href={`/copy?productId=${productId}`}>Generate listing copy</Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="rounded-xl">
+                  <Link href={`/products/${productId}#export`}>Export hub</Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="rounded-xl">
+                  <Link href="/grader">Grade listing copy</Link>
+                </Button>
+              </div>
             </div>
           )}
         </div>

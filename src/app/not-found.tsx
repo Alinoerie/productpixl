@@ -8,7 +8,7 @@ export default async function NotFound() {
   const signedIn = Boolean(session?.user?.id);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-hero-glow px-4 text-center">
+    <main id="main" className="flex min-h-screen flex-col items-center justify-center bg-hero-glow px-4 text-center">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">404</p>
       <h1 className="mt-4 font-serif text-4xl md:text-5xl">Page not found</h1>
       <p className="mt-4 max-w-md text-[var(--muted-fg)]">
@@ -41,6 +41,6 @@ export default async function NotFound() {
           </Button>
         )}
       </div>
-    </div>
+    </main>
   );
 }

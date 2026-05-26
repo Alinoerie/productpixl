@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { Suspense, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Check, Save, Camera } from "lucide-react";
+import { Loader2, Check, Save, Camera, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,7 @@ import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft } from "@/lib/copy-draft";
 import { useLiveCredits } from "@/hooks/use-live-credits";
+import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { type MarketplaceId, getMarketplace } from "@/lib/marketplaces";
 
 type LinkedProduct = {
@@ -59,17 +60,22 @@ export function CopyWorkspace({
   missingProductId = false,
   brandConfigured = true,
   defaultBrandName = "",
+  paymentSuccess = false,
 }: {
   initialCredits: number;
   linkedProduct?: LinkedProduct | null;
   missingProductId?: boolean;
   brandConfigured?: boolean;
   defaultBrandName?: string;
+  paymentSuccess?: boolean;
 }) {
   const router = useRouter();
   const { toast } = useToast();
   const [credits] = useLiveCredits(initialCredits);
   const previewUrlRef = useRef<string | null>(null);
+  const completionRef = useRef<HTMLDivElement>(null);
+  const awaitingCompletion = useRef(false);
+  const [showCompletionNudge, setShowCompletionNudge] = useState(false);
   const [linkedProductId, setLinkedProductId] = useState<string | null>(linkedProduct?.id ?? null);
   const [fromGrader, setFromGrader] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
@@ -236,6 +242,8 @@ export function CopyWorkspace({
   const generate = async () => {
     setLoading(true);
     setError("");
+    setShowCompletionNudge(false);
+    awaitingCompletion.current = true;
     try {
       const res = await fetch("/api/generate/copy", {
         method: "POST",
@@ -256,7 +264,22 @@ export function CopyWorkspace({
       const msg = e instanceof Error ? e.message : "Failed";
       setError(msg === "INSUFFICIENT_CREDITS" ? "INSUFFICIENT_CREDITS" : msg);
       setLoading(false);
+      awaitingCompletion.current = false;
     }
+  };
+
+  const regenerateCopy = async () => {
+    if (
+      !window.confirm(
+        "Regenerate listing copy? This replaces the current text and costs 1 credit."
+      )
+    ) {
+      return;
+    }
+    setCopy(null);
+    setSavedBaseline(null);
+    setShowCompletionNudge(false);
+    await generate();
   };
 
   useEffect(() => {
@@ -279,7 +302,15 @@ export function CopyWorkspace({
         if (data.listingCopy.status === "COMPLETE" || data.listingCopy.status === "FAILED") {
           setLoading(false);
           if (data.listingCopy.status === "FAILED") {
+            awaitingCompletion.current = false;
             setError(data.listingCopy.errorMessage || "Copy generation failed");
+          } else if (awaitingCompletion.current) {
+            awaitingCompletion.current = false;
+            setShowCompletionNudge(true);
+            toast("Listing copy ready — review and save to your project");
+            requestAnimationFrame(() => {
+              completionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
           }
         }
       } else if (attempts > 90) {
@@ -290,7 +321,7 @@ export function CopyWorkspace({
     poll();
     const id = setInterval(poll, 2000);
     return () => clearInterval(id);
-  }, [productId]);
+  }, [productId, toast]);
 
   const exportJson = () => {
     if (!copy) return;
@@ -420,6 +451,12 @@ export function CopyWorkspace({
         initialCredits={credits}
         description="RUFUS-ready title, bullets, description, and backend keywords."
       />
+
+      {paymentSuccess ? (
+        <Suspense fallback={null}>
+          <PaymentSuccessBanner />
+        </Suspense>
+      ) : null}
 
       <BrandSetupNudge configured={brandConfigured} />
 
@@ -586,6 +623,47 @@ export function CopyWorkspace({
 
       {copy?.title && (
         <div className="space-y-4">
+          {showCompletionNudge && productId ? (
+            <Card
+              ref={completionRef}
+              className="scroll-mt-24 border-[var(--success-border)] bg-[var(--success-bg)]/40"
+            >
+              <CardContent className="py-4">
+                <p className="font-semibold">Copy ready — what&apos;s next?</p>
+                <p className="mt-1 text-sm text-[var(--muted-fg)]">
+                  Review edits below, save to your project, then generate gallery images or grade the listing.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button asChild size="sm">
+                    <Link href={`/generate?productId=${productId}`}>
+                      <Camera className="h-4 w-4" />
+                      Generate gallery
+                    </Link>
+                  </Button>
+                  <GradeListingButton
+                    listingCopy={{
+                      title: copy.title,
+                      bullets: (copy.bullets as string[]) ?? [],
+                      description: copy.description,
+                      backendKeywords: copy.backendKeywords,
+                      productId,
+                    }}
+                    productId={productId}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Grade listing
+                  </GradeListingButton>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/products/${productId}`}>Open project</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/products/${productId}#export`}>Export hub</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
           {titleOverLimit ? (
             <LimitWarning
               message={`Title exceeds Amazon's ${AMAZON_TITLE_MAX}-character limit — trim before publishing.`}
@@ -729,6 +807,17 @@ export function CopyWorkspace({
               >
                 Grade this copy
               </GradeListingButton>
+            ) : null}
+            {productId && !loading && copy?.title ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={lacksCredits || saving}
+                onClick={() => void regenerateCopy()}
+              >
+                <RefreshCw className="h-4 w-4" />
+                Regenerate (1 credit)
+              </Button>
             ) : null}
             <Button variant="ghost" onClick={startOver}>
               Start over

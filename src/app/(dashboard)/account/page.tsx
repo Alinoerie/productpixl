@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
@@ -38,7 +39,11 @@ export default async function AccountPage({
         description={session.user.email ?? undefined}
       />
 
-      {params.success ? <PaymentSuccessBanner /> : null}
+      {params.success ? (
+        <Suspense fallback={null}>
+          <PaymentSuccessBanner />
+        </Suspense>
+      ) : null}
 
       {params.canceled ? (
         <p

@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/toast-provider";
 import { fetchJson } from "@/lib/fetch-json";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft, saveCopyDraft } from "@/lib/copy-draft";
+import { markProductGraded } from "@/lib/grade-session";
 import type { GraderResult } from "@/lib/listing-grader";
 
 const SAMPLE = {
@@ -73,6 +74,9 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
       });
       if (!ok) throw new Error((data as { error?: string }).error || "Failed");
       setResult(data as GraderResult);
+      if (draftProductId) {
+        markProductGraded(draftProductId);
+      }
       requestAnimationFrame(() => {
         scoreSummaryRef.current?.focus();
         resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -82,7 +86,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
     } finally {
       setLoading(false);
     }
-  }, [title, bullets, description, keywords]);
+  }, [title, bullets, description, keywords, draftProductId]);
 
   useEffect(() => {
     const draft = loadCopyDraft();

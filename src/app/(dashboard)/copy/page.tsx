@@ -7,7 +7,7 @@ import { type MarketplaceId } from "@/lib/marketplaces";
 export default async function CopyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ productId?: string }>;
+  searchParams: Promise<{ productId?: string; success?: string }>;
 }) {
   const session = await auth();
   const params = await searchParams;
@@ -60,6 +60,7 @@ export default async function CopyPage({
       missingProductId={missingProductId}
       brandConfigured={brandConfigured}
       defaultBrandName={defaultBrandName}
+      paymentSuccess={Boolean(params.success)}
     />
   );
 }

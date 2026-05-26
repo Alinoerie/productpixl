@@ -63,7 +63,7 @@ export default async function LoginPage({
         <p className="text-xs text-white/40">Built for Amazon & EU marketplace sellers</p>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center bg-[var(--background)] px-4 py-12">
+      <main id="main" className="flex flex-1 flex-col items-center justify-center bg-[var(--background)] px-4 py-12">
         <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 shadow-[var(--shadow-lg)] md:p-10">
           <Link href="/" className="mb-8 inline-flex items-center gap-2 lg:hidden">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ink)] text-xs font-bold text-white">
@@ -100,7 +100,7 @@ export default async function LoginPage({
         <div className="mt-10 w-full max-w-md lg:hidden">
           <ShowcaseMosaic className="opacity-90" />
         </div>
-      </div>
+      </main>
     </div>
   );
 }

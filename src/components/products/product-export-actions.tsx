@@ -53,6 +53,18 @@ export function ProductExportActions({
     await copyText("listing", text);
   };
 
+  const exportListingJson = () => {
+    if (!listingCopy?.title) return;
+    const blob = new Blob([JSON.stringify(listingCopy, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${productName.replace(/\s+/g, "-").toLowerCase()}-listing.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast("Listing JSON downloaded");
+  };
+
   const downloadImages = async () => {
     setDownloading(true);
     try {
@@ -79,7 +91,7 @@ export function ProductExportActions({
   };
 
   return (
-    <Card className="border-[var(--border)] bg-[var(--muted)]/30" id="export">
+    <Card className="scroll-mt-24 border-[var(--border)] bg-[var(--muted)]/30" id="export">
       <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
         <p className="text-sm font-medium">Export & review</p>
         <div className="flex flex-wrap gap-2">
@@ -98,10 +110,16 @@ export function ProductExportActions({
             </Button>
           )}
           {listingCopy?.title ? (
-            <Button type="button" variant="outline" size="sm" onClick={copyAllListing}>
-              {copied === "listing" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              {copied === "listing" ? "Copied" : "Copy listing text"}
-            </Button>
+            <>
+              <Button type="button" variant="outline" size="sm" onClick={copyAllListing}>
+                {copied === "listing" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied === "listing" ? "Copied" : "Copy listing text"}
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={exportListingJson}>
+                <Download className="h-4 w-4" />
+                Download JSON
+              </Button>
+            </>
           ) : completedImages.length > 0 ? (
             <Button asChild variant="outline" size="sm">
               <Link href={`/copy?productId=${productId}`}>Generate copy</Link>

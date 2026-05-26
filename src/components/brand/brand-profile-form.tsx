@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,9 @@ export function BrandProfileForm() {
   });
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [baseline, setBaseline] = useState<BrandProfileData | null>(null);
 
@@ -41,6 +44,9 @@ export function BrandProfileForm() {
         };
         setProfile(loaded);
         setBaseline(loaded);
+      })
+      .catch(() => {
+        setLoadError("Could not load your brand profile. Refresh the page or try again.");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -72,6 +78,7 @@ export function BrandProfileForm() {
 
   const save = useCallback(async () => {
     setError("");
+    setSaving(true);
     const { ok, data } = await fetchJson<{ error?: string }>("/api/brand-profile", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -87,6 +94,7 @@ export function BrandProfileForm() {
       setError(msg);
       toast(msg, "error");
     }
+    setSaving(false);
   }, [profile, toast]);
 
   useEffect(() => {
@@ -136,6 +144,11 @@ export function BrandProfileForm() {
           <p className="text-sm text-[var(--muted-fg)]">
             Set once — colors, tone, and logo flow into every PHOILA image and copy run.
           </p>
+          {loadError ? (
+            <p className="rounded-lg border border-[var(--error-border)] bg-[var(--error-bg)] px-3 py-2 text-sm text-[var(--error)]">
+              {loadError}
+            </p>
+          ) : null}
           <div>
             <Label htmlFor="brand-name">Brand display name</Label>
             <Input
@@ -225,9 +238,24 @@ export function BrandProfileForm() {
               placeholder="Always show EU energy label, never show hands, etc."
             />
           </div>
-          <Button onClick={save} className="w-full" disabled={!isDirty}>
-            {saved ? "Saved ✓" : isDirty ? "Save brand profile" : "No changes to save"}
+          <Button onClick={save} className="w-full" disabled={!isDirty || saving}>
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+              </>
+            ) : saved ? (
+              "Saved ✓"
+            ) : isDirty ? (
+              "Save brand profile"
+            ) : (
+              "No changes to save"
+            )}
           </Button>
+          {saved ? (
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/generate">Try image studio</Link>
+            </Button>
+          ) : null}
           {isDirty ? (
             <p className="text-xs text-[var(--muted-fg)]">Unsaved changes — save or use ⌘/Ctrl+S.</p>
           ) : null}

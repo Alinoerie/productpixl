@@ -1,6 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, Circle } from "lucide-react";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
+import { isProductGraded } from "@/lib/grade-session";
 import { cn } from "@/lib/utils";
 
 export function ProductReadiness({
@@ -23,6 +27,11 @@ export function ProductReadiness({
 }) {
   const hasImages = imageCount > 0;
   const readyToExport = hasImages && hasCopy;
+  const [graded, setGraded] = useState(false);
+
+  useEffect(() => {
+    setGraded(isProductGraded(productId));
+  }, [productId]);
 
   const steps = [
     {
@@ -30,8 +39,8 @@ export function ProductReadiness({
       label: "Gallery images",
       done: hasImages && status !== "FAILED",
       pending: status === "PROCESSING",
-      href: hasImages ? undefined : `/generate?productId=${productId}`,
-      cta: hasImages ? undefined : "Generate",
+      href: status === "FAILED" || !hasImages ? `/generate?productId=${productId}` : undefined,
+      cta: status === "FAILED" ? "Retry" : hasImages ? undefined : "Generate",
     },
     {
       key: "copy",
@@ -43,7 +52,7 @@ export function ProductReadiness({
     {
       key: "grade",
       label: "Grade listing",
-      done: false,
+      done: graded,
       showWhen: hasCopy,
       isGrade: true,
     },
@@ -92,6 +101,17 @@ export function ProductReadiness({
           );
 
           if (step.isGrade && listingCopy) {
+            if (step.done) {
+              return (
+                <li
+                  key={step.key}
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--success-border)] bg-[var(--success-bg)] px-3 py-2 text-xs font-medium"
+                >
+                  <Check className="h-4 w-4 shrink-0 text-[var(--success)]" strokeWidth={2.5} />
+                  <span className="text-[var(--foreground)]">Grade listing</span>
+                </li>
+              );
+            }
             return (
               <li key={step.key}>
                 <GradeListingButton
