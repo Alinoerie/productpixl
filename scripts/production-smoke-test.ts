@@ -93,10 +93,10 @@ async function main() {
   const homeRes = await fetch(`${BASE_URL}/`);
   if (homeRes.ok) {
     const html = await homeRes.text();
-    if (html.includes("Launch before you list")) {
-      pass("USP on homepage", "tagline visible");
+    if (html.includes("Launch before you list") && html.includes("One product photo")) {
+      pass("USP on homepage", "marketing hero visible");
     } else {
-      fail("USP on homepage", "missing tagline — deploy may be stale");
+      fail("USP on homepage", "missing marketing hero — check middleware public routes");
     }
   }
 

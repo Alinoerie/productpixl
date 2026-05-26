@@ -3,12 +3,20 @@ import { NextResponse } from "next/server";
 import { authConfig } from "@/lib/auth.config";
 
 const PUBLIC_EXACT = new Set([
+  "/",
   "/login",
   "/login/check-email",
   "/privacy",
   "/terms",
   "/guides/ecommerce",
   "/demo",
+  "/pricing",
+  "/grader",
+  "/how-it-works",
+  "/gallery",
+  "/compare",
+  "/faq",
+  "/marketplaces",
 ]);
 const PUBLIC_PREFIXES = ["/api/auth"];
 
@@ -27,13 +35,6 @@ const PROTECTED_PREFIXES = [
   "/my-playbooks",
   "/templates",
   "/batch",
-  "/pricing",
-  "/grader",
-  "/how-it-works",
-  "/gallery",
-  "/compare",
-  "/faq",
-  "/marketplaces",
 ];
 
 function isPublicPath(pathname: string) {
@@ -42,7 +43,6 @@ function isPublicPath(pathname: string) {
 }
 
 function isProtectedPath(pathname: string) {
-  if (pathname === "/") return true;
   return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
@@ -56,11 +56,6 @@ export default NextAuth(authConfig).auth((req) => {
   if (!signedIn && !isPublicPath(pathname) && isProtectedPath(pathname)) {
     const login = new URL("/login", req.nextUrl.origin);
     login.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
-    return NextResponse.redirect(login);
-  }
-
-  if (!signedIn && pathname === "/") {
-    const login = new URL("/login", req.nextUrl.origin);
     return NextResponse.redirect(login);
   }
 
