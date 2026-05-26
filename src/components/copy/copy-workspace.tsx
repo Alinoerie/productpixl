@@ -745,6 +745,7 @@ export function CopyWorkspace({
           ) : null}
           {titleOverLimit ? (
             <LimitWarning
+              id="copy-title-warning"
               message={`Title exceeds Amazon's ${AMAZON_TITLE_MAX}-character limit — trim before publishing.`}
             />
           ) : null}
@@ -752,7 +753,7 @@ export function CopyWorkspace({
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="text-base">Title</CardTitle>
               <div className="flex items-center gap-2">
-                <CharCounter value={copy.title} max={AMAZON_TITLE_MAX} />
+                <CharCounter id="copy-title-counter" value={copy.title ?? ""} max={AMAZON_TITLE_MAX} />
                 <Button
                   type="button"
                   variant="ghost"
@@ -766,7 +767,15 @@ export function CopyWorkspace({
               </div>
             </CardHeader>
             <CardContent>
-              <Textarea value={copy.title} onChange={(e) => setCopy({ ...copy, title: e.target.value })} />
+              <Textarea
+                id="copy-title"
+                value={copy.title}
+                onChange={(e) => setCopy({ ...copy, title: e.target.value })}
+                aria-describedby={
+                  titleOverLimit ? "copy-title-counter copy-title-warning" : "copy-title-counter"
+                }
+                aria-invalid={titleOverLimit || undefined}
+              />
             </CardContent>
           </Card>
           <details className="rounded-2xl border border-[var(--border)] bg-[var(--card)] md:contents">
@@ -821,7 +830,7 @@ export function CopyWorkspace({
                 <CardHeader className="flex flex-row items-center justify-between gap-2">
                   <CardTitle className="text-base">Bullet {i + 1}</CardTitle>
                   <div className="flex items-center gap-1">
-                    <CharCounter value={b} max={AMAZON_BULLET_MAX} />
+                    <CharCounter id={`copy-bullet-${i}-counter`} value={b} max={AMAZON_BULLET_MAX} />
                     <Button
                       type="button"
                       variant="ghost"
@@ -851,15 +860,25 @@ export function CopyWorkspace({
                 </CardHeader>
                 <CardContent>
                   {bulletOver ? (
-                    <LimitWarning message={`Over ${AMAZON_BULLET_MAX} characters — trim before publishing.`} />
+                    <LimitWarning
+                      id={`copy-bullet-${i}-warning`}
+                      message={`Over ${AMAZON_BULLET_MAX} characters — trim before publishing.`}
+                    />
                   ) : null}
                   <Textarea
+                    id={`copy-bullet-${i}`}
                     value={b}
                     onChange={(e) => {
                       const bullets = [...((copy.bullets as string[]) || [])];
                       bullets[i] = e.target.value;
                       setCopy({ ...copy, bullets });
                     }}
+                    aria-describedby={
+                      bulletOver
+                        ? `copy-bullet-${i}-counter copy-bullet-${i}-warning`
+                        : `copy-bullet-${i}-counter`
+                    }
+                    aria-invalid={bulletOver || undefined}
                   />
                 </CardContent>
               </Card>

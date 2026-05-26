@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CharCounter } from "@/components/ui/char-counter";
+import { CharCounter, LimitWarning } from "@/components/ui/char-counter";
 import { useToast } from "@/components/ui/toast-provider";
 import { fetchJson } from "@/lib/fetch-json";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
@@ -152,6 +152,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
   const generateHref = draftProductId ? `/generate?productId=${draftProductId}` : "/generate";
 
   const gradeClass = result ? `grade-${result.grade.toLowerCase()}` : "";
+  const titleOver = title.length > AMAZON_TITLE_MAX;
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
@@ -178,25 +179,41 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
           <div>
             <div className="flex items-center justify-between">
               <Label htmlFor="grader-title">Product title</Label>
-              <CharCounter value={title} max={AMAZON_TITLE_MAX} />
+              <CharCounter id="grader-title-counter" value={title} max={AMAZON_TITLE_MAX} />
             </div>
+            {titleOver ? (
+              <LimitWarning
+                id="grader-title-warning"
+                message={`Title is over Amazon's ${AMAZON_TITLE_MAX}-character limit.`}
+              />
+            ) : null}
             <Input
               id="grader-title"
               value={title}
               maxLength={200}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Your listing title"
+              aria-describedby={titleOver ? "grader-title-counter grader-title-warning" : "grader-title-counter"}
+              aria-invalid={titleOver || undefined}
             />
             {!title.trim() ? (
               <p className="mt-1 text-xs text-[var(--muted-fg)]">Enter a title to grade your listing.</p>
             ) : null}
           </div>
-          {bullets.map((b, i) => (
+          {bullets.map((b, i) => {
+            const bulletOver = b.length > AMAZON_BULLET_MAX;
+            return (
             <div key={`bullet-${i}`}>
               <div className="flex items-center justify-between">
                 <Label htmlFor={`grader-bullet-${i}`}>Bullet {i + 1}</Label>
-                <CharCounter value={b} max={AMAZON_BULLET_MAX} />
+                <CharCounter id={`grader-bullet-${i}-counter`} value={b} max={AMAZON_BULLET_MAX} />
               </div>
+              {bulletOver ? (
+                <LimitWarning
+                  id={`grader-bullet-${i}-warning`}
+                  message={`Over ${AMAZON_BULLET_MAX} characters — trim before publishing.`}
+                />
+              ) : null}
               <Textarea
                 id={`grader-bullet-${i}`}
                 value={b}
@@ -207,9 +224,16 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
                   next[i] = e.target.value;
                   setBullets(next);
                 }}
+                aria-describedby={
+                  bulletOver
+                    ? `grader-bullet-${i}-counter grader-bullet-${i}-warning`
+                    : `grader-bullet-${i}-counter`
+                }
+                aria-invalid={bulletOver || undefined}
               />
             </div>
-          ))}
+          );
+          })}
           <div>
             <Label htmlFor="grader-description">Description (optional)</Label>
             <Textarea

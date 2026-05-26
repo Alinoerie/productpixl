@@ -79,6 +79,13 @@ export default async function ProductPage({
                   productId={product.id}
                   initialGrade={product.listingCopy.grade}
                   initialScore={product.listingCopy.gradeScore}
+                  listingCopy={{
+                    title: product.listingCopy.title,
+                    bullets,
+                    description: product.listingCopy.description ?? undefined,
+                    backendKeywords: product.listingCopy.backendKeywords ?? undefined,
+                    productId: product.id,
+                  }}
                 />
               ) : null}
             </div>

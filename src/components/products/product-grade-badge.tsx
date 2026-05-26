@@ -2,16 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { GRADE_UPDATED_EVENT, getProductGrade } from "@/lib/grade-session";
+import type { CopyDraft } from "@/lib/copy-draft";
 
 export function ProductGradeBadge({
   productId,
   initialGrade,
   initialScore,
+  listingCopy,
 }: {
   productId: string;
   initialGrade?: string | null;
   initialScore?: number | null;
+  listingCopy?: CopyDraft | null;
 }) {
   const [grade, setGrade] = useState(initialGrade);
   const [score, setScore] = useState(initialScore);
@@ -42,10 +46,27 @@ export function ProductGradeBadge({
 
   if (!grade) return null;
 
+  const label = `Graded ${grade}${score != null ? ` · ${score}` : ""}`;
+
+  if (listingCopy?.title) {
+    return (
+      <GradeListingButton
+        productId={productId}
+        listingCopy={{ ...listingCopy, productId }}
+        variant="secondary"
+        size="sm"
+        className="h-7 gap-1 bg-[var(--success-bg)] text-[var(--success)] hover:bg-[var(--success-bg)]/80"
+      >
+        {label}
+        <span className="hidden sm:inline">· Review tips</span>
+        <span className="sr-only">Open grader tips</span>
+      </GradeListingButton>
+    );
+  }
+
   return (
     <Badge variant="secondary" className="bg-[var(--success-bg)] text-[var(--success)]">
-      Graded {grade}
-      {score != null ? ` · ${score}` : ""}
+      {label}
     </Badge>
   );
 }

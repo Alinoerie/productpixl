@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Copy, Download, ImageIcon, Loader2, FileText } from "lucide-react";
+import { Check, Circle, Copy, Download, ImageIcon, Loader2, FileText } from "lucide-react";
 import { useToast } from "@/components/ui/toast-provider";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { downloadGalleryZip } from "@/lib/download-gallery-zip";
@@ -46,6 +46,33 @@ export function ProductExportActions({
   const hasImages = completedImages.length > 0;
   const exportReady = hasCopy && hasImages;
   const slug = productName.replace(/\s+/g, "-").toLowerCase() || "product";
+
+  const checklist = (
+    <ul className="mt-4 space-y-2 text-sm">
+      <li className="flex items-center gap-2">
+        {hasImages ? (
+          <Check className="h-4 w-4 shrink-0 text-[var(--success)]" strokeWidth={2.5} />
+        ) : (
+          <Circle className="h-4 w-4 shrink-0 text-[var(--muted-fg)]" strokeWidth={1.5} />
+        )}
+        <span className={hasImages ? "text-[var(--foreground)]" : "text-[var(--muted-fg)]"}>
+          {hasImages
+            ? `${completedImages.length} gallery image${completedImages.length === 1 ? "" : "s"}`
+            : "Gallery images"}
+        </span>
+      </li>
+      <li className="flex items-center gap-2">
+        {hasCopy ? (
+          <Check className="h-4 w-4 shrink-0 text-[var(--success)]" strokeWidth={2.5} />
+        ) : (
+          <Circle className="h-4 w-4 shrink-0 text-[var(--muted-fg)]" strokeWidth={1.5} />
+        )}
+        <span className={hasCopy ? "text-[var(--foreground)]" : "text-[var(--muted-fg)]"}>
+          Listing copy
+        </span>
+      </li>
+    </ul>
+  );
 
   const copyText = async (label: string, text: string) => {
     await navigator.clipboard.writeText(text);
@@ -139,8 +166,9 @@ export function ProductExportActions({
         <CardContent className="py-8 text-center">
           <p className="font-serif text-lg">Nothing to export yet</p>
           <p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted-fg)]">
-            Generate gallery images or listing copy first — export tools appear here when your project is ready.
+            Complete both steps below — export tools unlock when gallery images and listing copy are ready.
           </p>
+          <div className="mx-auto max-w-xs text-left">{checklist}</div>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button asChild>
               <Link href={`/generate?productId=${productId}`}>
@@ -185,16 +213,19 @@ export function ProductExportActions({
         </div>
 
         {!exportReady ? (
-          <div className="flex flex-wrap gap-2">
-            {hasImages ? (
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/copy?productId=${productId}`}>Generate copy</Link>
-              </Button>
-            ) : (
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/generate?productId=${productId}`}>Run image studio</Link>
-              </Button>
-            )}
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+            {checklist}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {hasImages ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/copy?productId=${productId}`}>Generate copy</Link>
+                </Button>
+              ) : (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/generate?productId=${productId}`}>Run image studio</Link>
+                </Button>
+              )}
+            </div>
           </div>
         ) : null}
 
