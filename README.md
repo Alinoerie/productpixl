@@ -17,7 +17,7 @@ Listing studio for marketplace sellers: one product photo → gallery images + c
 
 See **[docs/BRAND.md](docs/BRAND.md)** — **Studio Iris** palette (indigo CTA, cool slate background, cyan for EU/RUFUS story). Positioning: photo-first, pay-per-credit, Amazon + Bol.com.
 
-Marketing pages use real PHOILA pipeline samples in **`public/showcase/`** (Zealots hand soap, skincare, Danish chair) — sourced from local generation runs.
+Marketing pages use real showcase samples in **`public/showcase/`** (Zealots hand soap, skincare, Danish chair) — sourced from local generation runs.
 
 ## Setup
 
@@ -42,7 +42,7 @@ pnpm inngest:dev
 | Feature | Route |
 |--------|--------|
 | Dashboard & projects | `/dashboard`, `/projects` |
-| Image pipeline (L1/L3/L4/L8) | `/generate` |
+| Image studio (L1/L3/L4/L8) | `/generate` |
 | Listing copy | `/copy` |
 | Brand onboarding (required before studio) | `/onboarding` |
 | Brand profile (edit anytime) | `/brand` |
@@ -51,7 +51,7 @@ pnpm inngest:dev
 | Export hub (images + copy JSON/CSV/TXT) | `/products/[id]#export` |
 | Marketplaces | Amazon US/UK/DE, Bol.com, Shopify |
 
-**Brand-first flow:** New users complete `/onboarding` (company → brand identity → AI brand story → launch) before `/generate` or `/copy`. Company, brand story, tone, and logo feed every PHOILA prompt and copy run.
+**Brand-first flow:** New users complete `/onboarding` (company → brand identity → AI brand story → launch) before `/generate` or `/copy`. Company, brand story, tone, and logo feed every image and copy run.
 
 **Product intake:** After brand setup, each product run collects vibe, use case, differentiators, competitors, and optional reference images — merged with vision AI analysis into prompt generation.
 

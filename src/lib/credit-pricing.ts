@@ -233,6 +233,6 @@ function buildDetailLine(params: {
   else if (params.depth >= 2) parts.push("product detail depth");
   if (params.market >= 2) parts.push("EU marketplace localization");
   else if (params.market > 0) parts.push("marketplace rules");
-  parts.push("QA & orchestration");
+  parts.push("quality checks");
   return `Based on ${parts.join(", ")} — estimate updates as you add detail`;
 }

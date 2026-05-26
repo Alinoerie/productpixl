@@ -7,7 +7,7 @@ export default function BrandPage() {
       <PageHeader
         eyebrow="Brand system"
         title="Brand profile"
-        description="Colors, tone, and guidelines flow into every PHOILA prompt — consistent output across your catalog without re-explaining your brand each run."
+        description="Colors, tone, and guidelines flow into every generation — consistent output across your catalog without re-explaining your brand each run."
       />
       <BrandProfileForm />
     </div>

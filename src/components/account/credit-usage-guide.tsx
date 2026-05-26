@@ -5,8 +5,8 @@ import { typicalCopyRunCredits, typicalImageRunCredits } from "@/lib/credit-pric
 const uses = [
   {
     icon: Camera,
-    label: "Image pipeline",
-    detail: "Per gallery image + research, QA, and orchestration depth",
+    label: "Gallery generation",
+    detail: "Per gallery image + research, QA, and studio depth",
     cost: `from ~${typicalImageRunCredits()} credits`,
   },
   {

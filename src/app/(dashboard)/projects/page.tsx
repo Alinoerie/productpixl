@@ -25,7 +25,7 @@ function getFilterEmptyState(filters: {
     return {
       title: "No export-ready projects yet",
       description:
-        "Export-ready projects have both gallery images and listing copy saved. Run an image pipeline, generate copy, or finish both on an existing project.",
+        "Export-ready projects have both gallery images and listing copy saved. Generate images, write copy, or finish both on an existing project.",
       primary: { href: "/generate", label: "Start image run" },
       secondary: { href: "/copy", label: "Generate listing copy" },
     };
@@ -41,7 +41,7 @@ function getFilterEmptyState(filters: {
   if (filters.status === "QUEUED" || filters.status === "PROCESSING") {
     return {
       title: "No active runs",
-      description: "Queued and processing projects appear here while the image pipeline is running.",
+      description: "Queued and processing projects appear here while gallery images are generating.",
       primary: { href: "/generate", label: "Start image run" },
       secondary: { href: "/projects", label: "Clear filters" },
     };

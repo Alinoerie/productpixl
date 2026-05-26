@@ -232,8 +232,8 @@ export default async function ProductPage({
                 </p>
                 <p className="mt-2 text-sm text-[var(--muted-fg)]">
                   {product.listingCopy?.title
-                    ? "Upload a product photo in Image studio to generate your PHOILA gallery."
-                    : "Start an image pipeline to populate this project."}
+                    ? "Upload a product photo in Image studio to generate your gallery."
+                    : "Start in Image studio to populate this project."}
                 </p>
                 <Button asChild className="mt-6">
                   <Link href={`/generate?productId=${product.id}`}>Run image studio</Link>

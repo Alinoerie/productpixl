@@ -487,7 +487,7 @@ export function GenerateWizard({
         initialCredits={credits}
         creditsRequired={imageQuote.total}
         detailLine={imageQuote.detailLine}
-        description="PHOILA image pipeline — review prompts before any image is generated."
+        description="Review prompts before any image is generated — nothing runs until you approve."
       />
 
       {paymentSuccess ? (
@@ -497,7 +497,7 @@ export function GenerateWizard({
       ) : null}
 
       <PageHeader
-        eyebrow="PHOILA pipeline"
+        eyebrow="Image studio"
         title="Image studio"
         description={
           <>
@@ -644,7 +644,7 @@ export function GenerateWizard({
             <p className="md:col-span-2 text-sm text-[var(--muted-fg)]">
               {copyOnlyHandoff && !imageUrl
                 ? "Review saved product details, upload a photo, then continue to the prompt plan."
-                : "Review AI-extracted product data and add vibe, use case, and reference images — this feeds your PHOILA prompts."}
+                : "Review AI-extracted product data and add vibe, use case, and reference images — this shapes your gallery prompts."}
             </p>
             {analysisStubMode ? (
               <p className="md:col-span-2 rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]">
@@ -678,7 +678,7 @@ export function GenerateWizard({
                   }}
                   disabled={uploading || analyzing}
                   minHeight="min-h-[180px]"
-                  emptyHint="PHOILA needs a product photo to generate images"
+                  emptyHint="Upload a product photo to start generating images"
                   inputId="generate-upload-step1"
                 />
                 {uploading ? (
@@ -746,11 +746,11 @@ export function GenerateWizard({
             <ul className="space-y-2 text-sm text-[var(--muted-fg)]">
               <li className="flex gap-2">
                 <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                Step 2 + 3 pipeline context (analysis + category research)
+                Built from your product analysis and category research
               </li>
               <li className="flex gap-2">
                 <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                Prompts structured from PHOILA listing pipeline constraints
+                Prompts tuned for marketplace listing rules and your brand
               </li>
               <li className="flex gap-2">
                 <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
@@ -860,8 +860,8 @@ export function GenerateWizard({
               </p>
               <p className="mt-2 text-[var(--error)]">
                 {pollTimedOut
-                  ? "The pipeline took too long. Check Inngest is running locally, open your project to see partial results, or retry with the same prompt plan."
-                  : "Something went wrong during the image pipeline. Open your project for details, retry with the same prompts, or adjust your prompt plan."}
+                  ? "Generation took too long. Check Inngest is running locally, open your project to see partial results, or retry with the same prompt plan."
+                  : "Something went wrong during generation. Open your project for details, retry with the same prompts, or adjust your prompt plan."}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button type="button" size="sm" disabled={!promptPlan.length || lacksCredits} onClick={() => void retryGeneration()}>
@@ -893,7 +893,7 @@ export function GenerateWizard({
             </CardContent>
           </Card>
 
-          <div className="flex flex-wrap gap-2" aria-label="Pipeline phases">
+          <div className="flex flex-wrap gap-2" aria-label="Generation phases">
             {PHASES.map((ph) => {
               const current = pipelineStatus?.phase;
               const idx = PHASES.indexOf(current ?? "");
@@ -970,7 +970,7 @@ export function GenerateWizard({
             </>
           ) : null}
           <p className="sr-only" aria-live="polite">
-            {done ? "Image pipeline complete" : ""}
+            {done ? "Gallery complete" : ""}
           </p>
           {done && productId && (
             <StudioSuccessBanner

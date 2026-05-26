@@ -34,7 +34,7 @@ Research-backed direction for 2026 SaaS and creative tools: move away from overu
 
 1. **Photo-first** — No ASIN required. Launch SKUs before they exist on Amazon.
 2. **Pay when you generate** — Credits, not subscriptions. Early sellers hate lock-in.
-3. **Research-backed** — Tavily + PHOILA prompts, not random prompts.
+3. **Research-backed** — Category intelligence and listing-specific prompts, not random AI.
 4. **Amazon + Europe** — Bol.com and EU marketplaces as first-class, not footnotes.
 5. **RUFUS / COSMO aware** — Copy structured for semantic search, not keyword stuffing.
 
@@ -52,7 +52,7 @@ Research-backed direction for 2026 SaaS and creative tools: move away from overu
 | Pixii: ASIN in | Photo in |
 | Pixii: $207/mo | Credits from €0 |
 | Perci: text only | Images + copy |
-| Amazon AI: free generic | Research + QA pipeline |
+| Amazon AI: free generic | Research-backed generation + QA |
 
 ## Implementation
 

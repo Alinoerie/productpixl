@@ -53,7 +53,7 @@ export function CreditCalculator({
             />
           </div>
           <div>
-            <Label htmlFor="calc-runs">Pipeline runs per SKU</Label>
+            <Label htmlFor="calc-runs">Generation runs per SKU</Label>
             <Input
               id="calc-runs"
               type="number"

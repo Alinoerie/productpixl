@@ -18,7 +18,7 @@ export type ShowcaseCaseStudy = {
   modules: ShowcaseModule[];
 };
 
-/** Real PHOILA pipeline outputs copied from local generation runs */
+/** Real showcase outputs copied from local generation runs */
 export const SHOWCASE_CASE_STUDIES: ShowcaseCaseStudy[] = [
   {
     id: "zealots",

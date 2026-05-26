@@ -502,7 +502,7 @@ export function CopyWorkspace({
       ) : null}
 
       <PageHeader
-        eyebrow="Copy pipeline"
+        eyebrow="Listing copy"
         title="Listing copy"
         description={
           <>
@@ -515,7 +515,7 @@ export function CopyWorkspace({
       <StudioStepper
         steps={COPY_STEPS}
         currentStep={copyStep}
-        label="Copy pipeline progress"
+        label="Copy studio progress"
         sticky
         statusText={loading ? "Generating listing copy…" : undefined}
       />

@@ -44,7 +44,7 @@ const WORKFLOW = [
   },
   {
     icon: Layers,
-    title: "PHOILA-style pipeline",
+    title: "Research-backed generation",
     body: "Hero, lifestyle, detail — built with listing-specific prompts, not generic “make it pretty” AI.",
   },
   {
@@ -113,7 +113,7 @@ export default async function HomePage() {
                 <ShowcaseMosaic priority className="relative rotate-1 lg:rotate-2" />
               </div>
               <p className="mt-4 text-center text-xs text-[var(--muted-fg)] lg:text-left">
-                Real PHOILA outputs — hand soap, skincare, furniture
+                Real ProductPixl outputs — hand soap, skincare, furniture
               </p>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default async function HomePage() {
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-xl">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
-                Image pipeline
+                Listing modules
               </p>
               <h2 className="mt-3 font-serif text-3xl md:text-4xl">Listing modules that convert</h2>
             </div>
@@ -259,7 +259,7 @@ export default async function HomePage() {
                   "Pay per generation — 10 free credits to start",
                   "One photo in — no ASIN, no photoshoot",
                   "Images + copy in one account",
-                  "Tavily research + PHOILA prompt pipeline",
+                  "Category research + listing-specific prompts",
                   "Amazon-first with EU / Bol.com positioning",
                 ].map((item) => (
                   <li key={item} className="flex gap-2">
@@ -295,7 +295,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-3xl rounded-3xl border border-[var(--border)] bg-[var(--card)] p-10 text-center shadow-[var(--shadow-lg)] md:p-14">
           <h2 className="font-serif text-3xl md:text-4xl">Ready to replace the photoshoot?</h2>
           <p className="mx-auto mt-4 max-w-lg text-[var(--muted-fg)]">
-            Sign in with Google, get 10 credits, and run your first image pipeline in minutes.
+            Sign in with Google, get 10 credits, and generate your first gallery in minutes.
           </p>
           <Button asChild size="lg" className="mt-8 rounded-xl px-10">
             <Link href={cta}>

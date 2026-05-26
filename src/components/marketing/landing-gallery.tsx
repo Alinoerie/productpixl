@@ -160,13 +160,13 @@ export function LandingGallery() {
       <div className="mx-auto max-w-6xl">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--teal)]">
-            Real pipeline output
+            Real gallery output
           </p>
           <h2 className="mt-3 font-serif text-3xl md:text-4xl">
             From one seller photo to a full gallery
           </h2>
           <p className="mt-4 text-[var(--muted-fg)]">
-            These are actual PHOILA-style generations from local pipeline runs — hand soap, skincare,
+            These are actual ProductPixl generations — hand soap, skincare,
             and furniture — not placeholder gradients.
           </p>
         </div>

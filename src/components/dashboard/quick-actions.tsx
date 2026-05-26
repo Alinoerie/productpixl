@@ -9,7 +9,7 @@ const actions = [
   {
     href: "/generate",
     label: "Image studio",
-    desc: "PHOILA pipeline · credits per run",
+    desc: "Gallery images · credits per run",
     icon: Camera,
     accent: "text-[var(--accent)] bg-[var(--accent-soft)]",
     requiresCredits: true,

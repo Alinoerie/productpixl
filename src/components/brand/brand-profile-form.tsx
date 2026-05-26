@@ -169,7 +169,7 @@ export function BrandProfileForm() {
       <Card className="shadow-[var(--shadow-md)]">
         <CardContent className="space-y-4 p-6">
           <p className="text-sm text-[var(--muted-fg)]">
-            Set once — colors, tone, and logo flow into every PHOILA image and copy run.
+            Set once — colors, tone, and logo flow into every image and copy run.
           </p>
           {loadError ? (
             <p className="rounded-lg border border-[var(--error-border)] bg-[var(--error-bg)] px-3 py-2 text-sm text-[var(--error)]">
@@ -429,7 +429,7 @@ export function BrandProfileForm() {
             </div>
           </div>
           <p className="mt-4 text-xs text-[var(--muted-fg)]">
-            Colors and tone flow into PHOILA image prompts and listing copy on every run.
+            Colors and tone flow into gallery images and listing copy on every run.
           </p>
         </CardContent>
       </Card>

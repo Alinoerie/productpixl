@@ -153,7 +153,7 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
                 id="onboard-company"
                 value={profile.companyName}
                 onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
-                placeholder="PHOILA BV"
+                placeholder="Acme Brands BV"
               />
             </div>
             <div>
@@ -282,7 +282,7 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
           <CardContent className="space-y-4 p-6 md:p-8">
             <p className="text-sm text-[var(--muted-fg)]">
               We&apos;ll generate a brand story from your company and identity. Edit it — this paragraph is injected
-              into every PHOILA prompt and copy run.
+              into every image and copy run.
             </p>
             <Button type="button" variant="outline" disabled={generatingStory} onClick={() => void generateStory()}>
               {generatingStory ? (

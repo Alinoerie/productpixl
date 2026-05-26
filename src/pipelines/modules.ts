@@ -8,7 +8,7 @@ export interface ListingModuleConfig {
   optional?: boolean;
 }
 
-/** MVP fast path — full L1–L12 in phase 2 per PHOILA listing pipeline */
+/** MVP fast path — full L1–L12 module library in a later phase */
 export const MVP_LISTING_MODULES: ListingModuleConfig[] = [
   {
     id: "L1",
