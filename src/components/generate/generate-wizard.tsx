@@ -17,6 +17,7 @@ import { UploadDropzone } from "@/components/ui/upload-dropzone";
 import { MarketplacePicker } from "@/components/ui/marketplace-picker";
 import { MarketplaceGuidance } from "@/components/ui/marketplace-guidance";
 import { StudioStepper } from "@/components/ui/studio-stepper";
+import { StudioSuccessBanner } from "@/components/ui/studio-success-banner";
 import { fetchJson } from "@/lib/fetch-json";
 import { cn } from "@/lib/utils";
 import { formatPipelinePhase, formatModuleLabel } from "@/lib/status-labels";
@@ -956,49 +957,42 @@ export function GenerateWizard({
             </>
           ) : null}
           {done && productId && (
-            <div
-              ref={completionRef}
-              className="scroll-mt-24 space-y-4 rounded-2xl border border-[var(--success-border)] bg-[var(--success-bg)]/40 p-5"
+            <StudioSuccessBanner
+              innerRef={completionRef}
+              title="Gallery complete — finish your listing"
+              description="Download images, write copy, grade, and export from your project hub."
             >
-              <div>
-                <p className="font-semibold">Gallery complete — finish your listing</p>
-                <p className="mt-1 text-sm text-[var(--muted-fg)]">
-                  Download images, write copy, grade, and export from your project hub.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Button size="lg" className="rounded-xl" onClick={() => router.push(`/products/${productId}`)}>
-                  View full project
-                </Button>
+              <Button size="lg" className="rounded-xl" onClick={() => router.push(`/products/${productId}`)}>
+                View full project
+              </Button>
+              <Button asChild size="lg" variant="outline" className="rounded-xl">
+                <Link href={`/copy?productId=${productId}`}>Generate listing copy</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="rounded-xl">
+                <Link href={`/products/${productId}#export`}>Export hub</Link>
+              </Button>
+              {projectListingCopy?.title ? (
+                <GradeListingButton
+                  listingCopy={{
+                    title: projectListingCopy.title,
+                    bullets: projectListingCopy.bullets,
+                    description: projectListingCopy.description ?? undefined,
+                    backendKeywords: projectListingCopy.backendKeywords ?? undefined,
+                    productId,
+                  }}
+                  productId={productId}
+                  size="lg"
+                  variant="outline"
+                  className="rounded-xl"
+                >
+                  Grade listing copy
+                </GradeListingButton>
+              ) : (
                 <Button asChild size="lg" variant="outline" className="rounded-xl">
-                  <Link href={`/copy?productId=${productId}`}>Generate listing copy</Link>
+                  <Link href="/grader">Grade listing copy</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-xl">
-                  <Link href={`/products/${productId}#export`}>Export hub</Link>
-                </Button>
-                {projectListingCopy?.title ? (
-                  <GradeListingButton
-                    listingCopy={{
-                      title: projectListingCopy.title,
-                      bullets: projectListingCopy.bullets,
-                      description: projectListingCopy.description ?? undefined,
-                      backendKeywords: projectListingCopy.backendKeywords ?? undefined,
-                      productId,
-                    }}
-                    productId={productId}
-                    size="lg"
-                    variant="outline"
-                    className="rounded-xl"
-                  >
-                    Grade listing copy
-                  </GradeListingButton>
-                ) : (
-                  <Button asChild size="lg" variant="outline" className="rounded-xl">
-                    <Link href="/grader">Grade listing copy</Link>
-                  </Button>
-                )}
-              </div>
-            </div>
+              )}
+            </StudioSuccessBanner>
           )}
         </div>
       )}

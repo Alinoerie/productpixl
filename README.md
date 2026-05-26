@@ -52,7 +52,7 @@ pnpm inngest:dev
 
 **Credits:** 10 free on signup · 1 credit per image run, copy run, or spot-edit.
 
-**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready and failed-project filters, marketplace-aware export (txt/csv/json + gallery ZIP), in-app unsaved guards on project/copy/brand pages, failed-module retry in gallery, payment success polling after Stripe checkout, grader → copy draft flow with persisted grades, marketplace guidance in generate/copy studios, smart pack recommendations on pricing, collapsible listing bullets on mobile, mobile More menu for Brand/Credits, debounced project search, re-grade from readiness checklist, live dashboard run polling, marketplace labels on project cards, accessible delete confirmation, clickable grade badge, export readiness checklist, screen-reader char counters in copy/grader studios, sticky studio steppers with live status, richer account orders empty state, and brand preview mockup.
+**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready and failed-project filters, marketplace-aware export (txt/csv/json + gallery ZIP), in-app unsaved guards on project/copy/brand pages, failed-module retry in gallery, payment success polling after Stripe checkout, grader → copy draft flow with persisted grades, marketplace guidance in generate/copy studios, smart pack recommendations on pricing, collapsible listing bullets on mobile, mobile More menu for Brand/Credits, debounced project search, re-grade from readiness checklist, live dashboard run polling, marketplace labels on project cards, accessible delete confirmation, clickable grade badge, export readiness checklist, screen-reader char counters in copy/grader studios, sticky studio steppers with live status, richer account orders empty state, brand preview mockup, login onboarding steps, pricing comparison cards, and animated studio success banners.
 
 ## Pipeline docs
 
@@ -70,7 +70,8 @@ pnpm inngest:dev
 - [ ] `/grader` — grade listing without login; char counter a11y; hand off to copy studio when signed in
 - [ ] `/products/[id]` — readiness checklist with re-grade, clickable grade badge, export checklist, section nav below header, collapsible bullets on mobile, marketplace export (ZIP + txt/csv/json), gallery filters + failed-module retry, spot-edit on completed assets
 - [ ] `/account` — balance, credit usage guide, orders empty state with pack CTA, sign out, payment return banner
-- [ ] `/pricing` — current balance, smart pack recommendation tied to calculator, checkout return banner
+- [ ] `/login` — onboarding steps, callback destination hint, link to free grader
+- [ ] `/pricing` — highlighted comparison cards, smart pack recommendation, checkout return banner
 
 ## Stub mode
 

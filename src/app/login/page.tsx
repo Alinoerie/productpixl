@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Check } from "lucide-react";
 import { GoogleSignInForm } from "@/components/auth/google-sign-in-form";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
+import { loginDestinationLabel } from "@/lib/login-destination";
 
 function safeCallbackUrl(raw?: string) {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
@@ -29,6 +30,9 @@ export default async function LoginPage({
       : params.error
         ? "Sign-in failed. Please try again."
         : null;
+
+  const destinationLabel = loginDestinationLabel(callbackUrl);
+  const showDestinationHint = callbackUrl !== "/dashboard";
 
   return (
     <div className="flex min-h-screen">
@@ -76,6 +80,27 @@ export default async function LoginPage({
             Continue with Google to access your studio and credits.
           </p>
 
+          {showDestinationHint ? (
+            <p className="mt-4 rounded-xl border border-[var(--teal)]/30 bg-[var(--teal-soft)]/40 px-4 py-3 text-sm">
+              After sign-in you&apos;ll return to <strong>{destinationLabel}</strong>.
+            </p>
+          ) : null}
+
+          <ol className="mt-6 space-y-2 text-sm text-[var(--muted-fg)]">
+            {[
+              "Sign in with Google — no credit card",
+              "Get 10 free generation credits instantly",
+              "Upload one photo → gallery + listing copy",
+            ].map((item, index) => (
+              <li key={item} className="flex gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xs font-semibold text-[var(--foreground)]">
+                  {index + 1}
+                </span>
+                <span className="pt-0.5">{item}</span>
+              </li>
+            ))}
+          </ol>
+
           {errorMessage ? (
             <p
               id="login-error"
@@ -95,6 +120,12 @@ export default async function LoginPage({
           />
           <p className="mt-6 text-center text-xs text-[var(--muted-fg)]">
             New accounts receive 10 free generation credits.
+          </p>
+          <p className="mt-4 text-center text-sm">
+            Not ready to sign in?{" "}
+            <Link href="/grader" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
+              Grade your listing free →
+            </Link>
           </p>
         </div>
         <div className="mt-10 w-full max-w-md lg:hidden">

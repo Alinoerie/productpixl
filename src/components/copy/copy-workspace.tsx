@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
 import { MarketplacePicker } from "@/components/ui/marketplace-picker";
 import { StudioStepper } from "@/components/ui/studio-stepper";
+import { StudioSuccessBanner } from "@/components/ui/studio-success-banner";
 import { fetchJson } from "@/lib/fetch-json";
 import { CharCounter, LimitWarning } from "@/components/ui/char-counter";
 import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-alert";
@@ -707,47 +708,38 @@ export function CopyWorkspace({
       {copy?.title && (
         <div className="space-y-4">
           {showNextStepsCard ? (
-            <Card
-              ref={completionRef}
-              className="scroll-mt-24 border-[var(--success-border)] bg-[var(--success-bg)]/40"
+            <StudioSuccessBanner
+              innerRef={completionRef}
+              title={showCompletionNudge ? "Copy ready — what's next?" : "Project copy — next steps"}
+              description="Review edits below, save to your project, then generate gallery images or grade the listing."
             >
-              <CardContent className="py-4">
-                <p className="font-semibold">
-                  {showCompletionNudge ? "Copy ready — what&apos;s next?" : "Project copy — next steps"}
-                </p>
-                <p className="mt-1 text-sm text-[var(--muted-fg)]">
-                  Review edits below, save to your project, then generate gallery images or grade the listing.
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button asChild size="sm">
-                    <Link href={`/generate?productId=${productId}`}>
-                      <Camera className="h-4 w-4" />
-                      Generate gallery
-                    </Link>
-                  </Button>
-                  <GradeListingButton
-                    listingCopy={{
-                      title: copy.title,
-                      bullets: (copy.bullets as string[]) ?? [],
-                      description: copy.description,
-                      backendKeywords: copy.backendKeywords,
-                      productId: productId ?? undefined,
-                    }}
-                    productId={productId ?? undefined}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Grade listing
-                  </GradeListingButton>
-                  <Button asChild size="sm" variant="outline">
-                    <Link href={`/products/${productId}`}>Open project</Link>
-                  </Button>
-                  <Button asChild size="sm" variant="outline">
-                    <Link href={`/products/${productId}#export`}>Export hub</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              <Button asChild size="sm">
+                <Link href={`/generate?productId=${productId}`}>
+                  <Camera className="h-4 w-4" />
+                  Generate gallery
+                </Link>
+              </Button>
+              <GradeListingButton
+                listingCopy={{
+                  title: copy.title,
+                  bullets: (copy.bullets as string[]) ?? [],
+                  description: copy.description,
+                  backendKeywords: copy.backendKeywords,
+                  productId: productId ?? undefined,
+                }}
+                productId={productId ?? undefined}
+                variant="outline"
+                size="sm"
+              >
+                Grade listing
+              </GradeListingButton>
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/products/${productId}`}>Open project</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/products/${productId}#export`}>Export hub</Link>
+              </Button>
+            </StudioSuccessBanner>
           ) : null}
           {titleOverLimit ? (
             <LimitWarning

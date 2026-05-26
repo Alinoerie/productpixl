@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { PricingBalance } from "@/components/pricing/pricing-balance";
 import { PricingCatalog } from "@/components/pricing/pricing-catalog";
+import { PricingComparison } from "@/components/pricing/pricing-comparison";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { isCheckoutEnabled } from "@/lib/checkout";
 
@@ -56,29 +57,7 @@ export default async function PricingPage({
         <PricingCatalog initialCredits={0} checkoutEnabled={checkoutEnabled} />
       )}
 
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 md:p-8">
-        <h2 className="font-serif text-xl">How credits compare</h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {[
-            { label: "Traditional photoshoot", value: "€500–5,000", sub: "per SKU" },
-            { label: "Pixii Growth", value: "€207/mo", sub: "~20 listings" },
-            { label: "ProductPixl", value: "1 credit", sub: "per full image run" },
-          ].map((row) => (
-            <div key={row.label} className="rounded-xl bg-[var(--muted)]/60 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
-                {row.label}
-              </p>
-              <p className="mt-1 font-serif text-2xl">{row.value}</p>
-              <p className="text-xs text-[var(--muted-fg)]">{row.sub}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-6 text-sm text-[var(--muted-fg)]">
-          {checkoutEnabled
-            ? "Secure checkout via Stripe. Credits are added instantly after payment."
-            : "Stripe checkout is available when billing is enabled. Until then, use your 10 free signup credits to test the full pipeline."}
-        </p>
-      </div>
+      <PricingComparison checkoutEnabled={checkoutEnabled} />
     </div>
   );
 }
