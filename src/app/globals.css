@@ -1,34 +1,35 @@
 @import "tailwindcss";
 
-/* ProductPixl — Copper Horizon brand system (see docs/BRAND.md) */
+/* ProductPixl — Studio Iris brand system (see docs/BRAND.md) */
 :root {
-  --background: #f3ede4;
-  --foreground: #121110;
-  --card: #fffdf9;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
   --card-elevated: #ffffff;
-  --border: #d9cec2;
-  --border-strong: #c4b5a5;
-  --muted: #ebe4da;
-  --muted-fg: #5a534c;
-  --accent: #b45309;
-  --accent-hover: #92400e;
-  --accent-soft: #fef3e8;
-  --accent-fg: #fffaf7;
-  --teal: #0d5c63;
-  --teal-soft: #e8f4f4;
-  --ink: #121110;
-  --ink-muted: #3d3834;
-  --success: #166534;
-  --success-bg: #ecfdf3;
-  --error: #991b1b;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --muted: #f1f5f9;
+  --muted-fg: #64748b;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-soft: #eef2ff;
+  --accent-fg: #ffffff;
+  --teal: #0891b2;
+  --teal-soft: #ecfeff;
+  --ink: #0f172a;
+  --ink-muted: #334155;
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --error: #dc2626;
   --error-bg: #fef2f2;
   --error-border: #fecaca;
-  --warning: #b45309;
-  --warning-bg: #fef3e8;
-  --warning-border: #fcd9b6;
-  --shadow-sm: 0 1px 2px rgb(18 17 16 / 0.05);
-  --shadow-md: 0 8px 28px rgb(18 17 16 / 0.09);
-  --shadow-lg: 0 24px 56px rgb(18 17 16 / 0.14);
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05);
+  --shadow-md: 0 8px 28px rgb(15 23 42 / 0.08);
+  --shadow-lg: 0 24px 56px rgb(15 23 42 / 0.12);
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
 }
@@ -52,7 +53,7 @@ html {
 }
 
 ::selection {
-  background: rgb(180 83 9 / 0.18);
+  background: rgb(99 102 241 / 0.18);
   color: var(--foreground);
 }
 
@@ -62,15 +63,15 @@ html {
 
 .bg-grid {
   background-image:
-    linear-gradient(rgb(18 17 16 / 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(18 17 16 / 0.035) 1px, transparent 1px);
+    linear-gradient(rgb(15 23 42 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(15 23 42 / 0.035) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
 .bg-hero-glow {
   background:
-    radial-gradient(ellipse 80% 55% at 50% -15%, rgb(180 83 9 / 0.16), transparent),
-    radial-gradient(ellipse 45% 35% at 100% 0%, rgb(13 92 99 / 0.08), transparent),
+    radial-gradient(ellipse 80% 55% at 50% -15%, rgb(99 102 241 / 0.14), transparent),
+    radial-gradient(ellipse 45% 35% at 100% 0%, rgb(8 145 178 / 0.1), transparent),
     var(--background);
 }
 
@@ -163,8 +164,8 @@ html {
   }
 }
 
-.grade-a { color: #166534; background: #ecfdf3; }
-.grade-b { color: #0d5c63; background: #e8f4f4; }
-.grade-c { color: #b45309; background: #fef3e8; }
-.grade-d { color: #9a3412; background: #ffedd5; }
-.grade-f { color: #991b1b; background: #fef2f2; }
+.grade-a { color: #059669; background: #ecfdf5; }
+.grade-b { color: #0891b2; background: #ecfeff; }
+.grade-c { color: #d97706; background: #fffbeb; }
+.grade-d { color: #ea580c; background: #ffedd5; }
+.grade-f { color: #dc2626; background: #fef2f2; }

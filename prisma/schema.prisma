@@ -33,8 +33,8 @@ model BrandProfile {
   companyDescription String?  @db.Text
   targetAudience     String?
   displayName        String?
-  primaryColor       String   @default("#B45309")
-  secondaryColor     String   @default("#0D5C63")
+  primaryColor       String   @default("#6366F1")
+  secondaryColor     String   @default("#0891B2")
   tone               String   @default("premium, trustworthy, conversion-focused")
   logoUrl            String?
   guidelines         String?  @db.Text

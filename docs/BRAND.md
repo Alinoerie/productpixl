@@ -8,17 +8,27 @@
 
 **One-liner:** Launch before you list — one photo to publication-ready gallery and copy.
 
-## Why this palette: Copper Horizon
+## Why this palette: Studio Iris
+
+Research-backed direction for 2026 SaaS and creative tools: move away from overused startup blue *and* warm copper/orange commerce clichés. **Studio Iris** uses cool slate neutrals (precision, long-session comfort) with **indigo** as the primary action color (premium, creative, memorable) and **cyan** as the secondary (EU marketplaces, Bol.com, RUFUS/COSMO intelligence).
 
 | Color | Hex | Role | Rationale |
 |-------|-----|------|-----------|
-| **Copper** | `#B45309` | Primary CTA, energy | Warm conversion color; distinct from Amazon orange and generic SaaS blue (Pixii/Helium). Signals commerce without copying Amazon. |
-| **Ink** | `#121110` | Text, dark UI | Warm black — editorial premium, not cold `#000`. |
-| **Linen** | `#F3EDE4` | Page background | Marketplace sellers work in long sessions; warm linen reduces fatigue vs stark white. |
-| **Teal** | `#0D5C63` | EU / trust / “RUFUS-ready” | Secondary accent for Europe, Bol.com, and algorithm-intelligence story without “fintech blue”. |
-| **Sand** | `#D9CEC2` | Borders | Organic, packaging-adjacent — fits product-commerce context. |
+| **Iris** | `#6366F1` | Primary CTA, links, focus rings | Premium indigo — distinct from Amazon orange and generic `#2563EB` SaaS blue. Reads as a creative studio, not a marketplace clone. |
+| **Ink** | `#0F172A` | Text, dark UI | Cool slate-900 — crisp editorial contrast on light backgrounds. |
+| **Mist** | `#F8FAFC` | Page background | Cool tinted neutral; reduces eye strain vs stark white without the dated “warm linen” look. |
+| **Cyan** | `#0891B2` | EU / trust / RUFUS-ready | Secondary accent for Europe, Bol.com, grader tips, and algorithm-intelligence story. |
+| **Slate** | `#E2E8F0` | Borders | Clean separation; works across marketing and dense studio UI. |
 
-**Avoid:** Pure Amazon orange, Inter-only SaaS purple-blue, neon gradients (reads cheap AI tool).
+**Semantic colors (separate from brand):**
+
+| Token | Hex | Use |
+|-------|-----|-----|
+| Success | `#059669` | Grades A, completed states |
+| Warning | `#D97706` | Paywall, low credits (amber — not brand accent) |
+| Error | `#DC2626` | Failures, grade F |
+
+**Avoid:** Pure Amazon orange, warm copper/linen palettes, Inter-only purple-blue gradients, neon-on-black “AI slop” aesthetics.
 
 ## Brand pillars
 
@@ -43,3 +53,9 @@
 | Pixii: $207/mo | Credits from €0 |
 | Perci: text only | Images + copy |
 | Amazon AI: free generic | Research + QA pipeline |
+
+## Implementation
+
+All UI colors flow from CSS custom properties in `src/app/globals.css`. Components reference `var(--accent)`, `var(--teal)` (secondary cyan), `var(--ink)`, etc. — never hardcode brand hex in TSX except user-editable brand profile defaults.
+
+Default brand profile colors for new users: primary `#6366F1`, secondary `#0891B2`.

@@ -15,7 +15,7 @@ Listing studio for marketplace sellers: one product photo → gallery images + c
 
 ## Brand
 
-See **[docs/BRAND.md](docs/BRAND.md)** — **Copper Horizon** palette (copper CTA, linen background, teal for EU/RUFUS story). Positioning: photo-first, pay-per-credit, Amazon + Bol.com.
+See **[docs/BRAND.md](docs/BRAND.md)** — **Studio Iris** palette (indigo CTA, cool slate background, cyan for EU/RUFUS story). Positioning: photo-first, pay-per-credit, Amazon + Bol.com.
 
 Marketing pages use real PHOILA pipeline samples in **`public/showcase/`** (Zealots hand soap, skincare, Danish chair) — sourced from local generation runs.
 
