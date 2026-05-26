@@ -1,4 +1,3 @@
-/** Replicate often returns streamed text as an array of string chunks — join all of them. */
 export function extractReplicateText(output: unknown): string {
   if (typeof output === "string") return output;
   if (Array.isArray(output)) {
@@ -14,6 +13,39 @@ export function extractReplicateText(output: unknown): string {
     return String(Object.values(obj)[0] ?? "");
   }
   return String(output ?? "");
+}
+
+/** Image models return FileOutput (with .url()) or a plain URL string. */
+export function extractReplicateUrl(output: unknown): string {
+  if (typeof output === "string") {
+    const trimmed = output.trim();
+    if (trimmed.startsWith("http")) return trimmed;
+  }
+
+  if (Array.isArray(output)) {
+    for (const item of output) {
+      try {
+        return extractReplicateUrl(item);
+      } catch {
+        continue;
+      }
+    }
+  }
+
+  if (output && typeof output === "object") {
+    const obj = output as { url?: () => string };
+    if (typeof obj.url === "function") {
+      const fromMethod = String(obj.url()).trim();
+      if (fromMethod.startsWith("http")) return fromMethod;
+    }
+    const asString = String(output).trim();
+    if (asString.startsWith("http")) return asString;
+  }
+
+  const text = extractReplicateText(output).trim();
+  if (text.startsWith("http")) return text;
+
+  throw new Error("No image URL in model output");
 }
 
 export function parseJsonFromModel<T>(raw: string): T {

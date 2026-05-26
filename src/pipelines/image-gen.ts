@@ -1,6 +1,6 @@
 import Replicate from "replicate";
 import sharp from "sharp";
-import { extractReplicateText } from "@/lib/replicate-output";
+import { extractReplicateUrl } from "@/lib/replicate-output";
 import { isStubMode, sleep } from "@/lib/utils";
 import type { ListingModuleId } from "./modules";
 
@@ -34,7 +34,7 @@ export async function generateListingImage(
         },
       });
 
-      const url = extractReplicateText(output).trim();
+      const url = extractReplicateUrl(output);
       const imgRes = await fetch(url);
       if (!imgRes.ok) throw new Error(`Failed to download generated image: ${imgRes.status}`);
       const raw = Buffer.from(await imgRes.arrayBuffer());
