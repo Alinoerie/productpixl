@@ -956,6 +956,9 @@ export function GenerateWizard({
               />
             </>
           ) : null}
+          <p className="sr-only" aria-live="polite">
+            {done ? "Image pipeline complete" : ""}
+          </p>
           {done && productId && (
             <StudioSuccessBanner
               innerRef={completionRef}

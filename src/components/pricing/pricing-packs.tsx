@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { Check, CreditCard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CheckoutButton } from "@/components/pricing/checkout-button";
 import { useLiveCredits } from "@/hooks/use-live-credits";
 import { cn } from "@/lib/utils";
@@ -37,10 +39,12 @@ export function PricingPacks({
   initialCredits,
   checkoutEnabled,
   creditsNeeded,
+  signedIn = true,
 }: {
   initialCredits: number;
   checkoutEnabled: boolean;
   creditsNeeded?: number;
+  signedIn?: boolean;
 }) {
   const [balance] = useLiveCredits(initialCredits);
   const needed = creditsNeeded ?? 0;
@@ -105,7 +109,13 @@ export function PricingPacks({
                     Image pipeline or copy per credit
                   </li>
                 </ul>
-                <CheckoutButton packageKey={p.key} label={`Buy ${p.name}`} checkoutEnabled={checkoutEnabled} />
+                {signedIn ? (
+                  <CheckoutButton packageKey={p.key} label={`Buy ${p.name}`} checkoutEnabled={checkoutEnabled} />
+                ) : (
+                  <Button asChild className="w-full">
+                    <Link href="/login?callbackUrl=/pricing">Sign in — 10 free credits</Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
           );

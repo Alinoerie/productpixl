@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, FileText, ImageIcon, Plus } from "lucide-react";
+import { ArrowRight, ClipboardCheck, FileText, ImageIcon, Plus } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
@@ -43,6 +43,7 @@ export default async function DashboardPage() {
   ]);
 
   const credits = user?.credits ?? 0;
+  const isFirstRun = totalProjects === 0;
   const heroStats = [
     { label: "Credits", value: String(credits), href: "/pricing" as const },
     { label: "Projects", value: String(totalProjects), href: "/projects" as const },
@@ -60,10 +61,14 @@ export default async function DashboardPage() {
           <div>
             <p className="text-sm font-medium text-[var(--accent-soft)]/90">Listing studio</p>
             <h1 className="mt-2 font-serif text-3xl md:text-4xl">
-              Welcome back{session.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}
+              {isFirstRun
+                ? "Welcome to your studio"
+                : `Welcome back${session.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}`}
             </h1>
             <p className="mt-2 max-w-md text-sm text-white/70">
-              Upload one product photo — get hero, lifestyle, detail images and optional listing copy.
+              {isFirstRun
+                ? "You have 10 free credits — start with an image run, listing copy, or grade a listing free."
+                : "Upload one product photo — get hero, lifestyle, detail images and optional listing copy."}
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -143,7 +148,8 @@ export default async function DashboardPage() {
                 </div>
                 <h3 className="mt-6 font-serif text-xl">Your studio is empty</h3>
                 <p className="mt-2 max-w-sm text-sm text-[var(--muted-fg)] md:max-w-md">
-                  Start with an image run or generate listing copy — every run saves as a project you can return to.
+                  Start with an image run or generate listing copy — every run saves as a project you can return to. Or
+                  grade an existing listing free before you spend credits.
                 </p>
                 <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
                   <Button asChild size="lg">
@@ -154,6 +160,12 @@ export default async function DashboardPage() {
                   </Button>
                   <Button asChild variant="outline" size="lg">
                     <Link href="/copy">Generate listing copy</Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg">
+                    <Link href="/grader">
+                      <ClipboardCheck className="h-4 w-4" />
+                      Grade a listing free
+                    </Link>
                   </Button>
                 </div>
               </div>

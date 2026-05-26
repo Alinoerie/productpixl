@@ -17,6 +17,7 @@ import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft, saveCopyDraft } from "@/lib/copy-draft";
 import { markProductGraded } from "@/lib/grade-session";
 import type { GraderResult } from "@/lib/listing-grader";
+import { cn } from "@/lib/utils";
 
 const SAMPLE = {
   title: "Zealots Energizing Liquid Hand Soap — Greek Olive Oil, Mandarin & Basil — 500ml",
@@ -143,6 +144,18 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
     router.push(draftProductId ? `/copy?productId=${draftProductId}` : "/copy");
   };
 
+  const fixListingWithProductPixl = () => {
+    saveCopyDraft({
+      title,
+      bullets: bullets.filter((b) => b.trim()),
+      description,
+      backendKeywords: keywords,
+      productId: draftProductId ?? undefined,
+    });
+    const callbackUrl = draftProductId ? `/copy?productId=${draftProductId}` : "/copy";
+    router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+  };
+
   const returnToProject = () => {
     if (!draftProductId) return;
     router.push(`/products/${draftProductId}`);
@@ -168,7 +181,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
           </button>
         </p>
       ) : null}
-      <Card className="shadow-[var(--shadow-md)]">
+      <Card className={cn("shadow-[var(--shadow-md)]", !signedIn && "mb-24 md:mb-0")}>
         <CardContent className="space-y-4 p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-[var(--muted-fg)]">Paste your Amazon listing copy</p>
@@ -262,7 +275,14 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
         </CardContent>
       </Card>
 
-      <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
+      <div
+        className={cn(
+          "fixed inset-x-0 z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden",
+          signedIn
+            ? "bottom-[calc(3.75rem+env(safe-area-inset-bottom))]"
+            : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+        )}
+      >
         <Button className="w-full" size="lg" onClick={grade} disabled={loading || !title.trim()}>
           {loading ? "Grading…" : "Grade my listing"}
         </Button>
@@ -358,8 +378,8 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
                   ) : null}
                 </>
               ) : (
-                <Button asChild className="flex-1">
-                  <Link href="/login">Fix listing with ProductPixl →</Link>
+                <Button type="button" className="flex-1" onClick={fixListingWithProductPixl}>
+                  Fix listing with ProductPixl →
                 </Button>
               )}
             </div>

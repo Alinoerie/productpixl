@@ -339,9 +339,11 @@ export function CopyWorkspace({
   const lacksCredits = credits < 1;
   const categoryLabel = `${getMarketplace(marketplace).label} category`;
   const canRetry = Boolean(error && error !== "INSUFFICIENT_CREDITS" && form.name.trim() && !loading);
-  const showNextStepsCard = Boolean(
+  const showGraderImportBanner = Boolean(fromGrader && copy?.title && !productId);
+  const showProjectNextSteps = Boolean(
     productId && copy?.title && (showCompletionNudge || linkedProduct?.listingCopy?.title)
   );
+  const showNextStepsCard = showGraderImportBanner || showProjectNextSteps;
   const mobileStickyFooter =
     "sticky bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-10 md:static md:bottom-auto";
 
@@ -510,10 +512,6 @@ export function CopyWorkspace({
               Generating copy for <strong>{linkedProduct.name}</strong> — saves to your existing project.
             </>
           )}
-        </div>
-      ) : fromGrader && copy?.title && !productId ? (
-        <div className="rounded-xl border border-[var(--accent)]/20 bg-[var(--accent-soft)]/30 px-4 py-3 text-sm text-[var(--foreground)]">
-          Imported from grader — save this listing to a project without spending a credit.
         </div>
       ) : null}
 
@@ -702,7 +700,7 @@ export function CopyWorkspace({
       )}
 
       <p className="sr-only" aria-live="polite">
-        {showCompletionNudge ? "Listing copy ready" : ""}
+        {showCompletionNudge || showGraderImportBanner ? "Listing copy ready" : ""}
       </p>
 
       {copy?.title && (
@@ -710,35 +708,68 @@ export function CopyWorkspace({
           {showNextStepsCard ? (
             <StudioSuccessBanner
               innerRef={completionRef}
-              title={showCompletionNudge ? "Copy ready — what's next?" : "Project copy — next steps"}
-              description="Review edits below, save to your project, then generate gallery images or grade the listing."
+              title={
+                showGraderImportBanner
+                  ? "Imported from grader — save to a project"
+                  : showCompletionNudge
+                    ? "Copy ready — what's next?"
+                    : "Project copy — next steps"
+              }
+              description={
+                showGraderImportBanner
+                  ? "Review the imported listing below, then save it to a project without spending a credit."
+                  : "Review edits below, save to your project, then generate gallery images or grade the listing."
+              }
             >
-              <Button asChild size="sm">
-                <Link href={`/generate?productId=${productId}`}>
-                  <Camera className="h-4 w-4" />
-                  Generate gallery
-                </Link>
-              </Button>
-              <GradeListingButton
-                listingCopy={{
-                  title: copy.title,
-                  bullets: (copy.bullets as string[]) ?? [],
-                  description: copy.description,
-                  backendKeywords: copy.backendKeywords,
-                  productId: productId ?? undefined,
-                }}
-                productId={productId ?? undefined}
-                variant="outline"
-                size="sm"
-              >
-                Grade listing
-              </GradeListingButton>
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/products/${productId}`}>Open project</Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/products/${productId}#export`}>Export hub</Link>
-              </Button>
+              {showGraderImportBanner ? (
+                <>
+                  <Button size="sm" disabled={saving} onClick={() => void saveDraftToProject()}>
+                    <Save className="h-4 w-4" />
+                    Save to project (free)
+                  </Button>
+                  <GradeListingButton
+                    listingCopy={{
+                      title: copy.title,
+                      bullets: (copy.bullets as string[]) ?? [],
+                      description: copy.description,
+                      backendKeywords: copy.backendKeywords,
+                    }}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Re-grade listing
+                  </GradeListingButton>
+                </>
+              ) : (
+                <>
+                  <Button asChild size="sm">
+                    <Link href={`/generate?productId=${productId}`}>
+                      <Camera className="h-4 w-4" />
+                      Generate gallery
+                    </Link>
+                  </Button>
+                  <GradeListingButton
+                    listingCopy={{
+                      title: copy.title,
+                      bullets: (copy.bullets as string[]) ?? [],
+                      description: copy.description,
+                      backendKeywords: copy.backendKeywords,
+                      productId: productId ?? undefined,
+                    }}
+                    productId={productId ?? undefined}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Grade listing
+                  </GradeListingButton>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/products/${productId}`}>Open project</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/products/${productId}#export`}>Export hub</Link>
+                  </Button>
+                </>
+              )}
             </StudioSuccessBanner>
           ) : null}
           {titleOverLimit ? (

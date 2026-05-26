@@ -7,9 +7,11 @@ import { PricingPacks } from "@/components/pricing/pricing-packs";
 export function PricingCatalog({
   initialCredits,
   checkoutEnabled,
+  signedIn = true,
 }: {
   initialCredits: number;
   checkoutEnabled: boolean;
+  signedIn?: boolean;
 }) {
   const [skus, setSkus] = useState(12);
   const [runsPerSku, setRunsPerSku] = useState(2);
@@ -21,6 +23,7 @@ export function PricingCatalog({
         initialCredits={initialCredits}
         checkoutEnabled={checkoutEnabled}
         creditsNeeded={creditsNeeded}
+        signedIn={signedIn}
       />
 
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--muted)]/20 p-6 md:p-8">

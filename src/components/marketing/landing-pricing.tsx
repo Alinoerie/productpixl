@@ -60,7 +60,7 @@ export function LandingPricing() {
             <Link href="/login">Sign in — 10 free credits</Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="rounded-xl">
-            <Link href="/login?callbackUrl=/pricing">Buy credits in studio</Link>
+            <Link href="/pricing">View full pricing & calculator</Link>
           </Button>
         </div>
       </div>

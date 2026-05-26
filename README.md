@@ -52,7 +52,7 @@ pnpm inngest:dev
 
 **Credits:** 10 free on signup · 1 credit per image run, copy run, or spot-edit.
 
-**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready and failed-project filters, marketplace-aware export (txt/csv/json + gallery ZIP), in-app unsaved guards on project/copy/brand pages, failed-module retry in gallery, payment success polling after Stripe checkout, grader → copy draft flow with persisted grades, marketplace guidance in generate/copy studios, smart pack recommendations on pricing, collapsible listing bullets on mobile, mobile More menu for Brand/Credits, debounced project search, re-grade from readiness checklist, live dashboard run polling, marketplace labels on project cards, accessible delete confirmation, clickable grade badge, export readiness checklist, screen-reader char counters in copy/grader studios, sticky studio steppers with live status, richer account orders empty state, brand preview mockup, login onboarding steps, pricing comparison cards, and animated studio success banners.
+**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready and failed-project filters, marketplace-aware export (txt/csv/json + gallery ZIP), in-app unsaved guards on project/copy/brand pages, failed-module retry in gallery, payment success polling after Stripe checkout, grader → copy draft flow with persisted grades, marketplace guidance in generate/copy studios, smart pack recommendations on pricing, collapsible listing bullets on mobile, mobile More menu for Brand/Credits, debounced project search, re-grade from readiness checklist, live dashboard run polling, marketplace labels on project cards, accessible delete confirmation, clickable grade badge, export readiness checklist, screen-reader char counters in copy/grader studios, sticky studio steppers with live status, richer account orders empty state, brand preview mockup, login onboarding steps, pricing comparison cards, animated studio success banners, public pricing page with sign-in CTAs, first-run dashboard onboarding, grader import success banner in copy studio, and logged-out grader → copy handoff with draft preservation.
 
 ## Pipeline docs
 
@@ -62,16 +62,16 @@ pnpm inngest:dev
 ## Manual test checklist
 
 - [ ] Sign in with Google → dashboard shows 10 credits
-- [ ] `/dashboard` — hero stats link to projects, export-ready, and failed runs; active runs panel updates live
+- [ ] `/dashboard` — first-run welcome copy; hero stats link to projects, export-ready, and failed runs; active runs panel updates live; empty state includes free grader CTA
 - [ ] `/projects` — search/filter (debounced search, failed, export-ready, queued), marketplace on cards, open generate or copy handoffs
 - [ ] `/brand` — live listing preview mockup, profile complete badge, mobile save bar, unsaved navigation guard
 - [ ] `/generate` — sticky stepper with pipeline status, marketplace guidance, navigation guard, gallery ZIP on completion
 - [ ] `/copy` — sticky stepper while generating, regenerate copy, bullet add/remove, marketplace guidance, char counter a11y, mobile save bar, unsaved guard
-- [ ] `/grader` — grade listing without login; char counter a11y; hand off to copy studio when signed in
+- [ ] `/grader` — grade listing without login; char counter a11y; hand off to copy studio with draft preserved; mobile sticky bar respects logged-out layout
 - [ ] `/products/[id]` — readiness checklist with re-grade, clickable grade badge, export checklist, section nav below header, collapsible bullets on mobile, marketplace export (ZIP + txt/csv/json), gallery filters + failed-module retry, spot-edit on completed assets
 - [ ] `/account` — balance, credit usage guide, orders empty state with pack CTA, sign out, payment return banner
 - [ ] `/login` — onboarding steps, callback destination hint, link to free grader
-- [ ] `/pricing` — highlighted comparison cards, smart pack recommendation, checkout return banner
+- [ ] `/pricing` — public when logged out; sign-in CTA on packs; highlighted comparison cards, smart pack recommendation, checkout return banner
 
 ## Stub mode
 
