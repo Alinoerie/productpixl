@@ -70,7 +70,7 @@ pnpm inngest:dev
 - [ ] `/onboarding` — company + brand identity, AI brand story, completes before studio access
 - [ ] `/dashboard` — first-run welcome copy; hero stats link to projects, export-ready, and failed runs; active runs panel updates live; empty state includes free grader CTA
 - [ ] `/projects` — search/filter (debounced search, failed, export-ready, queued), filter-specific empty states, marketplace on cards, open generate or copy handoffs; empty studio includes free grader CTA
-- [ ] `/brand` — live listing preview mockup, profile complete badge, mobile save bar, unsaved navigation guard
+- [ ] `/brand` — company, story, colors, tone, logo; AI brand story; live preview mockup; unsaved guard
 - [ ] `/generate` — vision AI prefill + product vibe/use case/reference images; stub mode banner when Replicate token missing; analysis reused in prompt plan (no triple re-analyze)
 - [ ] `/copy` — enriched product intake fields flow into listing copy generation
 - [ ] `/grader` — grade listing without login; grade toast + mobile results scroll; char counter a11y; hand off to copy studio with draft preserved; mobile sticky bar respects logged-out layout
