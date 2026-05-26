@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { analyzeProductImage } from "@/lib/ai";
+import { analyzeProductImage, type ProductAnalysis } from "@/lib/ai";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
+import type { ProductIntakeData } from "@/lib/product-intake";
 import { getModulesForRun } from "@/pipelines/modules";
 import { buildListingPrompt } from "@/pipelines/prompt-builder";
 import { runCategoryResearch } from "@/pipelines/tavily";
@@ -16,17 +17,8 @@ export async function POST(req: NextRequest) {
     inputImageUrl?: string;
     includePackaging?: boolean;
     marketplace?: string;
-    productData?: {
-      name: string;
-      brandName: string;
-      category: string;
-      dimensions?: string;
-      materials?: string;
-      colors?: string;
-      keyFeatures?: string;
-      targetBuyer?: string;
-      competitors?: string;
-    };
+    analysis?: ProductAnalysis;
+    productData?: ProductIntakeData;
   };
 
   if (!body.inputImageUrl || !body.productData?.name || !body.productData?.category) {
@@ -36,10 +28,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const [analysis, research, brandProfile] = await Promise.all([
-    analyzeProductImage(body.inputImageUrl),
-    runCategoryResearch(body.productData.name, body.productData.category),
-    getBrandProfileForUser(session.user.id),
+  const brandProfile = await getBrandProfileForUser(session.user.id);
+  const productData: ProductIntakeData = {
+    ...body.productData,
+    brandName: body.productData.brandName || brandProfile.displayName || body.productData.brandName,
+    referenceImageUrls: body.productData.referenceImageUrls ?? [],
+  };
+
+  const [analysis, research] = await Promise.all([
+    body.analysis ? Promise.resolve(body.analysis) : analyzeProductImage(body.inputImageUrl),
+    runCategoryResearch(productData.name, productData.category),
   ]);
 
   const modules = getModulesForRun(Boolean(body.includePackaging));
@@ -47,7 +45,7 @@ export async function POST(req: NextRequest) {
     moduleId: mod.id,
     label: mod.label,
     resolution: mod.resolution,
-    prompt: buildListingPrompt(mod.id, analysis, body.productData!, research, {
+    prompt: buildListingPrompt(mod.id, analysis, productData, research, {
       brandProfile,
       marketplace: body.marketplace ?? "AMAZON_US",
     }),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { analyzeProductImage } from "@/lib/ai";
+import { analyzeProductImage, type ProductAnalysis } from "@/lib/ai";
+import { isStubMode } from "@/lib/utils";
 
 export const maxDuration = 60;
 
@@ -24,7 +25,10 @@ export async function POST(req: NextRequest) {
     }
 
     const analysis = await analyzeProductImage(imageUrl);
-    return NextResponse.json({ analysis });
+    return NextResponse.json({
+      analysis,
+      stubMode: isStubMode(),
+    } satisfies { analysis: ProductAnalysis; stubMode: boolean });
   } catch (err) {
     console.error("[api/analyze]", err);
     const message = err instanceof Error ? err.message : "Analysis failed";

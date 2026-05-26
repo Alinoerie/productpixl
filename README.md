@@ -44,11 +44,16 @@ pnpm inngest:dev
 | Dashboard & projects | `/dashboard`, `/projects` |
 | Image pipeline (L1/L3/L4/L8) | `/generate` |
 | Listing copy | `/copy` |
-| Brand profile (colors, tone, logo) | `/brand` |
+| Brand onboarding (required before studio) | `/onboarding` |
+| Brand profile (edit anytime) | `/brand` |
 | Free listing grader (A–F) | `/grader` |
 | Spot-edit single module | Product page → 1 credit |
 | Export hub (images + copy JSON/CSV/TXT) | `/products/[id]#export` |
 | Marketplaces | Amazon US/UK/DE, Bol.com, Shopify |
+
+**Brand-first flow:** New users complete `/onboarding` (company → brand identity → AI brand story → launch) before `/generate` or `/copy`. Company, brand story, tone, and logo feed every PHOILA prompt and copy run.
+
+**Product intake:** After brand setup, each product run collects vibe, use case, differentiators, competitors, and optional reference images — merged with vision AI analysis into prompt generation.
 
 **Credits:** 10 free on signup · 1 credit per image run, copy run, or spot-edit.
 
@@ -61,12 +66,13 @@ pnpm inngest:dev
 
 ## Manual test checklist
 
-- [ ] Sign in with Google → dashboard shows 10 credits
+- [ ] Sign in with Google → redirected to `/onboarding` if brand not complete; dashboard shows 10 credits after
+- [ ] `/onboarding` — company + brand identity, AI brand story, completes before studio access
 - [ ] `/dashboard` — first-run welcome copy; hero stats link to projects, export-ready, and failed runs; active runs panel updates live; empty state includes free grader CTA
 - [ ] `/projects` — search/filter (debounced search, failed, export-ready, queued), filter-specific empty states, marketplace on cards, open generate or copy handoffs; empty studio includes free grader CTA
 - [ ] `/brand` — live listing preview mockup, profile complete badge, mobile save bar, unsaved navigation guard
-- [ ] `/generate` — sticky stepper with pipeline status, marketplace guidance, navigation guard, gallery ZIP on completion, failure recovery with retry
-- [ ] `/copy` — sticky stepper while generating, regenerate copy, bullet add/remove, marketplace guidance, char counter a11y, mobile save bar, unsaved guard, grader import scrolls to success banner
+- [ ] `/generate` — vision AI prefill + product vibe/use case/reference images; stub mode banner when Replicate token missing; analysis reused in prompt plan (no triple re-analyze)
+- [ ] `/copy` — enriched product intake fields flow into listing copy generation
 - [ ] `/grader` — grade listing without login; grade toast + mobile results scroll; char counter a11y; hand off to copy studio with draft preserved; mobile sticky bar respects logged-out layout
 - [ ] `/products/[id]` — new project onboarding card, readiness checklist with re-grade, clickable grade badge, export checklist, section nav below header, collapsible bullets on mobile, marketplace export (ZIP + txt/csv/json), gallery filters + failed-module retry, spot-edit on completed assets
 - [ ] `/account` — balance, credit usage guide, orders empty state with pack CTA, sign out, payment return banner

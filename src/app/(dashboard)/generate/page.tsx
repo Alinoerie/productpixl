@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { GenerateWizard } from "@/components/generate/generate-wizard";
-import { isBrandProfileConfigured, getBrandProfileForUser } from "@/lib/brand-profile";
+import { getBrandProfileForUser } from "@/lib/brand-profile";
 import { type MarketplaceId } from "@/lib/marketplaces";
 
 export default async function GeneratePage({
@@ -12,9 +12,10 @@ export default async function GeneratePage({
   const session = await auth();
   const params = await searchParams;
 
-  const brandConfigured = session?.user?.id
-    ? await isBrandProfileConfigured(session.user.id)
-    : true;
+  const brandProfile = session?.user?.id
+    ? await getBrandProfileForUser(session.user.id)
+    : null;
+  const defaultBrandName = brandProfile?.displayName ?? "";
 
   let linkedProduct = null;
   if (params.productId && session?.user?.id) {
@@ -23,7 +24,7 @@ export default async function GeneratePage({
     });
     if (product) {
       const analysis = product.analysisJson as { brandName?: string } | null;
-      const brandProfile = await getBrandProfileForUser(session.user.id);
+      const refs = (product.referenceImageUrls as string[] | null) ?? [];
       linkedProduct = {
         id: product.id,
         name: product.name,
@@ -34,8 +35,13 @@ export default async function GeneratePage({
         colors: product.colors,
         keyFeatures: product.keyFeatures,
         targetBuyer: product.targetBuyer,
+        competitors: product.competitors,
+        vibe: product.vibe,
+        useCase: product.useCase,
+        differentiators: product.differentiators,
+        referenceImageUrls: refs,
         amazonCategory: product.amazonCategory,
-        brandName: analysis?.brandName ?? brandProfile.displayName ?? "",
+        brandName: analysis?.brandName ?? defaultBrandName,
       };
     }
   }
@@ -47,7 +53,7 @@ export default async function GeneratePage({
       initialCredits={session?.user?.credits ?? 0}
       linkedProduct={linkedProduct}
       missingProductId={missingProductId}
-      brandConfigured={brandConfigured}
+      defaultBrandName={defaultBrandName}
       paymentSuccess={params.success === "true"}
     />
   );

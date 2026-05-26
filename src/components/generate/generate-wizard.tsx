@@ -4,21 +4,19 @@ import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-alert";
-import { BrandSetupNudge } from "@/components/ui/brand-setup-nudge";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { useLiveCredits } from "@/hooks/use-live-credits";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
-import { MarketplacePicker } from "@/components/ui/marketplace-picker";
-import { MarketplaceGuidance } from "@/components/ui/marketplace-guidance";
 import { StudioStepper } from "@/components/ui/studio-stepper";
 import { StudioSuccessBanner } from "@/components/ui/studio-success-banner";
+import { ProductIntakeFields } from "@/components/product/product-intake-fields";
 import { fetchJson } from "@/lib/fetch-json";
+import { EMPTY_PRODUCT_INTAKE, type ProductIntakeData } from "@/lib/product-intake";
+import type { ProductAnalysis } from "@/lib/ai";
 import { cn } from "@/lib/utils";
 import { formatPipelinePhase, formatModuleLabel } from "@/lib/status-labels";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,29 +27,8 @@ import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { Camera, Check, Download, Loader2, Sparkles } from "lucide-react";
 import { type MarketplaceId } from "@/lib/marketplaces";
 import { getMarketplace } from "@/lib/marketplaces";
-import { downloadGalleryZip } from "@/lib/download-gallery-zip";
 import { UnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
-
-interface ProductData {
-  name: string;
-  brandName: string;
-  category: string;
-  dimensions: string;
-  materials: string;
-  colors: string;
-  keyFeatures: string;
-  targetBuyer: string;
-}
-
-interface ProductAnalysis {
-  productName?: string;
-  brandName?: string;
-  amazonCategory?: string;
-  dimensions?: string;
-  materials?: string;
-  colors?: string;
-  keyObservations?: string;
-}
+import { downloadGalleryZip } from "@/lib/download-gallery-zip";
 
 interface PromptPlanItem {
   moduleId: string;
@@ -73,6 +50,11 @@ type LinkedProduct = {
   keyFeatures?: string | null;
   targetBuyer?: string | null;
   amazonCategory?: string | null;
+  competitors?: string | null;
+  vibe?: string | null;
+  useCase?: string | null;
+  differentiators?: string | null;
+  referenceImageUrls?: string[] | null;
   brandName?: string;
 };
 
@@ -80,13 +62,13 @@ export function GenerateWizard({
   initialCredits,
   linkedProduct = null,
   missingProductId = false,
-  brandConfigured = true,
+  defaultBrandName = "",
   paymentSuccess = false,
 }: {
   initialCredits: number;
   linkedProduct?: LinkedProduct | null;
   missingProductId?: boolean;
-  brandConfigured?: boolean;
+  defaultBrandName?: string;
   paymentSuccess?: boolean;
 }) {
   const router = useRouter();
@@ -123,6 +105,9 @@ export function GenerateWizard({
   const [downloading, setDownloading] = useState(false);
   const [pipelineFailed, setPipelineFailed] = useState(false);
   const [pollTimedOut, setPollTimedOut] = useState(false);
+  const [savedAnalysis, setSavedAnalysis] = useState<ProductAnalysis | null>(null);
+  const [analysisStubMode, setAnalysisStubMode] = useState(false);
+  const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
   const [projectListingCopy, setProjectListingCopy] = useState<{
     title: string;
     bullets: string[];
@@ -133,19 +118,18 @@ export function GenerateWizard({
   const mobileStickyFooter =
     "sticky bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-10 md:static md:bottom-auto";
 
-  const [form, setForm] = useState<ProductData>({
-    name: "",
-    brandName: "",
-    category: "",
-    dimensions: "",
-    materials: "",
-    colors: "",
-    keyFeatures: "",
-    targetBuyer: "",
+  const [form, setForm] = useState<ProductIntakeData>({
+    ...EMPTY_PRODUCT_INTAKE,
+    brandName: defaultBrandName,
   });
 
-  const setField = (key: keyof ProductData, value: string) =>
-    setForm((f) => ({ ...f, [key]: value }));
+  const intakePayload = useCallback(
+    (): ProductIntakeData => ({
+      ...form,
+      referenceImageUrls,
+    }),
+    [form, referenceImageUrls]
+  );
 
   const onFile = async (file: File) => {
     setError("");
@@ -177,7 +161,11 @@ export function GenerateWizard({
     setAnalyzing(true);
     setError("");
     try {
-      const { ok, data } = await fetchJson<{ analysis?: ProductAnalysis; error?: string }>(
+      const { ok, data } = await fetchJson<{
+        analysis?: ProductAnalysis;
+        stubMode?: boolean;
+        error?: string;
+      }>(
         "/api/analyze",
         {
           method: "POST",
@@ -188,16 +176,22 @@ export function GenerateWizard({
       if (!ok) throw new Error(data.error || "Analysis failed");
       const a = data.analysis;
       if (!a) throw new Error("No analysis returned");
-      setForm({
-        name: a.productName || form.name,
-        brandName: a.brandName || form.brandName,
-        category: a.amazonCategory || form.category,
-        dimensions: a.dimensions || form.dimensions,
-        materials: a.materials || form.materials,
-        colors: a.colors || form.colors,
-        keyFeatures: a.keyObservations || form.keyFeatures,
-        targetBuyer: form.targetBuyer,
-      });
+      setSavedAnalysis(a);
+      setAnalysisStubMode(Boolean(data.stubMode));
+      setForm((prev) => ({
+        ...prev,
+        name: a.productName || prev.name,
+        brandName: a.brandName || prev.brandName || defaultBrandName,
+        category: a.amazonCategory || prev.category,
+        dimensions: a.dimensions || prev.dimensions,
+        materials: a.materials || prev.materials,
+        colors: a.colors || prev.colors,
+        keyFeatures: a.keyObservations || prev.keyFeatures,
+        targetBuyer: a.suggestedTargetBuyer || prev.targetBuyer,
+        useCase: a.useCase || prev.useCase,
+        differentiators: a.differentiators || prev.differentiators,
+        vibe: a.mood || prev.vibe,
+      }));
       setPromptPlan([]);
       setStep(1);
     } catch (e) {
@@ -219,14 +213,20 @@ export function GenerateWizard({
     setMarketplace(linkedProduct.marketplace);
     setForm({
       name: linkedProduct.name,
-      brandName: linkedProduct.brandName ?? "",
+      brandName: linkedProduct.brandName ?? defaultBrandName,
       category: linkedProduct.amazonCategory ?? "",
       dimensions: linkedProduct.dimensions ?? "",
       materials: linkedProduct.materials ?? "",
       colors: linkedProduct.colors ?? "",
       keyFeatures: linkedProduct.keyFeatures ?? "",
       targetBuyer: linkedProduct.targetBuyer ?? "",
+      competitors: linkedProduct.competitors ?? "",
+      vibe: linkedProduct.vibe ?? "",
+      useCase: linkedProduct.useCase ?? "",
+      differentiators: linkedProduct.differentiators ?? "",
+      referenceImageUrls: linkedProduct.referenceImageUrls ?? [],
     });
+    setReferenceImageUrls(linkedProduct.referenceImageUrls ?? []);
     if (linkedProduct.inputImageUrl) {
       setImageUrl(linkedProduct.inputImageUrl);
       setPreview(linkedProduct.inputImageUrl);
@@ -234,7 +234,7 @@ export function GenerateWizard({
     } else {
       setStep(1);
     }
-  }, [linkedProduct]);
+  }, [linkedProduct, defaultBrandName]);
 
   const copyOnlyHandoff = Boolean(linkedProduct && !linkedProduct.inputImageUrl);
 
@@ -252,7 +252,8 @@ export function GenerateWizard({
           inputImageUrl: imageUrl,
           includePackaging,
           marketplace,
-          productData: form,
+          productData: intakePayload(),
+          analysis: savedAnalysis ?? undefined,
         }),
       });
       if (!ok) throw new Error(data.error || "Failed to build prompt plan");
@@ -262,7 +263,7 @@ export function GenerateWizard({
     } finally {
       setPlanningPrompts(false);
     }
-  }, [imageUrl, includePackaging, marketplace, form]);
+  }, [imageUrl, includePackaging, marketplace, intakePayload, savedAnalysis]);
 
   useEffect(() => {
     if (step !== 2 || promptPlan.length || planningPrompts || !imageUrl) return;
@@ -286,7 +287,8 @@ export function GenerateWizard({
             inputImageUrl: imageUrl,
             includePackaging,
             marketplace,
-            productData: form,
+            productData: intakePayload(),
+            analysis: savedAnalysis ?? undefined,
             promptOverrides: Object.fromEntries(promptPlan.map((p) => [p.moduleId, p.prompt])),
           }),
         }
@@ -438,20 +440,14 @@ export function GenerateWizard({
         previewUrlRef.current = null;
       }
       setPreview("");
-      setForm({
-        name: "",
-        brandName: "",
-        category: "",
-        dimensions: "",
-        materials: "",
-        colors: "",
-        keyFeatures: "",
-        targetBuyer: "",
-      });
+      setForm({ ...EMPTY_PRODUCT_INTAKE, brandName: defaultBrandName });
+      setReferenceImageUrls([]);
+      setSavedAnalysis(null);
+      setAnalysisStubMode(false);
     } else {
       setStep(2);
     }
-  }, []);
+  }, [defaultBrandName]);
 
   const downloadImages = async () => {
     setDownloading(true);
@@ -471,7 +467,6 @@ export function GenerateWizard({
 
   const PHASES = ["RECEIVING", "ANALYZING", "RESEARCHING", "SELECTING", "GENERATING", "QA", "COMPLETE"];
   const marketplaceLabel = getMarketplace(marketplace).label;
-  const categoryLabel = `${marketplaceLabel} category`;
 
   return (
     <div className="space-y-8">
@@ -485,8 +480,6 @@ export function GenerateWizard({
           <PaymentSuccessBanner onCreditsUpdated={setCredits} />
         </Suspense>
       ) : null}
-
-      <BrandSetupNudge configured={brandConfigured} />
 
       <PageHeader
         eyebrow="PHOILA pipeline"
@@ -634,8 +627,13 @@ export function GenerateWizard({
             <p className="md:col-span-2 text-sm text-[var(--muted-fg)]">
               {copyOnlyHandoff && !imageUrl
                 ? "Review saved product details, upload a photo, then continue to the prompt plan."
-                : "Review AI-extracted product data. Edit anything before generation — this feeds your PHOILA prompts."}
+                : "Review AI-extracted product data and add vibe, use case, and reference images — this feeds your PHOILA prompts."}
             </p>
+            {analysisStubMode ? (
+              <p className="md:col-span-2 rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]">
+                Vision AI is in demo mode — add a Replicate API token for live analysis, or fill in product details manually.
+              </p>
+            ) : null}
             {!imageUrl ? (
               <div className="md:col-span-2 space-y-2 rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)]/40 p-4">
                 <Label htmlFor="generate-upload-step1">Product photo (required for gallery)</Label>
@@ -671,56 +669,19 @@ export function GenerateWizard({
                 ) : null}
               </div>
             ) : null}
-            <div className="md:col-span-2">
-              <Label className="mb-2 block">Marketplace</Label>
-              <MarketplacePicker
-                value={marketplace}
-                onChange={(id) => {
-                  setMarketplace(id);
-                  setPromptPlan([]);
-                }}
-                noteField="imageNote"
-                name="generate-marketplace-step1"
-              />
-              <div className="mt-3">
-                <MarketplaceGuidance marketplaceId={marketplace} variant="images" />
-              </div>
-            </div>
-            {(
-              [
-                ["name", "Product name"],
-                ["brandName", "Brand name"],
-                ["category", categoryLabel],
-                ["dimensions", "Dimensions"],
-                ["materials", "Materials"],
-                ["colors", "Colors"],
-              ] as const
-            ).map(([key, label]) => (
-              <div key={key}>
-                <Label htmlFor={`generate-${key}`}>{label}</Label>
-                <Input
-                  id={`generate-${key}`}
-                  value={form[key]}
-                  onChange={(e) => setField(key, e.target.value)}
-                />
-              </div>
-            ))}
-            <div className="md:col-span-2">
-              <Label htmlFor="generate-features">Key features</Label>
-              <Textarea
-                id="generate-features"
-                value={form.keyFeatures}
-                onChange={(e) => setField("keyFeatures", e.target.value)}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="generate-buyer">Target buyer</Label>
-              <Input
-                id="generate-buyer"
-                value={form.targetBuyer}
-                onChange={(e) => setField("targetBuyer", e.target.value)}
-              />
-            </div>
+            <ProductIntakeFields
+              form={form}
+              onChange={setForm}
+              marketplace={marketplace}
+              onMarketplaceChange={(id) => {
+                setMarketplace(id);
+                setPromptPlan([]);
+              }}
+              referenceImageUrls={referenceImageUrls}
+              onReferenceImagesChange={setReferenceImageUrls}
+              variant="images"
+              disabled={uploading || analyzing}
+            />
             <div className={cn(mobileStickyFooter, "-mx-6 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none md:col-span-2")}>
               <Button variant="outline" onClick={() => setStep(0)}>
                 Back
@@ -731,7 +692,7 @@ export function GenerateWizard({
                   setPromptPlan([]);
                   setStep(2);
                 }}
-                disabled={!form.name.trim() || !imageUrl || uploading}
+                disabled={!form.name.trim() || !form.category.trim() || !imageUrl || uploading}
               >
                 {imageUrl ? "Next" : "Upload photo to continue"}
               </Button>

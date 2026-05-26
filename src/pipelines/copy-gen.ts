@@ -21,6 +21,10 @@ export async function generateListingCopy(params: {
   materials?: string;
   keyFeatures?: string;
   targetBuyer?: string;
+  vibe?: string;
+  useCase?: string;
+  differentiators?: string;
+  competitors?: string;
   analysisSummary?: string;
   researchSnippets: string[];
   keywords: string[];
@@ -60,6 +64,10 @@ ${isBol ? "Bol.com tone: direct, trustworthy, less aggressive US marketing hype.
     materials: params.materials,
     features: params.keyFeatures,
     buyer: params.targetBuyer,
+    vibe: params.vibe,
+    useCase: params.useCase,
+    differentiators: params.differentiators,
+    competitorsToAvoid: params.competitors,
     analysis: params.analysisSummary,
     keywords: params.keywords,
     competitors: params.competitorTitles,

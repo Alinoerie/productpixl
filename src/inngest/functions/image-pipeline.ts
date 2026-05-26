@@ -1,6 +1,7 @@
 import { inngest, IMAGE_PIPELINE_EVENT } from "../client";
 import { prisma } from "@/lib/prisma";
-import { analyzeProductImage } from "@/lib/ai";
+import { analyzeProductImage, type ProductAnalysis } from "@/lib/ai";
+import type { ProductIntakeData } from "@/lib/product-intake";
 import { scoreImageQuality } from "@/lib/ai";
 import { uploadBufferToCloudinary } from "@/lib/cloudinary";
 import { runCategoryResearch } from "@/pipelines/tavily";
@@ -45,21 +46,12 @@ export const imagePipeline = inngest.createFunction(
   },
   { event: IMAGE_PIPELINE_EVENT },
   async ({ event, step }) => {
-    const { productId, includePackaging, intake } = event.data as {
+    const { productId, includePackaging, intake, analysis: presetAnalysis } = event.data as {
       productId: string;
       includePackaging: boolean;
       promptOverrides?: Record<string, string>;
-      intake: {
-        name: string;
-        brandName: string;
-        category: string;
-        dimensions?: string;
-        materials?: string;
-        colors?: string;
-        keyFeatures?: string;
-        targetBuyer?: string;
-        competitors?: string;
-      };
+      analysis?: ProductAnalysis;
+      intake: ProductIntakeData;
     };
 
     const product = await step.run("load-product", () =>
@@ -101,6 +93,17 @@ export const imagePipeline = inngest.createFunction(
     const analysis = await step.run("analyze", async () => {
       pipelineStatus.phase = "ANALYZING";
       await setStatus(pipelineStatus);
+      if (presetAnalysis) {
+        await prisma.product.update({
+          where: { id: productId },
+          data: { analysisJson: presetAnalysis as object },
+        });
+        return presetAnalysis;
+      }
+      const existing = product.analysisJson as ProductAnalysis | null;
+      if (existing?.productName) {
+        return existing;
+      }
       const result = await analyzeProductImage(product.inputImageUrl);
       await prisma.product.update({
         where: { id: productId },

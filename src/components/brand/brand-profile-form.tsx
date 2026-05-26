@@ -11,38 +11,36 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast-provider";
 import { fetchJson } from "@/lib/fetch-json";
-import type { BrandProfileData } from "@/lib/brand-profile";
+import { DEFAULT_BRAND_PROFILE, type BrandProfileData } from "@/lib/brand-profile";
 import { UnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
 import { cn } from "@/lib/utils";
 
 export function BrandProfileForm() {
   const { toast } = useToast();
-  const [profile, setProfile] = useState<BrandProfileData>({
-    displayName: "",
-    primaryColor: "#B45309",
-    secondaryColor: "#0D5C63",
-    tone: "",
-    logoUrl: "",
-    guidelines: "",
-  });
+  const [profile, setProfile] = useState<BrandProfileData>(DEFAULT_BRAND_PROFILE);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [generatingStory, setGeneratingStory] = useState(false);
   const [baseline, setBaseline] = useState<BrandProfileData | null>(null);
 
   useEffect(() => {
     fetchJson<{ profile: BrandProfileData }>("/api/brand-profile")
       .then(({ data }) => {
-        const loaded = {
-          displayName: data.profile.displayName ?? "",
+        const loaded: BrandProfileData = {
+          companyName: data.profile.companyName,
+          companyDescription: data.profile.companyDescription,
+          targetAudience: data.profile.targetAudience,
+          displayName: data.profile.displayName,
           primaryColor: data.profile.primaryColor,
           secondaryColor: data.profile.secondaryColor,
           tone: data.profile.tone,
-          logoUrl: data.profile.logoUrl ?? "",
-          guidelines: data.profile.guidelines ?? "",
+          logoUrl: data.profile.logoUrl,
+          guidelines: data.profile.guidelines,
+          brandStory: data.profile.brandStory,
+          onboardingComplete: data.profile.onboardingComplete,
         };
         setProfile(loaded);
         setBaseline(loaded);
@@ -58,7 +56,40 @@ export function BrandProfileForm() {
     return JSON.stringify(profile) !== JSON.stringify(baseline);
   }, [profile, baseline]);
 
-  const profileComplete = Boolean(profile.displayName?.trim() && profile.tone?.trim());
+  const profileComplete = Boolean(
+    profile.displayName?.trim() && profile.tone?.trim() && profile.brandStory?.trim()
+  );
+
+  const generateStory = async () => {
+    setGeneratingStory(true);
+    setError("");
+    try {
+      const { ok, data } = await fetchJson<{ brandStory?: string; error?: string }>(
+        "/api/brand-profile/generate-story",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            companyName: profile.companyName,
+            companyDescription: profile.companyDescription,
+            targetAudience: profile.targetAudience,
+            displayName: profile.displayName,
+            tone: profile.tone,
+            guidelines: profile.guidelines,
+          }),
+        }
+      );
+      if (!ok || !data.brandStory) throw new Error(data.error || "Could not generate brand story");
+      setProfile((p) => ({ ...p, brandStory: data.brandStory ?? null }));
+      toast("Brand story generated — edit before saving");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Brand story generation failed");
+    } finally {
+      setGeneratingStory(false);
+    }
+  };
+
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const uploadLogo = async (file: File) => {
     setUploadingLogo(true);
@@ -146,6 +177,31 @@ export function BrandProfileForm() {
             </p>
           ) : null}
           <div>
+            <Label htmlFor="brand-company">Company name</Label>
+            <Input
+              id="brand-company"
+              value={profile.companyName ?? ""}
+              onChange={(e) => setProfile({ ...profile, companyName: e.target.value || null })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="brand-company-desc">Company description</Label>
+            <Textarea
+              id="brand-company-desc"
+              value={profile.companyDescription ?? ""}
+              onChange={(e) => setProfile({ ...profile, companyDescription: e.target.value || null })}
+              placeholder="What your company makes and who it serves"
+            />
+          </div>
+          <div>
+            <Label htmlFor="brand-audience">Target audience</Label>
+            <Input
+              id="brand-audience"
+              value={profile.targetAudience ?? ""}
+              onChange={(e) => setProfile({ ...profile, targetAudience: e.target.value || null })}
+            />
+          </div>
+          <div>
             <Label htmlFor="brand-name">Brand display name</Label>
             <Input
               id="brand-name"
@@ -224,6 +280,32 @@ export function BrandProfileForm() {
                 />
               </label>
             </div>
+          </div>
+          <div>
+            <Label htmlFor="brand-story">Brand story</Label>
+            <Textarea
+              id="brand-story"
+              value={profile.brandStory ?? ""}
+              onChange={(e) => setProfile({ ...profile, brandStory: e.target.value || null })}
+              placeholder="Why this brand exists and how it should feel to shoppers"
+              rows={5}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              disabled={generatingStory || !profile.displayName?.trim()}
+              onClick={() => void generateStory()}
+            >
+              {generatingStory ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Generating…
+                </>
+              ) : (
+                "Generate brand story with AI"
+              )}
+            </Button>
           </div>
           <div>
             <Label htmlFor="brand-guidelines">Extra guidelines</Label>

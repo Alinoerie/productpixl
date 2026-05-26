@@ -13,22 +13,22 @@ import { useToast } from "@/components/ui/toast-provider";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
-import { MarketplacePicker } from "@/components/ui/marketplace-picker";
 import { StudioStepper } from "@/components/ui/studio-stepper";
 import { StudioSuccessBanner } from "@/components/ui/studio-success-banner";
 import { fetchJson } from "@/lib/fetch-json";
 import { CharCounter, LimitWarning } from "@/components/ui/char-counter";
 import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-alert";
-import { BrandSetupNudge } from "@/components/ui/brand-setup-nudge";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
+import { ProductIntakeFields } from "@/components/product/product-intake-fields";
+import { EMPTY_PRODUCT_INTAKE, type ProductIntakeData } from "@/lib/product-intake";
+import type { ProductAnalysis } from "@/lib/ai";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft } from "@/lib/copy-draft";
 import { useLiveCredits } from "@/hooks/use-live-credits";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { cn } from "@/lib/utils";
-import { type MarketplaceId, getMarketplace } from "@/lib/marketplaces";
+import { type MarketplaceId } from "@/lib/marketplaces";
 import { UnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
-import { MarketplaceGuidance } from "@/components/ui/marketplace-guidance";
 
 type LinkedProduct = {
   id: string;
@@ -39,6 +39,10 @@ type LinkedProduct = {
   keyFeatures?: string | null;
   targetBuyer?: string | null;
   amazonCategory?: string | null;
+  competitors?: string | null;
+  vibe?: string | null;
+  useCase?: string | null;
+  differentiators?: string | null;
   brandName?: string;
   listingCopy?: {
     title: string;
@@ -50,26 +54,16 @@ type LinkedProduct = {
 
 const COPY_STEPS = ["Details", "Generate", "Edit copy"];
 
-const FIELD_LABELS: Record<string, string> = {
-  name: "Product name",
-  brandName: "Brand name",
-  category: "Amazon category",
-  materials: "Materials",
-  targetBuyer: "Target buyer",
-};
-
 export function CopyWorkspace({
   initialCredits,
   linkedProduct = null,
   missingProductId = false,
-  brandConfigured = true,
   defaultBrandName = "",
   paymentSuccess = false,
 }: {
   initialCredits: number;
   linkedProduct?: LinkedProduct | null;
   missingProductId?: boolean;
-  brandConfigured?: boolean;
   defaultBrandName?: string;
   paymentSuccess?: boolean;
 }) {
@@ -108,14 +102,11 @@ export function CopyWorkspace({
     status?: string;
   } | null>(null);
 
-  const [form, setForm] = useState({
-    name: "",
+  const [form, setForm] = useState<ProductIntakeData>({
+    ...EMPTY_PRODUCT_INTAKE,
     brandName: defaultBrandName,
-    category: "",
-    materials: "",
-    keyFeatures: "",
-    targetBuyer: "",
   });
+  const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
 
   const reset = () => {
     if (previewUrlRef.current) {
@@ -177,6 +168,11 @@ export function CopyWorkspace({
       materials: linkedProduct.materials ?? "",
       keyFeatures: linkedProduct.keyFeatures ?? "",
       targetBuyer: linkedProduct.targetBuyer ?? "",
+      competitors: linkedProduct.competitors ?? "",
+      vibe: linkedProduct.vibe ?? "",
+      useCase: linkedProduct.useCase ?? "",
+      differentiators: linkedProduct.differentiators ?? "",
+      referenceImageUrls: [],
     });
     if (linkedProduct.inputImageUrl) {
       setImageUrl(linkedProduct.inputImageUrl);
@@ -219,7 +215,10 @@ export function CopyWorkspace({
       });
       if (!ok) throw new Error(data.error || "Upload failed");
       setImageUrl(data.url ?? "");
-      const { ok: aOk, data: aData } = await fetchJson<{ analysis?: Record<string, string> }>(
+      const { ok: aOk, data: aData } = await fetchJson<{
+        analysis?: ProductAnalysis;
+        error?: string;
+      }>(
         "/api/analyze",
         {
           method: "POST",
@@ -229,14 +228,18 @@ export function CopyWorkspace({
       );
       if (aOk && aData.analysis) {
         const a = aData.analysis;
-        setForm({
-          name: a.productName || "",
-          brandName: a.brandName || "",
-          category: a.amazonCategory || "",
-          materials: a.materials || "",
-          keyFeatures: a.keyObservations || "",
-          targetBuyer: "",
-        });
+        setForm((prev) => ({
+          ...prev,
+          name: a.productName || prev.name,
+          brandName: a.brandName || prev.brandName || defaultBrandName,
+          category: a.amazonCategory || prev.category,
+          materials: a.materials || prev.materials,
+          keyFeatures: a.keyObservations || prev.keyFeatures,
+          targetBuyer: a.suggestedTargetBuyer || prev.targetBuyer,
+          useCase: a.useCase || prev.useCase,
+          differentiators: a.differentiators || prev.differentiators,
+          vibe: a.mood || prev.vibe,
+        }));
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
@@ -270,7 +273,7 @@ export function CopyWorkspace({
           productId: linkedProductId ?? undefined,
           inputImageUrl: imageUrl,
           marketplace,
-          productData: form,
+          productData: { ...form, referenceImageUrls },
         }),
       });
       const data = await res.json();
@@ -354,7 +357,6 @@ export function CopyWorkspace({
   const titleOverLimit = (copy?.title?.length ?? 0) > AMAZON_TITLE_MAX;
   const copyStep = copy?.title ? 2 : loading ? 1 : 0;
   const lacksCredits = credits < 1;
-  const categoryLabel = `${getMarketplace(marketplace).label} category`;
   const canRetry = Boolean(error && error !== "INSUFFICIENT_CREDITS" && form.name.trim() && !loading);
   const showGraderImportBanner = Boolean(fromGrader && copy?.title && !productId);
   const showProjectNextSteps = Boolean(
@@ -485,8 +487,6 @@ export function CopyWorkspace({
           <PaymentSuccessBanner />
         </Suspense>
       ) : null}
-
-      <BrandSetupNudge configured={brandConfigured} />
 
       <PageHeader
         eyebrow="Copy pipeline"
@@ -654,42 +654,20 @@ export function CopyWorkspace({
                 <p className="mt-1 text-xs text-[var(--muted-fg)]">Uploading and analyzing image…</p>
               )}
             </div>
-            <div className="md:col-span-2">
-              <Label className="mb-2 block">Marketplace</Label>
-              <MarketplacePicker
-                value={marketplace}
-                onChange={setMarketplace}
-                noteField="copyNote"
-                name="copy-marketplace"
-              />
-              <div className="mt-3">
-                <MarketplaceGuidance marketplaceId={marketplace} variant="copy" />
-              </div>
-            </div>
-            {(["name", "brandName", "category", "materials", "targetBuyer"] as const).map((key) => (
-              <div key={key}>
-                <Label htmlFor={`copy-${key}`}>
-                  {key === "category" ? categoryLabel : FIELD_LABELS[key] ?? key}
-                </Label>
-                <Input
-                  id={`copy-${key}`}
-                  value={form[key]}
-                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                />
-              </div>
-            ))}
-            <div className="md:col-span-2">
-              <Label htmlFor="copy-features">Key features</Label>
-              <Textarea
-                id="copy-features"
-                value={form.keyFeatures}
-                onChange={(e) => setForm((f) => ({ ...f, keyFeatures: e.target.value }))}
-              />
-            </div>
+            <ProductIntakeFields
+              form={form}
+              onChange={setForm}
+              marketplace={marketplace}
+              onMarketplaceChange={setMarketplace}
+              referenceImageUrls={referenceImageUrls}
+              onReferenceImagesChange={setReferenceImageUrls}
+              variant="copy"
+              disabled={uploading || loading}
+            />
             <div className={cn(mobileStickyFooter, "-mx-6 mt-2 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:mt-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none md:col-span-2")}>
               <Button
                 onClick={generate}
-                disabled={loading || uploading || !form.name.trim() || lacksCredits}
+                disabled={loading || uploading || !form.name.trim() || !form.category.trim() || lacksCredits}
                 className="flex-1 md:col-span-2"
               >
                 {lacksCredits ? "Need credits to generate" : loading ? "Generating…" : "Generate copy (1 credit)"}

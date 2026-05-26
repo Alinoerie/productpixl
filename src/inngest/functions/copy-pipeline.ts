@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { runCopyResearch } from "@/pipelines/tavily";
 import { generateListingCopy } from "@/pipelines/copy-gen";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
+import type { ProductIntakeData } from "@/lib/product-intake";
+import type { ProductAnalysis } from "@/lib/ai";
 
 export const copyPipeline = inngest.createFunction(
   { id: "copy-pipeline-run", retries: 3 },
@@ -11,14 +13,7 @@ export const copyPipeline = inngest.createFunction(
     const { productId, marketplace, intake } = event.data as {
       productId: string;
       marketplace: string;
-      intake: {
-        name: string;
-        brandName: string;
-        category: string;
-        materials?: string;
-        keyFeatures?: string;
-        targetBuyer?: string;
-      };
+      intake: ProductIntakeData;
     };
 
     await step.run("mark-processing", () =>
@@ -40,16 +35,20 @@ export const copyPipeline = inngest.createFunction(
     );
 
     const copy = await step.run("generate", async () => {
-      const analysis = product.analysisJson as { keyObservations?: string } | null;
+      const analysis = product.analysisJson as ProductAnalysis | null;
       const brandName = intake.brandName || brandProfile.displayName || "";
       return generateListingCopy({
         productName: intake.name,
         brandName,
         category: intake.category,
         marketplace,
-        materials: intake.materials,
-        keyFeatures: intake.keyFeatures,
-        targetBuyer: intake.targetBuyer,
+        materials: intake.materials ?? product.materials ?? undefined,
+        keyFeatures: intake.keyFeatures ?? product.keyFeatures ?? undefined,
+        targetBuyer: intake.targetBuyer ?? product.targetBuyer ?? undefined,
+        vibe: intake.vibe ?? product.vibe ?? undefined,
+        useCase: intake.useCase ?? product.useCase ?? undefined,
+        differentiators: intake.differentiators ?? product.differentiators ?? undefined,
+        competitors: intake.competitors ?? product.competitors ?? undefined,
         analysisSummary: analysis?.keyObservations,
         researchSnippets: research.snippets,
         keywords: research.keywords,

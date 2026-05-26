@@ -27,16 +27,21 @@ model User {
 }
 
 model BrandProfile {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  displayName    String?
-  primaryColor   String   @default("#B45309")
-  secondaryColor String   @default("#0D5C63")
-  tone           String   @default("premium, trustworthy, conversion-focused")
-  logoUrl        String?
-  guidelines     String?  @db.Text
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  companyName        String?
+  companyDescription String?  @db.Text
+  targetAudience     String?
+  displayName        String?
+  primaryColor       String   @default("#B45309")
+  secondaryColor     String   @default("#0D5C63")
+  tone               String   @default("premium, trustworthy, conversion-focused")
+  logoUrl            String?
+  guidelines         String?  @db.Text
+  brandStory         String?  @db.Text
+  onboardingComplete Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -109,6 +114,10 @@ model Product {
   brandGuidelines String?
   amazonCategory  String?
   brandRegistered Boolean @default(false)
+  vibe            String?
+  useCase         String?
+  differentiators String?  @db.Text
+  referenceImageUrls Json?
 
   analysisJson  Json?
   researchJson  Json?

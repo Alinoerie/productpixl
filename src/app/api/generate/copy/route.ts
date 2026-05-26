@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { inngest, COPY_PIPELINE_EVENT } from "@/inngest/client";
+import type { ProductIntakeData } from "@/lib/product-intake";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -19,18 +20,11 @@ export async function POST(req: NextRequest) {
     productId?: string;
     inputImageUrl?: string;
     marketplace?: string;
-    productData: {
-      name: string;
-      brandName: string;
-      category: string;
-      materials?: string;
-      keyFeatures?: string;
-      targetBuyer?: string;
-    };
+    productData: ProductIntakeData;
   };
 
-  if (!productData?.name) {
-    return NextResponse.json({ error: "Missing product data" }, { status: 400 });
+  if (!productData?.name || !productData?.category) {
+    return NextResponse.json({ error: "Product name and category are required" }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
@@ -40,18 +34,39 @@ export async function POST(req: NextRequest) {
 
   let productId = existingProductId;
 
-  if (!productId) {
+  const productFields = {
+    name: productData.name,
+    inputImageUrl: inputImageUrl || "",
+    marketplace,
+    status: "QUEUED" as const,
+    materials: productData.materials,
+    keyFeatures: productData.keyFeatures,
+    targetBuyer: productData.targetBuyer,
+    competitors: productData.competitors,
+    vibe: productData.vibe,
+    useCase: productData.useCase,
+    differentiators: productData.differentiators,
+    referenceImageUrls: productData.referenceImageUrls ?? [],
+    amazonCategory: productData.category,
+  };
+
+  if (productId) {
+    const existing = await prisma.product.findFirst({
+      where: { id: productId, userId: session.user.id },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+    await prisma.product.update({
+      where: { id: productId },
+      data: productFields,
+    });
+  } else {
     const product = await prisma.product.create({
       data: {
         userId: session.user.id,
-        name: productData.name,
-        inputImageUrl: inputImageUrl || "",
         pipelineType: "COPY",
-        status: "QUEUED",
-        materials: productData.materials,
-        keyFeatures: productData.keyFeatures,
-        targetBuyer: productData.targetBuyer,
-        amazonCategory: productData.category,
+        ...productFields,
       },
     });
     productId = product.id;
@@ -60,7 +75,7 @@ export async function POST(req: NextRequest) {
   await prisma.listingCopy.upsert({
     where: { productId },
     create: { productId, marketplace, status: "QUEUED" },
-    update: { marketplace, status: "QUEUED" },
+    update: { marketplace, status: "QUEUED", errorMessage: null },
   });
 
   await prisma.user.update({
@@ -73,14 +88,7 @@ export async function POST(req: NextRequest) {
     data: {
       productId,
       marketplace,
-      intake: {
-        name: productData.name,
-        brandName: productData.brandName,
-        category: productData.category,
-        materials: productData.materials,
-        keyFeatures: productData.keyFeatures,
-        targetBuyer: productData.targetBuyer,
-      },
+      intake: productData,
     },
   });
 

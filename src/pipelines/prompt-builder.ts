@@ -1,26 +1,39 @@
 import type { ProductAnalysis } from "@/lib/ai";
 import type { BrandProfileData } from "@/lib/brand-profile";
 import { brandContextBlock } from "@/lib/brand-profile";
+import type { ProductIntakeData } from "@/lib/product-intake";
 import { getMarketplace } from "@/lib/marketplaces";
 import type { ListingModuleId } from "./modules";
 
-export interface IntakeData {
-  name: string;
-  brandName: string;
-  category?: string;
-  dimensions?: string;
-  materials?: string;
-  colors?: string;
-  keyFeatures?: string;
-  targetBuyer?: string;
-  competitors?: string;
-}
+export type IntakeData = ProductIntakeData;
 
 export interface ResearchSummary {
   categoryThemes: string[];
   positioningGaps: string[];
   objections: string[];
   antiPatterns: string[];
+}
+
+function productContextBlock(analysis: ProductAnalysis, intake: IntakeData): string {
+  const vibe = intake.vibe?.trim() || analysis.mood;
+  const useCase = intake.useCase?.trim() || analysis.useCase;
+  const differentiators =
+    intake.differentiators?.trim() || intake.keyFeatures?.trim() || analysis.differentiators;
+  const targetBuyer = intake.targetBuyer?.trim() || analysis.suggestedTargetBuyer;
+
+  const lines = [
+    "Product positioning:",
+    `— Vibe / aesthetic: ${vibe}`,
+    useCase ? `— Primary use case: ${useCase}` : null,
+    differentiators ? `— Differentiators: ${differentiators}` : null,
+    targetBuyer ? `— Target buyer: ${targetBuyer}` : null,
+    intake.competitors?.trim() ? `— Differentiate from: ${intake.competitors.trim()}` : null,
+    intake.referenceImageUrls?.length
+      ? `— Style references: ${intake.referenceImageUrls.length} reference image(s) uploaded — match mood, palette, and photography style without copying unrelated products.`
+      : null,
+  ].filter(Boolean);
+
+  return lines.join("\n");
 }
 
 export function buildListingPrompt(
@@ -45,17 +58,17 @@ export function buildListingPrompt(
   const positioningGap =
     research.positioningGaps[0] ?? "authentic premium lifestyle with credible material proof";
   const trigger = research.objections[0] ?? "reduce buyer uncertainty about quality and fit";
-  const scaleAnchor = buildScaleAnchor(intake.dimensions);
+  const scaleAnchor = buildScaleAnchor(intake.dimensions || analysis.dimensions);
 
   const constraints = `
 [CONSTRAINT BLOCK]
-The product in the reference image is a ${intake.brandName} ${analysis.productType}. Exact specifications:
+The product in the reference image is a ${intake.brandName || analysis.brandName} ${analysis.productType}. Exact specifications:
 — Product name: ${intake.name || analysis.productName}
 — Amazon category: ${intake.category || analysis.amazonCategory}
 — Primary color: ${intake.colors || analysis.colors}
 — Materials / ingredients: ${intake.materials || analysis.materials}
 — Label text reads EXACTLY: '${analysis.labelText}'
-— Physical dimensions: ${intake.dimensions || "as shown in reference"}
+— Physical dimensions: ${intake.dimensions || analysis.dimensions || "as shown in reference"}
 — Scale anchor: ${scaleAnchor}
 Do NOT change, regenerate, blur, distort, recolor, restyle, or alter product elements.
 The product must remain IDENTICAL to reference fidelity.`;
@@ -69,7 +82,7 @@ Amazon main-image constraints are absolute: no text overlays, no watermarks, no 
     L3: `
 [SCENE BLOCK — L3 LIFESTYLE IN-CONTEXT]
 Foreground (0–30% depth): one specific supporting prop that matches buyer context, no clutter.
-Mid-ground (30–60% depth): product in natural use by ${intake.targetBuyer || "target buyer"}, scale anchored to ${scaleAnchor}.
+Mid-ground (30–60% depth): product in natural use by ${intake.targetBuyer || analysis.suggestedTargetBuyer || "target buyer"}, scale anchored to ${scaleAnchor}.
 Background (60–100% depth): realistic environment with warm, natural light and clear depth.
 COMPETITOR CONTRAST: avoid cliché "${antiPatterns[0]}"; differentiate via "${positioningGap}".
 TRIGGER ACTIVATION: address buyer objection "${trigger}" through visible in-use proof and realistic scale.`,
@@ -92,7 +105,7 @@ TRIGGER ACTIVATION: reduce uncertainty by clearly showing what arrives and produ
 Authentic product photography — NOT CGI, NOT stylized render.
 Camera & lens: Sony A7R V · FE 90mm Macro @ f/5.6 for detail fidelity.
 Lighting: realistic commercial setup with natural highlight falloff and controlled shadows.
-Mood: ${analysis.mood}. Marketplace fit: ${marketplace.label}.
+Mood: ${intake.vibe || analysis.mood}. Marketplace fit: ${marketplace.label}.
 Aspect ratio: 1:1 square. Target output: 1500×1500px, listing-ready.`;
 
   const negative = `
@@ -107,6 +120,7 @@ DO NOT generate:
 — unrealistic scaling that violates "${scaleAnchor}"`;
 
   const brandBlock = options?.brandProfile ? brandContextBlock(options.brandProfile) : "";
+  const productBlock = productContextBlock(analysis, intake);
   const marketBlock = `Marketplace: ${marketplace.label}. ${marketplace.imageNote}`;
   const spotBlock = options?.spotEditHint
     ? `Spot edit instruction (apply to this regeneration only): ${options.spotEditHint}`
@@ -115,6 +129,7 @@ DO NOT generate:
   return [
     constraints.trim(),
     brandBlock,
+    productBlock,
     marketBlock,
     scenes[moduleId],
     style.trim(),
@@ -126,7 +141,7 @@ DO NOT generate:
 }
 
 function buildScaleAnchor(dimensions?: string): string {
-  if (!dimensions) return "roughly the size shown in the reference image";
+  if (!dimensions || dimensions === "Unknown") return "roughly the size shown in the reference image";
   const matches = dimensions.match(/\d+(\.\d+)?/g);
   if (!matches?.length) return "roughly the size shown in the reference image";
   const largest = Math.max(...matches.map((v) => Number(v)));

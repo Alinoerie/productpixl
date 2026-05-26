@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { inngest, IMAGE_PIPELINE_EVENT } from "@/inngest/client";
+import type { ProductIntakeData } from "@/lib/product-intake";
+import type { ProductAnalysis } from "@/lib/ai";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -17,24 +19,15 @@ export async function POST(req: NextRequest) {
     productData,
     marketplace = "AMAZON_US",
     promptOverrides = {},
+    analysis,
   } = body as {
     existingProductId?: string;
     inputImageUrl: string;
     includePackaging?: boolean;
     marketplace?: string;
     promptOverrides?: Record<string, string>;
-    productData: {
-      name: string;
-      brandName: string;
-      category: string;
-      dimensions?: string;
-      materials?: string;
-      colors?: string;
-      keyFeatures?: string;
-      targetBuyer?: string;
-      competitors?: string;
-      brandGuidelines?: string;
-    };
+    analysis?: ProductAnalysis;
+    productData: ProductIntakeData;
   };
 
   if (!inputImageUrl || !productData?.name) {
@@ -47,6 +40,24 @@ export async function POST(req: NextRequest) {
   }
 
   let productId = existingProductId;
+  const productFields = {
+    name: productData.name,
+    inputImageUrl,
+    marketplace,
+    status: "QUEUED",
+    dimensions: productData.dimensions,
+    materials: productData.materials,
+    colors: productData.colors,
+    keyFeatures: productData.keyFeatures,
+    targetBuyer: productData.targetBuyer,
+    competitors: productData.competitors,
+    vibe: productData.vibe,
+    useCase: productData.useCase,
+    differentiators: productData.differentiators,
+    referenceImageUrls: productData.referenceImageUrls ?? [],
+    amazonCategory: productData.category,
+    analysisJson: analysis ? (analysis as object) : undefined,
+  };
 
   if (productId) {
     const existing = await prisma.product.findFirst({
@@ -58,39 +69,14 @@ export async function POST(req: NextRequest) {
     await prisma.asset.deleteMany({ where: { productId } });
     await prisma.product.update({
       where: { id: productId },
-      data: {
-        name: productData.name,
-        inputImageUrl,
-        marketplace,
-        status: "QUEUED",
-        pipelineStatus: undefined,
-        dimensions: productData.dimensions,
-        materials: productData.materials,
-        colors: productData.colors,
-        keyFeatures: productData.keyFeatures,
-        targetBuyer: productData.targetBuyer,
-        competitors: productData.competitors,
-        brandGuidelines: productData.brandGuidelines,
-        amazonCategory: productData.category,
-      },
+      data: productFields,
     });
   } else {
     const product = await prisma.product.create({
       data: {
         userId: session.user.id,
-        name: productData.name,
-        inputImageUrl,
         pipelineType: "LISTING",
-        marketplace,
-        status: "QUEUED",
-        dimensions: productData.dimensions,
-        materials: productData.materials,
-        colors: productData.colors,
-        keyFeatures: productData.keyFeatures,
-        targetBuyer: productData.targetBuyer,
-        competitors: productData.competitors,
-        brandGuidelines: productData.brandGuidelines,
-        amazonCategory: productData.category,
+        ...productFields,
       },
     });
     productId = product.id;
@@ -107,17 +93,8 @@ export async function POST(req: NextRequest) {
       productId,
       includePackaging,
       promptOverrides,
-      intake: {
-        name: productData.name,
-        brandName: productData.brandName,
-        category: productData.category,
-        dimensions: productData.dimensions,
-        materials: productData.materials,
-        colors: productData.colors,
-        keyFeatures: productData.keyFeatures,
-        targetBuyer: productData.targetBuyer,
-        competitors: productData.competitors,
-      },
+      analysis,
+      intake: productData,
     },
   });
 
