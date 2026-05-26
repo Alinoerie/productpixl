@@ -44,17 +44,23 @@ export function ProductListingPanel({
   const [keywords, setKeywords] = useState(initialKeywords ?? "");
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState({
+    title: initialTitle,
+    bullets: initialBullets,
+    description: initialDescription ?? "",
+    keywords: initialKeywords ?? "",
+  });
 
   const titleCount = charCountLabel(title, AMAZON_TITLE_MAX);
 
   const isDirty = useMemo(() => {
     return (
-      title !== initialTitle ||
-      JSON.stringify(bullets) !== JSON.stringify(initialBullets) ||
-      description !== (initialDescription ?? "") ||
-      keywords !== (initialKeywords ?? "")
+      title !== saved.title ||
+      JSON.stringify(bullets) !== JSON.stringify(saved.bullets) ||
+      description !== saved.description ||
+      keywords !== saved.keywords
     );
-  }, [title, bullets, description, keywords, initialTitle, initialBullets, initialDescription, initialKeywords]);
+  }, [title, bullets, description, keywords, saved]);
 
   const copyAll = async () => {
     const text = [
@@ -87,6 +93,7 @@ export function ProductListingPanel({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Save failed");
+      setSaved({ title, bullets, description, keywords });
       toast("Listing copy saved");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not save copy", "error");
@@ -142,7 +149,7 @@ export function ProductListingPanel({
       </div>
 
       {titleCount.over && (
-        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <p className="mb-4 rounded-lg border border-[var(--warning-border)] bg-[var(--warning-bg)] px-3 py-2 text-sm text-[var(--warning)]">
           Title is over Amazon&apos;s {AMAZON_TITLE_MAX}-character limit.
         </p>
       )}

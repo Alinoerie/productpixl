@@ -11,10 +11,15 @@ export function AlertBanner({
   actionLabel?: string;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
       <span>{message}</span>
       {actionHref && actionLabel ? (
-        <Button asChild size="sm" variant="outline" className="border-red-300 bg-white hover:bg-red-50">
+        <Button
+          asChild
+          size="sm"
+          variant="outline"
+          className="border-[var(--error-border)] bg-[var(--card)] hover:bg-[var(--error-bg)]"
+        >
           <Link href={actionHref}>{actionLabel}</Link>
         </Button>
       ) : null}

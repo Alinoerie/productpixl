@@ -1,18 +1,18 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SHOWCASE_CASE_STUDIES, type ShowcaseCaseStudy } from "@/lib/showcase";
 
-function CaseStudyPanel({ study }: { study: ShowcaseCaseStudy }) {
+function CaseStudyPanel({ study, panelId }: { study: ShowcaseCaseStudy; panelId: string }) {
   const highlightModules = study.source
     ? study.modules.filter((m) => m.moduleId === "L1" || m.moduleId === "L3")
     : [];
 
   return (
-    <div className="space-y-8">
+    <div id={panelId} role="tabpanel" aria-labelledby={`tab-${study.id}`} className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-[var(--muted-fg)]">{study.category}</p>
@@ -31,10 +31,10 @@ function CaseStudyPanel({ study }: { study: ShowcaseCaseStudy }) {
           <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-sm)]">
             <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
               <div className="border-b border-[var(--border)] p-4 md:border-b-0 md:border-r">
-                <Badge variant="outline" className="mb-3 bg-white/80 text-xs">
+                <Badge variant="outline" className="mb-3 bg-[var(--card)]/80 text-xs">
                   Before · upload
                 </Badge>
-                <div className="relative aspect-square overflow-hidden rounded-xl bg-white">
+                <div className="relative aspect-square overflow-hidden rounded-xl bg-[var(--card)]">
                   <Image
                     src={study.source.image}
                     alt={study.source.alt}
@@ -73,7 +73,7 @@ function CaseStudyPanel({ study }: { study: ShowcaseCaseStudy }) {
                 className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-sm)]"
               >
                 <div className="grid grid-cols-2">
-                  <div className="relative aspect-square border-r border-[var(--border)] bg-white">
+                  <div className="relative aspect-square border-r border-[var(--border)] bg-[var(--card)]">
                     <Image
                       src={study.source!.image}
                       alt={study.source!.alt}
@@ -144,6 +144,17 @@ export function LandingGallery() {
   const [activeId, setActiveId] = useState(SHOWCASE_CASE_STUDIES[0].id);
   const active = SHOWCASE_CASE_STUDIES.find((s) => s.id === activeId) ?? SHOWCASE_CASE_STUDIES[0];
 
+  const onTabKeyDown = (e: React.KeyboardEvent, index: number) => {
+    const last = SHOWCASE_CASE_STUDIES.length - 1;
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      setActiveId(SHOWCASE_CASE_STUDIES[Math.min(index + 1, last)].id);
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      setActiveId(SHOWCASE_CASE_STUDIES[Math.max(index - 1, 0)].id);
+    }
+  };
+
   return (
     <section id="gallery" className="border-y border-[var(--border)] bg-[var(--card)] px-4 py-20">
       <div className="mx-auto max-w-6xl">
@@ -161,15 +172,19 @@ export function LandingGallery() {
         </div>
 
         <div className="mt-8 flex flex-wrap gap-2" role="tablist" aria-label="Showcase case studies">
-          {SHOWCASE_CASE_STUDIES.map((study) => {
+          {SHOWCASE_CASE_STUDIES.map((study, index) => {
             const selected = study.id === activeId;
             return (
               <button
                 key={study.id}
+                id={`tab-${study.id}`}
                 type="button"
                 role="tab"
                 aria-selected={selected}
+                aria-controls={`panel-${study.id}`}
+                tabIndex={selected ? 0 : -1}
                 onClick={() => setActiveId(study.id)}
+                onKeyDown={(e) => onTabKeyDown(e, index)}
                 className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
                   selected
                     ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--ink)]"
@@ -182,8 +197,8 @@ export function LandingGallery() {
           })}
         </div>
 
-        <div className="mt-10 transition-opacity duration-300" role="tabpanel">
-          <CaseStudyPanel study={active} />
+        <div className="mt-10 transition-opacity duration-300">
+          <CaseStudyPanel study={active} panelId={`panel-${active.id}`} />
         </div>
       </div>
     </section>

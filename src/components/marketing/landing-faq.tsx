@@ -1,3 +1,9 @@
+"use client";
+
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+
 const FAQ = [
   {
     q: "Do I need an Amazon ASIN?",
@@ -26,28 +32,56 @@ const FAQ = [
 ];
 
 export function LandingFaq() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
   return (
     <section id="faq" className="px-4 py-20">
       <div className="mx-auto max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">FAQ</p>
         <h2 className="mt-3 font-serif text-3xl md:text-4xl">Common questions</h2>
         <div className="mt-10 space-y-3">
-          {FAQ.map((item) => (
-            <details
-              key={item.q}
-              className="group rounded-2xl border border-[var(--border)] bg-[var(--card)] open:shadow-[var(--shadow-sm)]"
-            >
-              <summary className="cursor-pointer list-none px-6 py-4 font-semibold marker:content-none [&::-webkit-details-marker]:hidden">
-                <span className="flex items-center justify-between gap-4">
+          {FAQ.map((item, index) => {
+            const open = openIndex === index;
+            const panelId = `faq-panel-${index}`;
+            const buttonId = `faq-button-${index}`;
+            return (
+              <div
+                key={item.q}
+                className={cn(
+                  "rounded-2xl border border-[var(--border)] bg-[var(--card)]",
+                  open && "shadow-[var(--shadow-sm)]"
+                )}
+              >
+                <button
+                  id={buttonId}
+                  type="button"
+                  aria-expanded={open}
+                  aria-controls={panelId}
+                  className="flex w-full items-center justify-between gap-4 px-6 py-4 text-left font-semibold"
+                  onClick={() => setOpenIndex(open ? null : index)}
+                >
                   {item.q}
-                  <span className="text-[var(--muted-fg)] transition group-open:rotate-45">+</span>
-                </span>
-              </summary>
-              <p className="border-t border-[var(--border)] px-6 py-4 text-sm leading-relaxed text-[var(--muted-fg)]">
-                {item.a}
-              </p>
-            </details>
-          ))}
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-[var(--muted-fg)] transition-transform",
+                      open && "rotate-180"
+                    )}
+                    aria-hidden
+                  />
+                </button>
+                {open ? (
+                  <p
+                    id={panelId}
+                    role="region"
+                    aria-labelledby={buttonId}
+                    className="border-t border-[var(--border)] px-6 py-4 text-sm leading-relaxed text-[var(--muted-fg)]"
+                  >
+                    {item.a}
+                  </p>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

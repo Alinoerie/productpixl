@@ -17,6 +17,7 @@ import { StudioStepper } from "@/components/ui/studio-stepper";
 import { fetchJson } from "@/lib/fetch-json";
 import { cn } from "@/lib/utils";
 import { formatPipelinePhase, formatModuleLabel } from "@/lib/status-labels";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import { Camera, Check, Loader2, Sparkles } from "lucide-react";
 import { type MarketplaceId } from "@/lib/marketplaces";
@@ -248,6 +249,8 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
   }, [step, productId, pollStatus]);
 
   const done = pipelineStatus?.phase === "COMPLETE";
+  const lacksCredits = initialCredits < 1;
+  const resultsLoading = step === 3 && !pipelineStatus?.steps?.length && !pipelineFailed;
 
   const PHASES = ["RECEIVING", "ANALYZING", "RESEARCHING", "SELECTING", "GENERATING", "QA", "COMPLETE"];
 
@@ -279,7 +282,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
           actionLabel="Buy credits"
         />
       ) : error ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+        <p className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">{error}</p>
       ) : null}
 
       {step === 0 && (
@@ -301,6 +304,12 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
                 if (file?.type.startsWith("image/")) onFile(file);
               }}
               onFileSelect={onFile}
+              onClear={() => {
+                if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+                previewUrlRef.current = null;
+                setPreview("");
+                setImageUrl("");
+              }}
               disabled={uploading || analyzing}
               minHeight="min-h-[280px]"
               emptyTitle="Drop your product photo"
@@ -489,9 +498,9 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
                 onClick={startGeneration}
                 className="flex-1 rounded-xl"
                 size="lg"
-                disabled={!promptPlan.length || planningPrompts}
+                disabled={!promptPlan.length || planningPrompts || lacksCredits}
               >
-                Start generation with reviewed prompts (1 credit)
+                {lacksCredits ? "Need credits to start" : "Start generation with reviewed prompts (1 credit)"}
               </Button>
             </div>
           </CardContent>
@@ -549,7 +558,22 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
             })}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy={resultsLoading}>
+            {resultsLoading
+              ? (promptPlan.length ? promptPlan : [{ moduleId: "L1" }, { moduleId: "L3" }, { moduleId: "L4" }]).map(
+                  (item) => (
+                    <Card key={item.moduleId} className="overflow-hidden">
+                      <CardContent className="p-0">
+                        <Skeleton className="aspect-square w-full rounded-none" />
+                        <div className="space-y-2 p-4">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-3 w-full" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                )
+              : null}
             {pipelineStatus?.steps?.map((s) => (
               <Card key={s.id} className="overflow-hidden">
                 <CardContent className="p-0">

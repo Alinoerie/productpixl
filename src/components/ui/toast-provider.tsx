@@ -51,7 +51,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               "pointer-events-auto flex max-w-sm items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-[var(--shadow-lg)] backdrop-blur-md animate-fade-up",
               t.variant === "success"
                 ? "border-[var(--success)]/20 bg-[var(--success-bg)] text-[var(--success)]"
-                : "border-red-200 bg-red-50 text-red-800"
+                : "border-[var(--error-border)] bg-[var(--error-bg)] text-[var(--error)]"
             )}
           >
             {t.variant === "success" ? (

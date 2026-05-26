@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,10 +13,10 @@ type Thumb = { id: string; imageUrl: string | null };
 export function DashboardProjectCard({
   id,
   name,
-  status,
+  status: initialStatus,
   createdAt,
   hasCopy,
-  thumbs,
+  thumbs: initialThumbs,
 }: {
   id: string;
   name: string;
@@ -24,11 +25,13 @@ export function DashboardProjectCard({
   hasCopy: boolean;
   thumbs: Thumb[];
 }) {
+  const router = useRouter();
+  const [status, setStatus] = useState(initialStatus);
   const [phase, setPhase] = useState<string | null>(null);
   const isProcessing = status === "PROCESSING";
 
   useEffect(() => {
-    if (!isProcessing) return;
+    if (status !== "PROCESSING") return;
 
     let active = true;
     const poll = async () => {
@@ -38,9 +41,10 @@ export function DashboardProjectCard({
 
       const ps = data.pipelineStatus as { phase?: string } | null;
       setPhase(ps?.phase ?? data.status);
+      setStatus(data.status);
 
       if (data.status === "COMPLETE" || data.status === "FAILED") {
-        window.location.reload();
+        router.refresh();
       }
     };
 
@@ -50,10 +54,12 @@ export function DashboardProjectCard({
       active = false;
       window.clearInterval(timer);
     };
-  }, [id, isProcessing]);
+  }, [id, status, router]);
+
+  const thumbs = initialThumbs;
 
   return (
-    <Link href={`/products/${id}`} className="group">
+    <Link href={`/products/${id}`} className="group block">
       <Card className="overflow-hidden transition-all hover:border-[var(--accent)]/40 hover:shadow-[var(--shadow-md)]">
         <div className="relative aspect-[4/3] bg-[var(--muted)]">
           {thumbs.length > 1 ? (
@@ -102,6 +108,9 @@ export function DashboardProjectCard({
             {new Date(createdAt).toLocaleDateString()}
             {hasCopy ? " · Copy ready" : ""}
           </p>
+          {status === "FAILED" ? (
+            <p className="mt-2 text-xs font-medium text-[var(--error)]">Retry in Image studio →</p>
+          ) : null}
         </CardContent>
       </Card>
     </Link>

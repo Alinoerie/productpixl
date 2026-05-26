@@ -43,7 +43,7 @@ export function statusBadgeClass(status: string) {
     case "COMPLETE":
       return "bg-[var(--success-bg)] text-[var(--success)]";
     case "FAILED":
-      return "bg-red-50 text-red-700";
+      return "bg-[var(--error-bg)] text-[var(--error)]";
     case "PROCESSING":
       return "bg-[var(--accent-soft)] text-[var(--accent)]";
     default:

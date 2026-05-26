@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Copy, Download } from "lucide-react";
+import { Check, Copy, Download, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast-provider";
 
 type CopyPayload = {
@@ -25,6 +25,7 @@ export function ProductExportActions({
 }) {
   const { toast } = useToast();
   const [copied, setCopied] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
   const completedImages = assets.filter((a) => a.imageUrl);
 
   const copyText = async (label: string, text: string) => {
@@ -49,17 +50,29 @@ export function ProductExportActions({
     await copyText("listing", text);
   };
 
-  const downloadImages = () => {
-    completedImages.forEach((asset, index) => {
-      if (!asset.imageUrl) return;
-      const a = document.createElement("a");
-      a.href = asset.imageUrl;
-      a.download = `${productName.replace(/\s+/g, "-").toLowerCase()}-${asset.moduleId}-${index + 1}.jpg`;
-      a.target = "_blank";
-      a.rel = "noreferrer";
-      a.click();
-    });
-    toast(`Downloading ${completedImages.length} image${completedImages.length === 1 ? "" : "s"}`);
+  const downloadImages = async () => {
+    setDownloading(true);
+    try {
+      let saved = 0;
+      for (const [index, asset] of completedImages.entries()) {
+        if (!asset.imageUrl) continue;
+        const res = await fetch(asset.imageUrl);
+        if (!res.ok) throw new Error("Fetch failed");
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${productName.replace(/\s+/g, "-").toLowerCase()}-${asset.moduleId}-${index + 1}.jpg`;
+        a.click();
+        URL.revokeObjectURL(url);
+        saved++;
+      }
+      toast(`Saved ${saved} image${saved === 1 ? "" : "s"}`);
+    } catch {
+      toast("Download failed — open images individually or try again", "error");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -68,9 +81,17 @@ export function ProductExportActions({
         <p className="text-sm font-medium">Export & review</p>
         <div className="flex flex-wrap gap-2">
           {completedImages.length > 0 && (
-            <Button type="button" variant="outline" size="sm" onClick={downloadImages}>
-              <Download className="h-4 w-4" />
-              Download images ({completedImages.length})
+            <Button type="button" variant="outline" size="sm" disabled={downloading} onClick={downloadImages}>
+              {downloading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Download images ({completedImages.length})
+                </>
+              )}
             </Button>
           )}
           {listingCopy?.title && (

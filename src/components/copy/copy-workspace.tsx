@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Check } from "lucide-react";
+import { Loader2, Check, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +52,13 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copiedAll, setCopiedAll] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedBaseline, setSavedBaseline] = useState<{
+    title: string;
+    bullets: string[];
+    description: string;
+    backendKeywords: string;
+  } | null>(null);
   const [copy, setCopy] = useState<{
     title?: string;
     bullets?: string[];
@@ -72,6 +79,7 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
   const reset = () => {
     setCopy(null);
     setProductId(null);
+    setSavedBaseline(null);
     setError("");
     setLoading(false);
   };
@@ -154,6 +162,14 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
       const data = await res.json();
       if (res.ok && data.listingCopy) {
         setCopy(data.listingCopy);
+        if (data.listingCopy.status === "COMPLETE") {
+          setSavedBaseline({
+            title: data.listingCopy.title ?? "",
+            bullets: (data.listingCopy.bullets as string[]) ?? [],
+            description: data.listingCopy.description ?? "",
+            backendKeywords: data.listingCopy.backendKeywords ?? "",
+          });
+        }
         if (data.listingCopy.status === "COMPLETE" || data.listingCopy.status === "FAILED") {
           setLoading(false);
           if (data.listingCopy.status === "FAILED") {
@@ -181,6 +197,47 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
 
   const titleCount = charCountLabel(copy?.title ?? "", AMAZON_TITLE_MAX);
   const copyStep = copy?.title ? 2 : loading ? 1 : 0;
+  const lacksCredits = initialCredits < 1;
+
+  const isDirty = useMemo(() => {
+    if (!copy?.title || !savedBaseline) return false;
+    return (
+      copy.title !== savedBaseline.title ||
+      JSON.stringify(copy.bullets ?? []) !== JSON.stringify(savedBaseline.bullets) ||
+      (copy.description ?? "") !== savedBaseline.description ||
+      (copy.backendKeywords ?? "") !== savedBaseline.backendKeywords
+    );
+  }, [copy, savedBaseline]);
+
+  const saveCopy = useCallback(async () => {
+    if (!productId || !copy?.title) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/products/${productId}/listing-copy`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: copy.title,
+          bullets: copy.bullets ?? [],
+          description: copy.description || null,
+          backendKeywords: copy.backendKeywords || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Save failed");
+      setSavedBaseline({
+        title: copy.title,
+        bullets: (copy.bullets as string[]) ?? [],
+        description: copy.description ?? "",
+        backendKeywords: copy.backendKeywords ?? "",
+      });
+      toast("Listing copy saved to project");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Could not save copy", "error");
+    } finally {
+      setSaving(false);
+    }
+  }, [productId, copy, toast]);
 
   return (
     <div className="space-y-8">
@@ -209,7 +266,7 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
           actionLabel="Buy credits"
         />
       ) : error ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+        <p className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">{error}</p>
       ) : null}
 
       {!copy?.title && !loading && (
@@ -228,6 +285,10 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
                 onDragLeave={() => setDragOver(false)}
                 onDrop={onDrop}
                 onFileSelect={upload}
+                onClear={() => {
+                  setPreview("");
+                  setImageUrl("");
+                }}
                 disabled={uploading}
                 minHeight="min-h-[180px]"
                 emptyHint="Auto-fills product fields from vision AI"
@@ -264,8 +325,12 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
                 onChange={(e) => setForm((f) => ({ ...f, keyFeatures: e.target.value }))}
               />
             </div>
-            <Button onClick={generate} disabled={loading || uploading || !form.name.trim()} className="md:col-span-2">
-              {loading ? "Generating…" : "Generate copy (1 credit)"}
+            <Button
+              onClick={generate}
+              disabled={loading || uploading || !form.name.trim() || lacksCredits}
+              className="md:col-span-2"
+            >
+              {lacksCredits ? "Need credits to generate" : loading ? "Generating…" : "Generate copy (1 credit)"}
             </Button>
           </CardContent>
         </Card>
@@ -349,6 +414,19 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
             </CardContent>
           </Card>
           <div className="flex flex-wrap gap-3">
+            {productId ? (
+              <Button size="sm" disabled={!isDirty || saving} onClick={saveCopy}>
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" /> Save to project
+                  </>
+                )}
+              </Button>
+            ) : null}
             <Button variant="outline" onClick={exportJson}>
               Download JSON
             </Button>

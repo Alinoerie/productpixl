@@ -20,8 +20,12 @@
   --ink-muted: #3d3834;
   --success: #166534;
   --success-bg: #ecfdf3;
+  --error: #991b1b;
+  --error-bg: #fef2f2;
+  --error-border: #fecaca;
   --warning: #b45309;
   --warning-bg: #fef3e8;
+  --warning-border: #fcd9b6;
   --shadow-sm: 0 1px 2px rgb(18 17 16 / 0.05);
   --shadow-md: 0 8px 28px rgb(18 17 16 / 0.09);
   --shadow-lg: 0 24px 56px rgb(18 17 16 / 0.14);
