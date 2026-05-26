@@ -27,6 +27,7 @@ import { PaymentSuccessBanner } from "@/components/account/payment-success-banne
 import { cn } from "@/lib/utils";
 import { type MarketplaceId, getMarketplace } from "@/lib/marketplaces";
 import { UnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
+import { MarketplaceGuidance } from "@/components/ui/marketplace-guidance";
 
 type LinkedProduct = {
   id: string;
@@ -639,6 +640,9 @@ export function CopyWorkspace({
                 noteField="copyNote"
                 name="copy-marketplace"
               />
+              <div className="mt-3">
+                <MarketplaceGuidance marketplaceId={marketplace} variant="copy" />
+              </div>
             </div>
             {(["name", "brandName", "category", "materials", "targetBuyer"] as const).map((key) => (
               <div key={key}>

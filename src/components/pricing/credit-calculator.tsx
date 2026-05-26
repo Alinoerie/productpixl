@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -8,20 +8,36 @@ const PIXII_MONTHLY = 207;
 const AGENCY_PER_SKU = 150;
 const CREDIT_PACK = 2.63;
 
-export function CreditCalculator({ compact = false }: { compact?: boolean }) {
-  const [skus, setSkus] = useState(12);
-  const [runsPerSku, setRunsPerSku] = useState(2);
+export function CreditCalculator({
+  compact = false,
+  skus: controlledSkus,
+  runsPerSku: controlledRuns,
+  onSkusChange,
+  onRunsPerSkuChange,
+  currentCredits = 0,
+}: {
+  compact?: boolean;
+  skus?: number;
+  runsPerSku?: number;
+  onSkusChange?: (value: number) => void;
+  onRunsPerSkuChange?: (value: number) => void;
+  currentCredits?: number;
+}) {
+  const skus = controlledSkus ?? 12;
+  const runsPerSku = controlledRuns ?? 2;
 
   const productPixl = useMemo(() => {
     const credits = skus * runsPerSku;
     return Math.round(credits * CREDIT_PACK);
   }, [skus, runsPerSku]);
 
+  const totalCredits = skus * runsPerSku;
+  const deficit = Math.max(0, totalCredits - currentCredits);
   const pixii = PIXII_MONTHLY * 12;
   const agency = skus * AGENCY_PER_SKU;
 
   return (
-    <div className={compact ? "grid gap-6 lg:grid-cols-2" : "mt-10 grid gap-8 lg:grid-cols-2"}>
+    <div className={compact ? "mt-6 grid gap-6 lg:grid-cols-2" : "mt-10 grid gap-8 lg:grid-cols-2"}>
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-sm)]">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -32,7 +48,7 @@ export function CreditCalculator({ compact = false }: { compact?: boolean }) {
               min={1}
               max={500}
               value={skus}
-              onChange={(e) => setSkus(Number(e.target.value) || 1)}
+              onChange={(e) => onSkusChange?.(Number(e.target.value) || 1)}
             />
           </div>
           <div>
@@ -43,20 +59,30 @@ export function CreditCalculator({ compact = false }: { compact?: boolean }) {
               min={1}
               max={10}
               value={runsPerSku}
-              onChange={(e) => setRunsPerSku(Number(e.target.value) || 1)}
+              onChange={(e) => onRunsPerSkuChange?.(Number(e.target.value) || 1)}
             />
           </div>
         </div>
         <p className="mt-4 text-xs text-[var(--muted-fg)]">
-          Uses Growth pack pricing (~€{CREDIT_PACK}/credit). You start with 10 free credits.
+          Uses Growth pack pricing (~€{CREDIT_PACK}/credit). You have {currentCredits} credit
+          {currentCredits === 1 ? "" : "s"} today.
         </p>
+        {deficit > 0 ? (
+          <p className="mt-2 text-xs font-medium text-[var(--accent)]">
+            Plan requires {totalCredits} credits — you need {deficit} more after your current balance.
+          </p>
+        ) : (
+          <p className="mt-2 text-xs font-medium text-[var(--success)]">
+            Your balance covers this plan ({totalCredits} credits needed).
+          </p>
+        )}
       </div>
       <div className="grid gap-4">
         <div className="rounded-2xl border-2 border-[var(--accent)] bg-[var(--accent-soft)]/30 p-6">
           <p className="text-sm font-medium text-[var(--accent)]">ProductPixl (credits)</p>
           <p className="mt-2 font-serif text-4xl">~€{productPixl}</p>
           <p className="mt-1 text-sm text-[var(--muted-fg)]">
-            {skus * runsPerSku} credits · only when you generate
+            {totalCredits} credits · only when you generate
           </p>
         </div>
         {!compact && (

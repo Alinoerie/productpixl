@@ -15,6 +15,7 @@ import { PaymentSuccessBanner } from "@/components/account/payment-success-banne
 import { useLiveCredits } from "@/hooks/use-live-credits";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
 import { MarketplacePicker } from "@/components/ui/marketplace-picker";
+import { MarketplaceGuidance } from "@/components/ui/marketplace-guidance";
 import { StudioStepper } from "@/components/ui/studio-stepper";
 import { fetchJson } from "@/lib/fetch-json";
 import { cn } from "@/lib/utils";
@@ -644,6 +645,9 @@ export function GenerateWizard({
                 noteField="imageNote"
                 name="generate-marketplace-step1"
               />
+              <div className="mt-3">
+                <MarketplaceGuidance marketplaceId={marketplace} variant="images" />
+              </div>
             </div>
             {(
               [

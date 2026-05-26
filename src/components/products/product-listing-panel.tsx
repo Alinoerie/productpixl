@@ -205,6 +205,7 @@ export function ProductListingPanel({
               type="button"
               variant="outline"
               size="sm"
+              className="hidden md:inline-flex"
               onClick={() => setBullets([...bullets, ""])}
             >
               <Plus className="h-4 w-4" />
@@ -213,7 +214,21 @@ export function ProductListingPanel({
           ) : null}
         </div>
 
-        {bullets.map((b, i) => {
+        <details className="rounded-2xl border border-[var(--border)] bg-[var(--card)] md:contents">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 marker:content-none md:hidden [&::-webkit-details-marker]:hidden">
+            <span className="text-sm font-medium">Bullets ({bullets.length})</span>
+            <span className="text-xs text-[var(--muted-fg)]">Tap to expand</span>
+          </summary>
+          <div className="space-y-4 border-t border-[var(--border)] p-4 pt-3 md:contents md:border-0 md:p-0">
+            {bullets.length < 5 ? (
+              <div className="flex justify-end md:hidden">
+                <Button type="button" variant="outline" size="sm" onClick={() => setBullets([...bullets, ""])}>
+                  <Plus className="h-4 w-4" />
+                  Add bullet
+                </Button>
+              </div>
+            ) : null}
+            {bullets.map((b, i) => {
           const bulletOver = b.length > AMAZON_BULLET_MAX;
           return (
             <Card key={`bullet-${i}`}>
@@ -265,6 +280,8 @@ export function ProductListingPanel({
             </Card>
           );
         })}
+          </div>
+        </details>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">

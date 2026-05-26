@@ -1,35 +1,13 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Check, CreditCard } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
-import { CheckoutButton } from "@/components/pricing/checkout-button";
-import { CreditCalculator } from "@/components/pricing/credit-calculator";
 import { PricingBalance } from "@/components/pricing/pricing-balance";
+import { PricingCatalog } from "@/components/pricing/pricing-catalog";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { isCheckoutEnabled } from "@/lib/checkout";
-
-const packs = [
-  {
-    key: "starter" as const,
-    name: "Starter",
-    credits: 10,
-    price: "€29",
-    per: "€2.90",
-    tag: null,
-  },
-  {
-    key: "growth" as const,
-    name: "Growth",
-    credits: 30,
-    price: "€79",
-    per: "€2.63",
-    tag: "Best value",
-  },
-];
 
 export default async function PricingPage({
   searchParams,
@@ -72,51 +50,11 @@ export default async function PricingPage({
         </Badge>
       </PageHeader>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {packs.map((p) => (
-          <Card
-            key={p.key}
-            className={
-              p.tag
-                ? "relative border-[var(--accent)] shadow-[var(--shadow-md)] ring-1 ring-[var(--accent)]/20"
-                : ""
-            }
-          >
-            {p.tag ? (
-              <Badge className="absolute -top-2.5 right-4">{p.tag}</Badge>
-            ) : null}
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{p.name}</span>
-                <CreditCard className="h-5 w-5 text-[var(--muted-fg)]" strokeWidth={1.5} />
-              </CardTitle>
-              <p className="font-serif text-4xl">{p.price}</p>
-              <p className="text-sm text-[var(--muted-fg)]">{p.per} per credit</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-2 text-sm">
-                <li className="flex gap-2">
-                  <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                  {p.credits} generation credits
-                </li>
-                <li className="flex gap-2">
-                  <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                  Image pipeline or copy per credit
-                </li>
-              </ul>
-              <CheckoutButton packageKey={p.key} label={`Buy ${p.name}`} checkoutEnabled={checkoutEnabled} />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--muted)]/20 p-6 md:p-8">
-        <h2 className="font-serif text-xl">Estimate your catalog cost</h2>
-        <p className="mt-2 text-sm text-[var(--muted-fg)]">
-          See how pay-per-credit pricing compares before you buy a pack.
-        </p>
-        <CreditCalculator compact />
-      </div>
+      {session?.user?.id ? (
+        <PricingCatalog initialCredits={credits} checkoutEnabled={checkoutEnabled} />
+      ) : (
+        <PricingCatalog initialCredits={0} checkoutEnabled={checkoutEnabled} />
+      )}
 
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 md:p-8">
         <h2 className="font-serif text-xl">How credits compare</h2>
