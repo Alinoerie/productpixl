@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { analyzeProductImage, type ProductAnalysis } from "@/lib/ai";
+import { insufficientCreditsResponse, requireCredits } from "@/lib/require-credits";
 import { isStubMode } from "@/lib/utils";
 
 export const maxDuration = 60;
@@ -22,6 +23,10 @@ export async function POST(req: NextRequest) {
     const { imageUrl } = body;
     if (!imageUrl) {
       return NextResponse.json({ error: "imageUrl required" }, { status: 400 });
+    }
+
+    if (!(await requireCredits(session.user.id))) {
+      return insufficientCreditsResponse();
     }
 
     const analysis = await analyzeProductImage(imageUrl);

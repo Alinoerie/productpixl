@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { analyzeProductImage, type ProductAnalysis } from "@/lib/ai";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
 import type { ProductIntakeData } from "@/lib/product-intake";
+import { insufficientCreditsResponse, requireCredits } from "@/lib/require-credits";
 import { getModulesForRun } from "@/pipelines/modules";
 import { buildListingPrompt } from "@/pipelines/prompt-builder";
 import { runCategoryResearch } from "@/pipelines/tavily";
@@ -26,6 +27,10 @@ export async function POST(req: NextRequest) {
       { error: "inputImageUrl, productData.name, and productData.category are required" },
       { status: 400 }
     );
+  }
+
+  if (!(await requireCredits(session.user.id))) {
+    return insufficientCreditsResponse();
   }
 
   const brandProfile = await getBrandProfileForUser(session.user.id);

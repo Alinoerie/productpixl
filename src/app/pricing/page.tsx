@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PricingBalance } from "@/components/pricing/pricing-balance";
 import { PricingCatalog } from "@/components/pricing/pricing-catalog";
 import { PricingComparison } from "@/components/pricing/pricing-comparison";
+import { CreditsLockedNotice } from "@/components/pricing/credits-locked-notice";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { isCheckoutEnabled } from "@/lib/checkout";
 
@@ -37,15 +38,18 @@ function PricingContent({
   checkoutEnabled,
   canceled,
   success,
+  locked,
 }: {
   signedIn: boolean;
   credits: number;
   checkoutEnabled: boolean;
   canceled?: string;
   success?: string;
+  locked?: boolean;
 }) {
   return (
     <div className="space-y-12">
+      {locked && signedIn ? <CreditsLockedNotice /> : null}
       {!signedIn ? (
         <div className="rounded-2xl border border-[var(--accent)]/25 bg-[var(--accent-soft)]/30 px-4 py-4 text-sm md:flex md:items-center md:justify-between md:gap-4">
           <p>
@@ -93,7 +97,7 @@ function PricingContent({
 export default async function PricingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ canceled?: string; success?: string }>;
+  searchParams: Promise<{ canceled?: string; success?: string; locked?: string }>;
 }) {
   const params = await searchParams;
   const checkoutEnabled = isCheckoutEnabled();
@@ -107,13 +111,14 @@ export default async function PricingPage({
   if (signedIn) {
     return (
       <StudioProviders>
-        <AppShell>
+        <AppShell credits={credits} showPaywallBanner={false}>
           <PricingContent
             signedIn
             credits={credits}
             checkoutEnabled={checkoutEnabled}
             canceled={params.canceled}
             success={params.success}
+            locked={params.locked === "1"}
           />
         </AppShell>
       </StudioProviders>

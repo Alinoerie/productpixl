@@ -2,12 +2,26 @@ import Link from "next/link";
 import { User } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { CreditBadge } from "@/components/layout/credit-badge";
+import { CreditsPaywallBanner } from "@/components/ui/credits-paywall-banner";
 import { Button } from "@/components/ui/button";
 import { AppShellMobileNav, AppShellNav } from "@/components/layout/app-shell-nav";
+import { getUserCredits } from "@/lib/require-credits";
+import { hasPaidCredits } from "@/lib/credits-access";
 
-export async function AppShell({ children }: { children: React.ReactNode }) {
+export async function AppShell({
+  children,
+  credits: creditsProp,
+  showPaywallBanner = true,
+}: {
+  children: React.ReactNode;
+  credits?: number;
+  showPaywallBanner?: boolean;
+}) {
   const session = await auth();
-  const credits = session?.user?.credits ?? 0;
+  const credits =
+    creditsProp ??
+    (session?.user?.id ? await getUserCredits(session.user.id) : session?.user?.credits ?? 0);
+  const studioLocked = !hasPaidCredits(credits);
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
@@ -26,7 +40,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               </span>
               <span className="font-serif text-lg tracking-tight">ProductPixl</span>
             </Link>
-            <AppShellNav className="hidden md:flex" />
+            <AppShellNav className="hidden md:flex" studioLocked={studioLocked} />
           </div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <CreditBadge initialCredits={credits} />
@@ -40,9 +54,14 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
           </div>
         </div>
-        <AppShellMobileNav />
+        <AppShellMobileNav studioLocked={studioLocked} />
       </header>
       <main id="main" className="mx-auto max-w-6xl px-4 py-8 pb-24 md:py-12 md:pb-12">
+        {showPaywallBanner && studioLocked ? (
+          <div className="mb-8">
+            <CreditsPaywallBanner />
+          </div>
+        ) : null}
         {children}
       </main>
     </div>

@@ -62,7 +62,7 @@ export function PricingComparison({ checkoutEnabled }: { checkoutEnabled: boolea
       <p className="mt-6 text-sm text-[var(--muted-fg)]">
         {checkoutEnabled
           ? "Secure checkout via Stripe. Credits are added instantly after payment."
-          : "Stripe checkout is available when billing is enabled. Until then, use your 10 free signup credits to test the full pipeline."}
+          : "Stripe checkout is a placeholder for now — packs and prices are shown for reference until billing launches."}
       </p>
     </div>
   );

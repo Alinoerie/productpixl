@@ -2,10 +2,17 @@ import { AppShell } from "@/components/layout/app-shell";
 import { StudioProviders } from "@/components/layout/studio-providers";
 import { auth } from "@/lib/auth";
 import { isBrandOnboardingComplete } from "@/lib/brand-profile";
+import {
+  isCreditExemptPath,
+  isCreditLockedPath,
+  hasPaidCredits,
+  pricingPaywallUrl,
+} from "@/lib/credits-access";
+import { getUserCredits } from "@/lib/require-credits";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-const ONBOARDING_EXEMPT_PREFIXES = ["/onboarding", "/brand", "/account"];
+const ONBOARDING_EXEMPT_PREFIXES = ["/onboarding", "/brand", "/account", "/pricing"];
 
 export default async function DashboardLayout({
   children,
@@ -19,14 +26,23 @@ export default async function DashboardLayout({
   }
 
   const pathname = (await headers()).get("x-pathname") || "/dashboard";
-  const exempt = ONBOARDING_EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-  if (!exempt && !(await isBrandOnboardingComplete(session.user.id))) {
+  const onboardingExempt = ONBOARDING_EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  if (!onboardingExempt && !(await isBrandOnboardingComplete(session.user.id))) {
     redirect("/onboarding");
+  }
+
+  const credits = await getUserCredits(session.user.id);
+  if (
+    !isCreditExemptPath(pathname) &&
+    isCreditLockedPath(pathname) &&
+    !hasPaidCredits(credits)
+  ) {
+    redirect(pricingPaywallUrl("locked"));
   }
 
   return (
     <StudioProviders>
-      <AppShell>{children}</AppShell>
+      <AppShell credits={credits}>{children}</AppShell>
     </StudioProviders>
   );
 }

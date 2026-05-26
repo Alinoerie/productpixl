@@ -10,9 +10,12 @@ export function InsufficientCreditsAlert({ className }: { className?: string }) 
       role="alert"
     >
       You need at least 1 credit for this run.{" "}
-      <Link href="/pricing" className="font-medium underline underline-offset-2">
-        Buy credits
+      <Link href="/pricing?locked=1" className="font-medium underline underline-offset-2">
+        View pricing
       </Link>
+      <span className="mt-1 block text-[var(--muted-fg)]">
+        Credit packs are listed on pricing; Stripe checkout is a placeholder until billing goes live.
+      </span>
     </p>
   );
 }

@@ -11,6 +11,7 @@ const protectedPrefixes = [
   "/account",
   "/brand",
   "/brands",
+  "/onboarding",
 ];
 
 export default NextAuth(authConfig).auth((req) => {

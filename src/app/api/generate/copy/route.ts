@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { inngest, COPY_PIPELINE_EVENT } from "@/inngest/client";
 import type { ProductIntakeData } from "@/lib/product-intake";
+import { insufficientCreditsResponse, requireCredits } from "@/lib/require-credits";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -27,9 +28,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Product name and category are required" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-  if (!user || user.credits < 1) {
-    return NextResponse.json({ error: "Insufficient credits" }, { status: 402 });
+  const user = await requireCredits(session.user.id);
+  if (!user) {
+    return insufficientCreditsResponse();
   }
 
   let productId = existingProductId;

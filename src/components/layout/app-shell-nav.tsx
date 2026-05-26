@@ -47,7 +47,13 @@ function isActive(pathname: string, href: string) {
   );
 }
 
-export function AppShellNav({ className }: { className?: string }) {
+export function AppShellNav({
+  className,
+  studioLocked = false,
+}: {
+  className?: string;
+  studioLocked?: boolean;
+}) {
   const pathname = usePathname();
 
   return (
@@ -55,21 +61,29 @@ export function AppShellNav({ className }: { className?: string }) {
       className={cn("flex max-w-[min(100%,42rem)] items-center gap-1 overflow-x-auto scrollbar-none", className)}
       aria-label="Studio navigation"
     >
-      {nav.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          aria-current={isActive(pathname, item.href) ? "page" : undefined}
-          className={cn(
-            "shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-            isActive(pathname, item.href)
-              ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-              : "text-[var(--muted-fg)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-          )}
-        >
-          {item.label}
-        </Link>
-      ))}
+      {nav.map((item) => {
+        const locked =
+          studioLocked && (item.href === "/generate" || item.href === "/copy");
+        const href = locked ? "/pricing?locked=1" : item.href;
+        return (
+          <Link
+            key={item.href}
+            href={href}
+            aria-current={isActive(pathname, item.href) ? "page" : undefined}
+            aria-disabled={locked || undefined}
+            title={locked ? "Buy credits to unlock" : undefined}
+            className={cn(
+              "shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              locked && "opacity-60",
+              isActive(pathname, item.href)
+                ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                : "text-[var(--muted-fg)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+            )}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
@@ -145,7 +159,7 @@ function MobileMoreMenu() {
   );
 }
 
-export function AppShellMobileNav() {
+export function AppShellMobileNav({ studioLocked = false }: { studioLocked?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -156,15 +170,20 @@ export function AppShellMobileNav() {
       <div className="mx-auto grid max-w-lg grid-cols-5">
         {mobileNav.map((item) => {
           const active = isActive(pathname, item.href);
+          const locked =
+            studioLocked && (item.href === "/generate" || item.href === "/copy");
+          const href = locked ? "/pricing?locked=1" : item.href;
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={href}
               aria-current={active ? "page" : undefined}
               aria-label={item.label}
-              title={item.label}
+              aria-disabled={locked || undefined}
+              title={locked ? "Buy credits to unlock" : item.label}
               className={cn(
                 "flex min-h-[44px] flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors",
+                locked && "opacity-60",
                 active ? "text-[var(--accent)]" : "text-[var(--muted-fg)]"
               )}
             >

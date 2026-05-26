@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { isCheckoutEnabled } from "@/lib/checkout";
 import { prisma } from "@/lib/prisma";
 import { createCheckoutSession, type CreditPackageKey } from "@/lib/stripe";
 
@@ -7,6 +8,16 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id || !session.user.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!isCheckoutEnabled()) {
+    return NextResponse.json(
+      {
+        error: "Stripe checkout is not live yet. Credit packs are shown as placeholders until billing launches.",
+        code: "CHECKOUT_DISABLED",
+      },
+      { status: 503 }
+    );
   }
 
   const { package: packageKey, returnTo } = (await req.json()) as {

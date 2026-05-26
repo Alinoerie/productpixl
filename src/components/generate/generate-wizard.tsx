@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-alert";

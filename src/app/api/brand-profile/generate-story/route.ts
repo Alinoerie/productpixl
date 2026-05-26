@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { generateBrandStory } from "@/lib/ai";
-import { getBrandProfileForUser } from "@/lib/brand-profile";
+import { getBrandProfileForUser, isBrandOnboardingComplete } from "@/lib/brand-profile";
+import { insufficientCreditsResponse, requireCredits } from "@/lib/require-credits";
 
 export const maxDuration = 60;
 
@@ -38,6 +39,11 @@ export async function POST(req: NextRequest) {
 
     if (!profile.displayName?.trim()) {
       return NextResponse.json({ error: "Brand display name is required" }, { status: 400 });
+    }
+
+    const onboardingDone = await isBrandOnboardingComplete(session.user.id);
+    if (onboardingDone && !(await requireCredits(session.user.id))) {
+      return insufficientCreditsResponse();
     }
 
     const brandStory = await generateBrandStory(profile);

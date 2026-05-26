@@ -103,14 +103,21 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {credits < 2 && (
+      {credits === 0 ? (
+        <div className="rounded-2xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]">
+          Free credits used — image studio and copy are locked.{" "}
+          <Link href="/pricing?locked=1" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
+            View pricing
+          </Link>
+        </div>
+      ) : credits < 2 ? (
         <div className="rounded-2xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]">
           Running low on credits ({credits} left).{" "}
-          <Link href="/pricing" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
+          <Link href="/pricing?locked=1" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
             Top up before your next run
           </Link>
         </div>
-      )}
+      ) : null}
 
       <BrandSetupNudge configured={brandConfigured} />
 
