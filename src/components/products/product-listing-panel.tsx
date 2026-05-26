@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CharCounter, LimitWarning } from "@/components/ui/char-counter";
 import { useToast } from "@/components/ui/toast-provider";
+import { useProductEdit } from "@/components/products/product-edit-context";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 
 export function ProductListingPanel({
@@ -25,6 +26,7 @@ export function ProductListingPanel({
   keywords?: string | null;
 }) {
   const { toast } = useToast();
+  const edit = useProductEdit();
   const [title, setTitle] = useState(initialTitle);
   const [bullets, setBullets] = useState(initialBullets);
   const [description, setDescription] = useState(initialDescription ?? "");
@@ -67,6 +69,7 @@ export function ProductListingPanel({
 
   const save = useCallback(async () => {
     setSaving(true);
+    edit?.setListingSaving(true);
     try {
       const res = await fetch(`/api/products/${productId}/listing-copy`, {
         method: "PATCH",
@@ -86,8 +89,17 @@ export function ProductListingPanel({
       toast(e instanceof Error ? e.message : "Could not save copy", "error");
     } finally {
       setSaving(false);
+      edit?.setListingSaving(false);
     }
-  }, [productId, title, bullets, description, keywords, toast]);
+  }, [productId, title, bullets, description, keywords, toast, edit]);
+
+  useEffect(() => {
+    edit?.registerListingSave(save);
+  }, [edit, save]);
+
+  useEffect(() => {
+    edit?.setListingDirty(isDirty);
+  }, [edit, isDirty]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -110,7 +122,7 @@ export function ProductListingPanel({
   }, [isDirty]);
 
   return (
-    <section>
+    <section id="listing" className="scroll-mt-24">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-serif text-xl">Listing copy</h2>
@@ -234,26 +246,8 @@ export function ProductListingPanel({
 
       {isDirty ? (
         <p className="mt-4 text-xs text-[var(--muted-fg)]">
-          Unsaved edits — press Save or use ⌘/Ctrl+S.
+          Unsaved edits — save from the bar below on mobile, or use Save / ⌘/Ctrl+S on desktop.
         </p>
-      ) : null}
-
-      {isDirty ? (
-        <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
-          <div className="mx-auto flex max-w-lg gap-2">
-            <Button type="button" className="flex-1" disabled={saving} onClick={save}>
-              {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" /> Save changes
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
       ) : null}
     </section>
   );

@@ -150,6 +150,9 @@ model ListingCopy {
   backendKeywords  String?
   status           String   @default("PENDING")
   errorMessage     String?
+  grade            String?
+  gradeScore       Int?
+  gradedAt         DateTime?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

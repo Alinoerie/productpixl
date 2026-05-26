@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { gradeListing } from "@/lib/listing-grader";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,6 +10,7 @@ export async function POST(req: NextRequest) {
       bullets?: string[];
       description?: string;
       backendKeywords?: string;
+      productId?: string;
     };
 
     if (!body.title?.trim()) {
@@ -20,6 +23,26 @@ export async function POST(req: NextRequest) {
       description: body.description,
       backendKeywords: body.backendKeywords,
     });
+
+    if (body.productId) {
+      const session = await auth();
+      if (session?.user?.id) {
+        const product = await prisma.product.findFirst({
+          where: { id: body.productId, userId: session.user.id },
+          include: { listingCopy: true },
+        });
+        if (product?.listingCopy) {
+          await prisma.listingCopy.update({
+            where: { productId: body.productId },
+            data: {
+              grade: result.grade,
+              gradeScore: result.score,
+              gradedAt: new Date(),
+            },
+          });
+        }
+      }
+    }
 
     return NextResponse.json(result);
   } catch (err) {

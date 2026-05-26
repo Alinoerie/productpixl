@@ -12,6 +12,8 @@ import { ProductExportActions } from "@/components/products/product-export-actio
 import { ProductListingPanel } from "@/components/products/product-listing-panel";
 import { ProductReadiness } from "@/components/products/product-readiness";
 import { ProductMobileActions } from "@/components/products/product-mobile-actions";
+import { ProductEditProvider } from "@/components/products/product-edit-context";
+import { ProductSectionNav } from "@/components/products/product-section-nav";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { getMarketplace } from "@/lib/marketplaces";
 import {
@@ -37,6 +39,7 @@ export default async function ProductPage({
 
   const bullets = (product.listingCopy?.bullets as string[] | null) ?? [];
   const completedAssets = product.assets.filter((a) => a.status === "COMPLETE" && a.imageUrl);
+  const hasGallery = product.assets.length > 0 || product.status === "PROCESSING";
   const galleryAssets = product.assets.map((a) => ({
     id: a.id,
     moduleId: a.moduleId,
@@ -47,175 +50,208 @@ export default async function ProductPage({
   }));
 
   return (
-    <div className="space-y-8 pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-0">
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-[var(--muted-fg)]">
-        <Link href="/dashboard" className="hover:text-[var(--foreground)]">
-          Studio
-        </Link>
-        <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
-        <Link href="/projects" className="hover:text-[var(--foreground)]">
-          Projects
-        </Link>
-        <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
-        <span className="truncate text-[var(--foreground)]">{product.name}</span>
-      </nav>
+    <ProductEditProvider>
+      <div className="space-y-8 pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-[var(--muted-fg)]">
+          <Link href="/dashboard" className="hover:text-[var(--foreground)]">
+            Studio
+          </Link>
+          <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
+          <Link href="/projects" className="hover:text-[var(--foreground)]">
+            Projects
+          </Link>
+          <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
+          <span className="truncate text-[var(--foreground)]">{product.name}</span>
+        </nav>
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-serif text-3xl">{product.name}</h1>
-            <Badge className={statusBadgeClass(product.status)}>
-              {formatProductStatus(product.status)}
-            </Badge>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-serif text-3xl">{product.name}</h1>
+              <Badge className={statusBadgeClass(product.status)}>
+                {formatProductStatus(product.status)}
+              </Badge>
+              {product.listingCopy?.grade ? (
+                <Badge variant="secondary" className="bg-[var(--success-bg)] text-[var(--success)]">
+                  Graded {product.listingCopy.grade}
+                  {product.listingCopy.gradeScore != null ? ` · ${product.listingCopy.gradeScore}` : ""}
+                </Badge>
+              ) : null}
+            </div>
+            <p className="mt-2 text-sm text-[var(--muted-fg)]">
+              {getMarketplace(product.marketplace).label} ·{" "}
+              {new Date(product.createdAt).toLocaleDateString()}
+              {product.listingCopy?.title ? " · Copy attached" : ""}
+              {completedAssets.length > 0 ? ` · ${completedAssets.length} images` : ""}
+            </p>
           </div>
-          <p className="mt-2 text-sm text-[var(--muted-fg)]">
-            {getMarketplace(product.marketplace).label} ·{" "}
-            {new Date(product.createdAt).toLocaleDateString()}
-            {product.listingCopy?.title ? " · Copy attached" : ""}
-            {completedAssets.length > 0 ? ` · ${completedAssets.length} images` : ""}
-          </p>
-        </div>
-        <div className="hidden flex-wrap gap-2 md:flex">
-          {completedAssets.length > 0 && !product.listingCopy?.title ? (
-            <Button asChild>
-              <Link href={`/copy?productId=${product.id}`}>Generate copy</Link>
-            </Button>
-          ) : null}
-          {product.listingCopy?.title ? (
-            <GradeListingButton
-              productId={product.id}
-              listingCopy={{
-                title: product.listingCopy.title,
-                bullets,
-                description: product.listingCopy.description ?? undefined,
-                backendKeywords: product.listingCopy.backendKeywords ?? undefined,
-                productId: product.id,
-              }}
-            />
-          ) : null}
-          {product.status === "FAILED" ? (
-            <Button asChild>
-              <Link href={`/generate?productId=${product.id}`}>Retry run</Link>
-            </Button>
-          ) : (
+          <div className="hidden flex-wrap gap-2 md:flex">
+            {completedAssets.length > 0 && !product.listingCopy?.title ? (
+              <Button asChild>
+                <Link href={`/copy?productId=${product.id}`}>Generate copy</Link>
+              </Button>
+            ) : null}
+            {product.listingCopy?.title ? (
+              <GradeListingButton
+                productId={product.id}
+                listingCopy={{
+                  title: product.listingCopy.title,
+                  bullets,
+                  description: product.listingCopy.description ?? undefined,
+                  backendKeywords: product.listingCopy.backendKeywords ?? undefined,
+                  productId: product.id,
+                }}
+              />
+            ) : null}
+            {product.status === "FAILED" ? (
+              <Button asChild>
+                <Link href={`/generate?productId=${product.id}`}>Retry run</Link>
+              </Button>
+            ) : (
+              <Button asChild variant="outline">
+                <Link href={`/generate?productId=${product.id}`}>New image run</Link>
+              </Button>
+            )}
             <Button asChild variant="outline">
-              <Link href={`/generate?productId=${product.id}`}>New image run</Link>
+              <Link href="/dashboard">Back to studio</Link>
             </Button>
-          )}
-          <Button asChild variant="outline">
-            <Link href="/dashboard">Back to studio</Link>
-          </Button>
+          </div>
         </div>
-      </div>
 
-      {product.status === "FAILED" && (
-        <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
-          Generation failed. Try a new run from{" "}
-          <Link href={`/generate?productId=${product.id}`} className="font-medium underline">
-            Image studio
-          </Link>{" "}
-          or spot-edit individual modules below.
-        </div>
-      )}
+        <ProductSectionNav
+          hasCopy={Boolean(product.listingCopy?.title)}
+          hasGallery={hasGallery || completedAssets.length === 0}
+        />
 
-      <ProductReadiness
-        productId={product.id}
-        imageCount={completedAssets.length}
-        hasCopy={Boolean(product.listingCopy?.title)}
-        listingCopy={
-          product.listingCopy?.title
-            ? {
-                title: product.listingCopy.title,
-                bullets,
-                description: product.listingCopy.description,
-                backendKeywords: product.listingCopy.backendKeywords,
-              }
-            : null
-        }
-        status={product.status}
-      />
+        {product.status === "FAILED" && (
+          <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
+            Image generation failed. Try a new run from{" "}
+            <Link href={`/generate?productId=${product.id}`} className="font-medium underline">
+              Image studio
+            </Link>{" "}
+            or spot-edit individual modules below.
+          </div>
+        )}
 
-      <ProductExportActions
-        productId={product.id}
-        productName={product.name}
-        assets={product.assets}
-        listingCopy={
-          product.listingCopy
-            ? {
-                title: product.listingCopy.title,
-                bullets: bullets,
-                description: product.listingCopy.description,
-                backendKeywords: product.listingCopy.backendKeywords,
-              }
-            : null
-        }
-      />
+        {product.listingCopy?.status === "FAILED" ? (
+          <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
+            <p>
+              Listing copy generation failed
+              {product.listingCopy.errorMessage ? `: ${product.listingCopy.errorMessage}` : "."}
+            </p>
+            <Button asChild size="sm" variant="outline" className="mt-3 border-[var(--error-border)]">
+              <Link href={`/copy?productId=${product.id}`}>Retry in Copy studio</Link>
+            </Button>
+          </div>
+        ) : null}
 
-      {product.assets.length > 0 || product.status === "PROCESSING" ? (
-        <ProductLiveGallery
+        <ProductReadiness
+          productId={product.id}
+          imageCount={completedAssets.length}
+          hasCopy={Boolean(product.listingCopy?.title)}
+          grade={product.listingCopy?.grade}
+          gradeScore={product.listingCopy?.gradeScore}
+          listingCopy={
+            product.listingCopy?.title
+              ? {
+                  title: product.listingCopy.title,
+                  bullets,
+                  description: product.listingCopy.description,
+                  backendKeywords: product.listingCopy.backendKeywords,
+                }
+              : null
+          }
+          status={product.status}
+        />
+
+        <ProductExportActions
           productId={product.id}
           productName={product.name}
-          initialAssets={galleryAssets}
-          initialStatus={product.status}
+          assets={product.assets}
+          listingCopy={
+            product.listingCopy
+              ? {
+                  title: product.listingCopy.title,
+                  bullets: bullets,
+                  description: product.listingCopy.description,
+                  backendKeywords: product.listingCopy.backendKeywords,
+                }
+              : null
+          }
         />
-      ) : (
-        <Card className="border-dashed">
-          <CardContent className="py-12 text-center">
-            <p className="font-serif text-lg">No images yet</p>
-            <p className="mt-2 text-sm text-[var(--muted-fg)]">
-              Start an image pipeline to populate this project.
-            </p>
-            <Button asChild className="mt-6">
-              <Link href={`/generate?productId=${product.id}`}>Run image studio</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
-      {product.listingCopy?.title ? (
-        <ProductListingPanel
+        <div id="gallery" className="scroll-mt-24">
+          {hasGallery ? (
+            <ProductLiveGallery
+              productId={product.id}
+              productName={product.name}
+              initialAssets={galleryAssets}
+              initialStatus={product.status}
+            />
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="py-12 text-center">
+                <p className="font-serif text-lg">
+                  {product.listingCopy?.title ? "Copy saved — add gallery images" : "No images yet"}
+                </p>
+                <p className="mt-2 text-sm text-[var(--muted-fg)]">
+                  {product.listingCopy?.title
+                    ? "Upload a product photo in Image studio to generate your PHOILA gallery."
+                    : "Start an image pipeline to populate this project."}
+                </p>
+                <Button asChild className="mt-6">
+                  <Link href={`/generate?productId=${product.id}`}>Run image studio</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {product.listingCopy?.title ? (
+          <ProductListingPanel
+            productId={product.id}
+            title={product.listingCopy.title}
+            bullets={bullets}
+            description={product.listingCopy.description}
+            keywords={product.listingCopy.backendKeywords}
+          />
+        ) : completedAssets.length > 0 ? (
+          <Card className="border-[var(--teal)]/30 bg-[var(--teal-soft)]/40">
+            <CardContent className="flex flex-wrap items-center justify-between gap-4 py-6">
+              <div>
+                <p className="font-semibold">Images ready — add listing copy?</p>
+                <p className="mt-1 text-sm text-[var(--muted-fg)]">
+                  Generate RUFUS-ready title, bullets, and keywords for 1 credit.
+                </p>
+              </div>
+              <Button asChild>
+                <Link href={`/copy?productId=${product.id}`}>Generate copy</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        <div className="border-t border-[var(--border)] pt-6">
+          <ProductDeleteButton productId={product.id} productName={product.name} />
+        </div>
+
+        <ProductMobileActions
           productId={product.id}
-          title={product.listingCopy.title}
-          bullets={bullets}
-          description={product.listingCopy.description}
-          keywords={product.listingCopy.backendKeywords}
+          hasImages={completedAssets.length > 0}
+          hasCopy={Boolean(product.listingCopy?.title)}
+          status={product.status}
+          listingCopy={
+            product.listingCopy?.title
+              ? {
+                  title: product.listingCopy.title,
+                  bullets,
+                  description: product.listingCopy.description,
+                  backendKeywords: product.listingCopy.backendKeywords,
+                }
+              : null
+          }
         />
-      ) : completedAssets.length > 0 ? (
-        <Card className="border-[var(--teal)]/30 bg-[var(--teal-soft)]/40">
-          <CardContent className="flex flex-wrap items-center justify-between gap-4 py-6">
-            <div>
-              <p className="font-semibold">Images ready — add listing copy?</p>
-              <p className="mt-1 text-sm text-[var(--muted-fg)]">
-                Generate RUFUS-ready title, bullets, and keywords for 1 credit.
-              </p>
-            </div>
-            <Button asChild>
-              <Link href={`/copy?productId=${product.id}`}>Generate copy</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <div className="border-t border-[var(--border)] pt-6">
-        <ProductDeleteButton productId={product.id} productName={product.name} />
       </div>
-
-      <ProductMobileActions
-        productId={product.id}
-        hasImages={completedAssets.length > 0}
-        hasCopy={Boolean(product.listingCopy?.title)}
-        status={product.status}
-        listingCopy={
-          product.listingCopy?.title
-            ? {
-                title: product.listingCopy.title,
-                bullets,
-                description: product.listingCopy.description,
-                backendKeywords: product.listingCopy.backendKeywords,
-              }
-            : null
-        }
-      />
-    </div>
+    </ProductEditProvider>
   );
 }

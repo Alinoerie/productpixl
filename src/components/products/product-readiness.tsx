@@ -13,6 +13,8 @@ export function ProductReadiness({
   hasCopy,
   listingCopy,
   status,
+  grade,
+  gradeScore,
 }: {
   productId: string;
   imageCount: number;
@@ -24,13 +26,16 @@ export function ProductReadiness({
     backendKeywords?: string | null;
   } | null;
   status: string;
+  grade?: string | null;
+  gradeScore?: number | null;
 }) {
   const hasImages = imageCount > 0;
   const readyToExport = hasImages && hasCopy;
-  const [graded, setGraded] = useState(false);
+  const [sessionGraded, setSessionGraded] = useState(false);
+  const isGraded = Boolean(grade) || sessionGraded;
 
   useEffect(() => {
-    const refresh = () => setGraded(isProductGraded(productId));
+    const refresh = () => setSessionGraded(isProductGraded(productId));
     refresh();
     const onGrade = (event: Event) => {
       const detail = (event as CustomEvent<{ productId?: string }>).detail;
@@ -51,6 +56,9 @@ export function ProductReadiness({
     };
   }, [productId]);
 
+  const gradeLabel =
+    grade && gradeScore != null ? `Graded · ${grade} (${gradeScore})` : "Grade listing";
+
   const steps = [
     {
       key: "images",
@@ -69,8 +77,8 @@ export function ProductReadiness({
     },
     {
       key: "grade",
-      label: "Grade listing",
-      done: graded,
+      label: gradeLabel,
+      done: isGraded,
       showWhen: hasCopy,
       isGrade: true,
     },
@@ -85,8 +93,9 @@ export function ProductReadiness({
 
   return (
     <section
+      id="readiness"
       aria-label="Listing readiness"
-      className="rounded-2xl border border-[var(--border)] bg-[var(--muted)]/30 p-4 md:p-5"
+      className="scroll-mt-24 rounded-2xl border border-[var(--border)] bg-[var(--muted)]/30 p-4 md:p-5"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold">Listing readiness</p>
@@ -126,7 +135,7 @@ export function ProductReadiness({
                   className="inline-flex items-center gap-2 rounded-full border border-[var(--success-border)] bg-[var(--success-bg)] px-3 py-2 text-xs font-medium"
                 >
                   <Check className="h-4 w-4 shrink-0 text-[var(--success)]" strokeWidth={2.5} />
-                  <span className="text-[var(--foreground)]">Grade listing</span>
+                  <span className="text-[var(--foreground)]">{gradeLabel}</span>
                 </li>
               );
             }

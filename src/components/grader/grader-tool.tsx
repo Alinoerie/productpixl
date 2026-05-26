@@ -70,6 +70,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
           bullets: bullets.filter((b) => b.trim()),
           description,
           backendKeywords: keywords,
+          productId: draftProductId ?? undefined,
         }),
       });
       if (!ok) throw new Error((data as { error?: string }).error || "Failed");

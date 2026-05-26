@@ -16,7 +16,7 @@ const PAGE_SIZE = 24;
 
 function buildWhere(
   userId: string,
-  filters: { status?: string; copy?: string; images?: string; q?: string }
+  filters: { status?: string; copy?: string; images?: string; ready?: string; q?: string }
 ): Prisma.ProductWhereInput {
   const where: Prisma.ProductWhereInput = { userId };
 
@@ -44,6 +44,11 @@ function buildWhere(
     where.NOT = { assets: { some: { imageUrl: { not: null } } } };
   }
 
+  if (filters.ready === "export") {
+    where.listingCopy = { title: { not: null } };
+    where.assets = { some: { imageUrl: { not: null } } };
+  }
+
   return where;
 }
 
@@ -54,7 +59,7 @@ function FiltersFallback() {
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; status?: string; copy?: string; images?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; copy?: string; images?: string; ready?: string; q?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) return null;
@@ -62,7 +67,13 @@ export default async function ProjectsPage({
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
   const skip = (page - 1) * PAGE_SIZE;
-  const filters = { status: params.status, copy: params.copy, images: params.images, q: params.q };
+  const filters = {
+    status: params.status,
+    copy: params.copy,
+    images: params.images,
+    ready: params.ready,
+    q: params.q,
+  };
   const where = buildWhere(session.user.id, filters);
 
   const [products, filtered, total] = await Promise.all([
@@ -78,7 +89,9 @@ export default async function ProjectsPage({
   ]);
 
   const totalPages = Math.max(1, Math.ceil(filtered / PAGE_SIZE));
-  const hasFilters = Boolean(filters.status || filters.copy || filters.images || filters.q?.trim());
+  const hasFilters = Boolean(
+    filters.status || filters.copy || filters.images || filters.ready || filters.q?.trim()
+  );
 
   return (
     <div className="space-y-8">
@@ -136,9 +149,14 @@ export default async function ProjectsPage({
             <p className="mt-2 text-sm text-[var(--muted-fg)]">
               Try clearing filters or search with a different product name.
             </p>
-            <Button asChild variant="outline" className="mt-6">
-              <Link href="/projects">Clear filters</Link>
-            </Button>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button asChild variant="outline">
+                <Link href="/projects">Clear filters</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/generate">Open image studio</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (

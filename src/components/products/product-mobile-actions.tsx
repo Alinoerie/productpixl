@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { Loader2, Save } from "lucide-react";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
+import { useProductEdit } from "@/components/products/product-edit-context";
 import { Button } from "@/components/ui/button";
 
 export function ProductMobileActions({
@@ -22,13 +24,40 @@ export function ProductMobileActions({
     backendKeywords?: string | null;
   } | null;
 }) {
+  const edit = useProductEdit();
   const showBar =
+    edit?.listingDirty ||
     status === "FAILED" ||
     (hasImages && !hasCopy) ||
     hasCopy ||
     !hasImages;
 
   if (!showBar) return null;
+
+  if (edit?.listingDirty) {
+    return (
+      <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
+        <div className="mx-auto flex max-w-lg gap-2">
+          <Button
+            type="button"
+            className="flex-1"
+            disabled={edit.listingSaving}
+            onClick={() => void edit.saveListing()}
+          >
+            {edit.listingSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" /> Save copy changes
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">

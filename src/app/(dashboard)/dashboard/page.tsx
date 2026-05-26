@@ -74,10 +74,10 @@ export default async function DashboardPage() {
           {[
             { label: "Credits", value: String(credits), href: "/pricing" as const },
             { label: "Projects", value: String(totalProjects) },
-            { label: "Export-ready", value: String(exportReady) },
+            { label: "Export-ready", value: String(exportReady), href: "/projects?ready=export" as const },
           ].map((s) => (
             <div key={s.label}>
-              {s.href ? (
+              {"href" in s && s.href ? (
                 <Link href={s.href} className="group block rounded-lg transition-colors hover:bg-white/5">
                   <p className="font-serif text-2xl group-hover:text-[var(--accent-soft)]">{s.value}</p>
                   <p className="text-xs uppercase tracking-wide text-white/50">{s.label}</p>

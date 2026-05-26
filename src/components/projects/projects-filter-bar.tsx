@@ -25,11 +25,14 @@ const IMAGES_OPTIONS = [
   { value: "without", label: "Missing images" },
 ] as const;
 
+const READY_OPTIONS = [{ value: "export", label: "Export-ready" }] as const;
+
 export function buildProjectsQuery(params: Record<string, string | undefined>) {
   const q = new URLSearchParams();
   if (params.status) q.set("status", params.status);
   if (params.copy) q.set("copy", params.copy);
   if (params.images) q.set("images", params.images);
+  if (params.ready) q.set("ready", params.ready);
   if (params.q) q.set("q", params.q);
   if (params.page && params.page !== "1") q.set("page", params.page);
   const s = q.toString();
@@ -48,6 +51,7 @@ export function ProjectsFilterBar({
   const status = searchParams.get("status") ?? "";
   const copy = searchParams.get("copy") ?? "";
   const images = searchParams.get("images") ?? "";
+  const ready = searchParams.get("ready") ?? "";
   const q = searchParams.get("q") ?? "";
 
   const push = (next: Record<string, string>) => {
@@ -55,6 +59,7 @@ export function ProjectsFilterBar({
       status: next.status ?? status,
       copy: next.copy ?? copy,
       images: next.images ?? images,
+      ready: next.ready ?? ready,
       q: next.q ?? q,
     };
     router.push(`/projects${buildProjectsQuery({ ...merged, page: "1" })}`);
@@ -67,7 +72,7 @@ export function ProjectsFilterBar({
           Showing <strong className="text-[var(--foreground)]">{filtered}</strong>
           {filtered !== total ? ` of ${total}` : ""} project{filtered === 1 ? "" : "s"}
         </p>
-        {(status || copy || images || q) ? (
+        {(status || copy || images || ready || q) ? (
           <Link
             href="/projects"
             className="text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
@@ -143,6 +148,30 @@ export function ProjectsFilterBar({
                 : "bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)]"
             )}
             aria-pressed={images === opt.value}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {READY_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() =>
+              push({
+                ready: ready === opt.value ? "" : opt.value,
+                copy: ready === opt.value ? copy : "with",
+                images: ready === opt.value ? images : "with",
+              })
+            }
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+              ready === opt.value
+                ? "bg-[var(--success)] text-white"
+                : "bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)]"
+            )}
+            aria-pressed={ready === opt.value}
           >
             {opt.label}
           </button>
