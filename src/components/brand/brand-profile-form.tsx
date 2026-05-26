@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ export function BrandProfileForm() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
     fetchJson<{ profile: BrandProfileData }>("/api/brand-profile")
@@ -37,6 +39,25 @@ export function BrandProfileForm() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const uploadLogo = async (file: File) => {
+    setUploadingLogo(true);
+    setError("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const { ok, data } = await fetchJson<{ url?: string; error?: string }>("/api/upload", {
+        method: "POST",
+        body: fd,
+      });
+      if (!ok) throw new Error(data.error || "Upload failed");
+      setProfile((p) => ({ ...p, logoUrl: data.url ?? "" }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Logo upload failed");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const save = async () => {
     setError("");
@@ -78,41 +99,46 @@ export function BrandProfileForm() {
       <Card className="shadow-[var(--shadow-md)]">
         <CardContent className="space-y-4 p-6">
           <p className="text-sm text-[var(--muted-fg)]">
-            Like Pixii&apos;s Brand Profile — set once, applied to every image and copy run.
+            Set once — colors, tone, and logo flow into every PHOILA image and copy run.
           </p>
           <div>
-            <Label>Brand display name</Label>
+            <Label htmlFor="brand-name">Brand display name</Label>
             <Input
+              id="brand-name"
               value={profile.displayName ?? ""}
               onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Primary color</Label>
+              <Label htmlFor="brand-primary">Primary color</Label>
               <div className="mt-1 flex gap-2">
                 <input
                   type="color"
+                  aria-label="Primary color picker"
                   value={profile.primaryColor}
                   onChange={(e) => setProfile({ ...profile, primaryColor: e.target.value })}
                   className="h-10 w-12 cursor-pointer rounded border"
                 />
                 <Input
+                  id="brand-primary"
                   value={profile.primaryColor}
                   onChange={(e) => setProfile({ ...profile, primaryColor: e.target.value })}
                 />
               </div>
             </div>
             <div>
-              <Label>Secondary (EU accent)</Label>
+              <Label htmlFor="brand-secondary">Secondary (EU accent)</Label>
               <div className="mt-1 flex gap-2">
                 <input
                   type="color"
+                  aria-label="Secondary color picker"
                   value={profile.secondaryColor}
                   onChange={(e) => setProfile({ ...profile, secondaryColor: e.target.value })}
                   className="h-10 w-12 cursor-pointer rounded border"
                 />
                 <Input
+                  id="brand-secondary"
                   value={profile.secondaryColor}
                   onChange={(e) => setProfile({ ...profile, secondaryColor: e.target.value })}
                 />
@@ -120,35 +146,45 @@ export function BrandProfileForm() {
             </div>
           </div>
           <div>
-            <Label>Brand tone</Label>
+            <Label htmlFor="brand-tone">Brand tone</Label>
             <Input
+              id="brand-tone"
               value={profile.tone}
               onChange={(e) => setProfile({ ...profile, tone: e.target.value })}
               placeholder="premium, trustworthy, no hype"
             />
           </div>
           <div>
-            <Label>Logo URL (optional)</Label>
-            <Input
-              value={profile.logoUrl ?? ""}
-              onChange={(e) => setProfile({ ...profile, logoUrl: e.target.value })}
-              placeholder="https://…"
-            />
-            {profile.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={profile.logoUrl}
-                alt="Brand logo preview"
-                className="mt-3 h-14 max-w-[200px] rounded-lg border border-[var(--border)] bg-white object-contain p-2"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
+            <Label htmlFor="brand-logo-url">Logo</Label>
+            <div className="mt-1 flex flex-wrap gap-2">
+              <Input
+                id="brand-logo-url"
+                value={profile.logoUrl ?? ""}
+                onChange={(e) => setProfile({ ...profile, logoUrl: e.target.value })}
+                placeholder="https://… or upload below"
+                className="min-w-[200px] flex-1"
               />
-            ) : null}
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 px-3 py-2 text-sm hover:border-[var(--accent)]">
+                {uploadingLogo ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                Upload logo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  disabled={uploadingLogo}
+                  onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])}
+                />
+              </label>
+            </div>
           </div>
           <div>
-            <Label>Extra guidelines</Label>
+            <Label htmlFor="brand-guidelines">Extra guidelines</Label>
             <Textarea
+              id="brand-guidelines"
               value={profile.guidelines ?? ""}
               onChange={(e) => setProfile({ ...profile, guidelines: e.target.value })}
               placeholder="Always show EU energy label, never show hands, etc."
@@ -163,12 +199,7 @@ export function BrandProfileForm() {
         </CardContent>
       </Card>
 
-      <Card
-        className="overflow-hidden"
-        style={{
-          borderColor: profile.primaryColor,
-        }}
-      >
+      <Card className="overflow-hidden" style={{ borderColor: profile.primaryColor }}>
         <div
           className="h-3"
           style={{
@@ -177,25 +208,40 @@ export function BrandProfileForm() {
         />
         <CardContent className="p-6">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)]">
-            Preview
+            Listing preview mockup
           </p>
-          {profile.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={profile.logoUrl}
-              alt=""
-              className="mt-3 h-10 max-w-[160px] object-contain"
-            />
-          ) : null}
-          <h3 className="mt-2 font-serif text-2xl" style={{ color: profile.primaryColor }}>
-            {profile.displayName || "Your brand"}
-          </h3>
-          <p className="mt-2 text-sm text-[var(--muted-fg)]">Tone: {profile.tone}</p>
-          <div
-            className="mt-6 rounded-xl p-4 text-sm text-white"
-            style={{ backgroundColor: profile.secondaryColor }}
-          >
-            Bol.com & Amazon-ready · RUFUS-optimized copy
+          <div className="mt-4 overflow-hidden rounded-xl border border-[var(--border)] bg-white shadow-[var(--shadow-sm)]">
+            <div className="aspect-square bg-[var(--muted)]/30 p-6">
+              {profile.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={profile.logoUrl}
+                  alt={`${profile.displayName || "Brand"} logo`}
+                  className="mx-auto h-12 max-w-[140px] object-contain"
+                />
+              ) : (
+                <div
+                  className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg text-lg font-bold text-white"
+                  style={{ backgroundColor: profile.primaryColor }}
+                >
+                  {(profile.displayName || "B").charAt(0)}
+                </div>
+              )}
+            </div>
+            <div className="space-y-2 p-4">
+              <h3 className="font-serif text-lg leading-snug" style={{ color: profile.primaryColor }}>
+                {profile.displayName || "Your brand"} — Sample product title
+              </h3>
+              <p className="text-xs text-[var(--muted-fg)]">
+                Tone: {profile.tone || "Set your brand voice"}
+              </p>
+              <div
+                className="rounded-lg px-3 py-2 text-xs text-white"
+                style={{ backgroundColor: profile.secondaryColor }}
+              >
+                Bol.com & Amazon-ready · RUFUS-optimized copy
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

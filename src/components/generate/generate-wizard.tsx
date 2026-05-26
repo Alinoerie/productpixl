@@ -348,17 +348,29 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
               ] as const
             ).map(([key, label]) => (
               <div key={key}>
-                <Label>{label}</Label>
-                <Input value={form[key]} onChange={(e) => setField(key, e.target.value)} />
+                <Label htmlFor={`generate-${key}`}>{label}</Label>
+                <Input
+                  id={`generate-${key}`}
+                  value={form[key]}
+                  onChange={(e) => setField(key, e.target.value)}
+                />
               </div>
             ))}
             <div className="md:col-span-2">
-              <Label>Key features</Label>
-              <Textarea value={form.keyFeatures} onChange={(e) => setField("keyFeatures", e.target.value)} />
+              <Label htmlFor="generate-features">Key features</Label>
+              <Textarea
+                id="generate-features"
+                value={form.keyFeatures}
+                onChange={(e) => setField("keyFeatures", e.target.value)}
+              />
             </div>
             <div className="md:col-span-2">
-              <Label>Target buyer</Label>
-              <Input value={form.targetBuyer} onChange={(e) => setField("targetBuyer", e.target.value)} />
+              <Label htmlFor="generate-buyer">Target buyer</Label>
+              <Input
+                id="generate-buyer"
+                value={form.targetBuyer}
+                onChange={(e) => setField("targetBuyer", e.target.value)}
+              />
             </div>
             <div className="flex gap-3 md:col-span-2">
               <Button variant="outline" onClick={() => setStep(0)}>

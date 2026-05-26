@@ -4,14 +4,14 @@ import { ChevronRight } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProductLiveStatus } from "@/components/products/product-live-status";
-import { AssetSpotEdit } from "@/components/products/asset-spot-edit";
 import { ProductExportActions } from "@/components/products/product-export-actions";
+import { ProductImageGallery } from "@/components/products/product-image-gallery";
+import { ProductListingPanel } from "@/components/products/product-listing-panel";
 import { getMarketplace } from "@/lib/marketplaces";
 import {
-  formatModuleLabel,
   formatProductStatus,
   statusBadgeClass,
 } from "@/lib/status-labels";
@@ -27,7 +27,7 @@ export default async function ProductPage({
   const { id } = await params;
   const product = await prisma.product.findFirst({
     where: { id, userId: session.user.id },
-    include: { assets: true, listingCopy: true },
+    include: { assets: { orderBy: { moduleId: "asc" } }, listingCopy: true },
   });
 
   if (!product) notFound();
@@ -57,6 +57,7 @@ export default async function ProductPage({
             {getMarketplace(product.marketplace).label} ·{" "}
             {new Date(product.createdAt).toLocaleDateString()}
             {product.listingCopy?.title ? " · Copy attached" : ""}
+            {completedAssets.length > 0 ? ` · ${completedAssets.length} images` : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -97,48 +98,11 @@ export default async function ProductPage({
       {product.status === "PROCESSING" && <ProductLiveStatus productId={product.id} />}
 
       {product.assets.length > 0 ? (
-        <section>
-          <h2 className="mb-4 font-serif text-xl">Gallery images</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {product.assets.map((a) => (
-              <Card key={a.id} className="group overflow-hidden transition-shadow hover:shadow-[var(--shadow-md)]">
-                <CardContent className="p-0">
-                  <div className="relative aspect-square bg-[var(--muted)]">
-                    {a.imageUrl ? (
-                      <a href={a.imageUrl} target="_blank" rel="noreferrer" className="block h-full">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={a.imageUrl}
-                          alt={`${product.name} — ${formatModuleLabel(a.moduleId)}`}
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                        />
-                      </a>
-                    ) : (
-                      <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-[var(--muted-fg)]">
-                        <span className="animate-pulse-soft">{formatProductStatus(a.status)}</span>
-                      </div>
-                    )}
-                    <span className="absolute left-3 top-3 rounded-full bg-[var(--ink)]/80 px-2 py-0.5 font-serif text-xs text-white">
-                      {a.moduleId}
-                    </span>
-                  </div>
-                  <div className="p-4">
-                    <p className="text-sm font-medium">
-                      {formatModuleLabel(a.moduleId)}
-                      {a.qaScore != null ? ` · QA ${a.qaScore}/10` : ""}
-                    </p>
-                    {a.errorMessage && (
-                      <p className="mt-2 text-xs text-red-600">{a.errorMessage}</p>
-                    )}
-                    {a.status === "COMPLETE" && a.imageUrl && (
-                      <AssetSpotEdit productId={product.id} assetId={a.id} moduleId={a.moduleId} />
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
+        <ProductImageGallery
+          productId={product.id}
+          productName={product.name}
+          assets={product.assets}
+        />
       ) : product.status !== "PROCESSING" ? (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">
@@ -154,25 +118,12 @@ export default async function ProductPage({
       ) : null}
 
       {product.listingCopy?.title ? (
-        <section>
-          <h2 className="mb-4 font-serif text-xl">Listing copy</h2>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{product.listingCopy.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <ul className="list-disc space-y-2 pl-5">
-                {bullets.map((b, i) => (
-                  <li key={`bullet-${i}-${b.slice(0, 12)}`}>{b}</li>
-                ))}
-              </ul>
-              <p className="whitespace-pre-wrap text-[var(--muted-fg)]">{product.listingCopy.description}</p>
-              <p className="text-xs">
-                <strong>Keywords:</strong> {product.listingCopy.backendKeywords}
-              </p>
-            </CardContent>
-          </Card>
-        </section>
+        <ProductListingPanel
+          title={product.listingCopy.title}
+          bullets={bullets}
+          description={product.listingCopy.description}
+          keywords={product.listingCopy.backendKeywords}
+        />
       ) : completedAssets.length > 0 ? (
         <Card className="border-[var(--teal)]/30 bg-[var(--teal-soft)]/40">
           <CardContent className="flex flex-wrap items-center justify-between gap-4 py-6">

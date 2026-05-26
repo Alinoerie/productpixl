@@ -18,7 +18,7 @@ export default async function DashboardPage() {
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
       take: 12,
-      include: { assets: { take: 1 }, listingCopy: true },
+      include: { assets: { orderBy: { moduleId: "asc" } }, listingCopy: true },
     }),
     prisma.user.findUnique({ where: { id: session.user.id }, select: { credits: true } }),
   ]);
@@ -32,7 +32,7 @@ export default async function DashboardPage() {
         <div className="bg-grid absolute inset-0 opacity-20" />
         <div className="relative flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="text-sm font-medium text-orange-200/80">Listing studio</p>
+            <p className="text-sm font-medium text-[var(--accent-soft)]/90">Listing studio</p>
             <h1 className="mt-2 font-serif text-3xl md:text-4xl">
               Welcome back{session.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}
             </h1>
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
             <div key={s.label}>
               {s.href ? (
                 <Link href={s.href} className="group block rounded-lg transition-colors hover:bg-white/5">
-                  <p className="font-serif text-2xl group-hover:text-orange-200">{s.value}</p>
+                  <p className="font-serif text-2xl group-hover:text-[var(--accent-soft)]">{s.value}</p>
                   <p className="text-xs uppercase tracking-wide text-white/50">{s.label}</p>
                 </Link>
               ) : (
@@ -126,21 +126,35 @@ export default async function DashboardPage() {
           </Card>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {products.map((p) => (
+            {products.map((p) => {
+              const thumbs = p.assets.filter((a) => a.imageUrl).slice(0, 4);
+              return (
               <Link key={p.id} href={`/products/${p.id}`} className="group">
                 <Card className="overflow-hidden transition-all hover:border-[var(--accent)]/40 hover:shadow-[var(--shadow-md)]">
                   <div className="relative aspect-[4/3] bg-[var(--muted)]">
-                    {p.assets[0]?.imageUrl ? (
+                    {thumbs.length > 1 ? (
+                      <div className="grid h-full grid-cols-2 grid-rows-2 gap-0.5 p-0.5">
+                        {thumbs.map((a) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            key={a.id}
+                            src={a.imageUrl!}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ))}
+                      </div>
+                    ) : thumbs.length === 1 ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={p.assets[0].imageUrl}
+                        src={thumbs[0].imageUrl!}
                         alt={`${p.name} preview`}
                         className="h-full w-full object-cover transition-transform group-hover:scale-[1.02]"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center">
+                      <div className="flex h-full flex-col items-center justify-center gap-2">
                         <span className="animate-pulse-soft text-sm text-[var(--muted-fg)]">
-                          Generating…
+                          {formatProductStatus(p.status)}
                         </span>
                       </div>
                     )}
@@ -163,7 +177,8 @@ export default async function DashboardPage() {
                   </CardContent>
                 </Card>
               </Link>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>
