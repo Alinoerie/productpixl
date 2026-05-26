@@ -15,10 +15,12 @@ type CopyPayload = {
 };
 
 export function ProductExportActions({
+  productId,
   productName,
   assets,
   listingCopy,
 }: {
+  productId: string;
   productName: string;
   assets: { moduleId: string; imageUrl: string | null }[];
   listingCopy: CopyPayload | null;
@@ -94,12 +96,16 @@ export function ProductExportActions({
               )}
             </Button>
           )}
-          {listingCopy?.title && (
+          {listingCopy?.title ? (
             <Button type="button" variant="outline" size="sm" onClick={copyAllListing}>
               {copied === "listing" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {copied === "listing" ? "Copied" : "Copy listing text"}
             </Button>
-          )}
+          ) : completedImages.length > 0 ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/copy?productId=${productId}`}>Generate copy</Link>
+            </Button>
+          ) : null}
           <Button asChild variant="outline" size="sm">
             <Link href="/grader">Grade listing copy</Link>
           </Button>

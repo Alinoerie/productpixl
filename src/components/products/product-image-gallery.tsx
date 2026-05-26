@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { X, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
 import { formatModuleLabel } from "@/lib/status-labels";
 import { AssetSpotEdit } from "@/components/products/asset-spot-edit";
 
@@ -25,23 +25,42 @@ export function ProductImageGallery({
   assets: GalleryAsset[];
   readOnly?: boolean;
 }) {
-  const [lightbox, setLightbox] = useState<GalleryAsset | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  const viewableAssets = assets.filter((a) => a.imageUrl);
+  const lightbox = lightboxIndex != null ? viewableAssets[lightboxIndex] ?? null : null;
+
   const openLightbox = (asset: GalleryAsset, el: HTMLElement) => {
+    const index = viewableAssets.findIndex((a) => a.id === asset.id);
+    if (index < 0) return;
     setTriggerEl(el);
-    setLightbox(asset);
+    setLightboxIndex(index);
   };
 
   const closeLightbox = useCallback(() => {
-    setLightbox(null);
+    setLightboxIndex(null);
     triggerEl?.focus();
   }, [triggerEl]);
 
+  const goPrev = useCallback(() => {
+    setLightboxIndex((i) => {
+      if (i == null || viewableAssets.length === 0) return i;
+      return i === 0 ? viewableAssets.length - 1 : i - 1;
+    });
+  }, [viewableAssets.length]);
+
+  const goNext = useCallback(() => {
+    setLightboxIndex((i) => {
+      if (i == null || viewableAssets.length === 0) return i;
+      return i === viewableAssets.length - 1 ? 0 : i + 1;
+    });
+  }, [viewableAssets.length]);
+
   useEffect(() => {
-    if (!lightbox) return;
+    if (lightboxIndex == null) return;
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -50,6 +69,16 @@ export function ProductImageGallery({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         closeLightbox();
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goPrev();
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goNext();
         return;
       }
       if (e.key !== "Tab" || !dialogRef.current) return;
@@ -76,7 +105,7 @@ export function ProductImageGallery({
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
     };
-  }, [lightbox, closeLightbox]);
+  }, [lightboxIndex, closeLightbox, goPrev, goNext]);
 
   return (
     <>
@@ -150,17 +179,45 @@ export function ProductImageGallery({
           >
             <X className="h-5 w-5" />
           </button>
+          {viewableAssets.length > 1 ? (
+            <>
+              <button
+                type="button"
+                className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goPrev();
+                }}
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button
+                type="button"
+                className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 md:right-16"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goNext();
+                }}
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+            </>
+          ) : null}
           <div className="max-h-[90vh] max-w-5xl" onClick={(e) => e.stopPropagation()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={lightbox.imageUrl}
               alt={`${productName} — ${formatModuleLabel(lightbox.moduleId)}`}
               className="max-h-[85vh] w-auto rounded-xl object-contain shadow-2xl"
-              tabIndex={0}
             />
             <p className="mt-3 text-center text-sm text-white/80">
               {formatModuleLabel(lightbox.moduleId)}
               {lightbox.qaScore != null ? ` · QA ${lightbox.qaScore}/10` : ""}
+              {viewableAssets.length > 1 ? (
+                <> · {lightboxIndex! + 1} of {viewableAssets.length}</>
+              ) : null}
             </p>
           </div>
         </div>

@@ -14,7 +14,7 @@ const buttonVariants = cva(
           "border border-[var(--border-strong)] bg-[var(--card)] hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]",
         ghost: "hover:bg-[var(--muted)]",
         secondary: "bg-[var(--ink)] text-white hover:opacity-90",
-        destructive: "bg-red-600 text-white hover:bg-red-700",
+        destructive: "bg-[var(--error)] text-white hover:opacity-90",
       },
       size: {
         default: "h-10 px-4 py-2",

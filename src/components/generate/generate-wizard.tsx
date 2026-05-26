@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertBanner } from "@/components/ui/alert-banner";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
 import { MarketplacePicker } from "@/components/ui/marketplace-picker";
@@ -289,6 +288,36 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
     })) ?? [];
   const completedImages = galleryAssets.filter((a) => a.imageUrl);
 
+  const resetWizard = useCallback((mode: "prompt" | "fresh") => {
+    setPipelineFailed(false);
+    setPipelineStatus(null);
+    setProductId(null);
+    setError("");
+    setDownloading(false);
+    if (mode === "fresh") {
+      setStep(0);
+      setPromptPlan([]);
+      setImageUrl("");
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = null;
+      }
+      setPreview("");
+      setForm({
+        name: "",
+        brandName: "",
+        category: "",
+        dimensions: "",
+        materials: "",
+        colors: "",
+        keyFeatures: "",
+        targetBuyer: "",
+      });
+    } else {
+      setStep(2);
+    }
+  }, []);
+
   const downloadImages = async () => {
     setDownloading(true);
     try {
@@ -342,13 +371,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
         <StudioStepper steps={STEPS} currentStep={step} label="Generation progress" />
       </div>
 
-      {error === "INSUFFICIENT_CREDITS" ? (
-        <AlertBanner
-          message="You need at least 1 credit to start an image run."
-          actionHref="/pricing"
-          actionLabel="Buy credits"
-        />
-      ) : error ? (
+      {error && error !== "INSUFFICIENT_CREDITS" ? (
         <p className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">{error}</p>
       ) : null}
 
@@ -539,7 +562,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
                     Prompt plan ready — edit anything below before generation:
                   </p>
                   {promptPlan.map((item, index) => (
-                    <div key={item.moduleId} className="space-y-2 rounded-lg border bg-white/70 p-3">
+                    <div key={item.moduleId} className="space-y-2 rounded-lg border bg-[var(--card)] p-3">
                       <p className="text-sm font-semibold">
                         {index + 1}. {formatModuleLabel(item.moduleId)}
                         {item.label ? ` · ${item.label}` : ""} ({item.resolution})
@@ -579,13 +602,21 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
 
       {step === 3 && (
         <div className="space-y-6">
-          {pipelineFailed && (
-            <AlertBanner
-              message="Image generation failed. Check Inngest is running locally, or go back and retry your prompt plan."
-              actionHref="/generate"
-              actionLabel="New run"
-            />
-          )}
+          {pipelineFailed ? (
+            <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-4 text-sm text-[var(--error)]">
+              <p>
+                Image generation failed. Check Inngest is running locally, or go back and retry your prompt plan.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={() => resetWizard("prompt")}>
+                  Back to prompt plan
+                </Button>
+                <Button type="button" size="sm" onClick={() => resetWizard("fresh")}>
+                  Start fresh
+                </Button>
+              </div>
+            </div>
+          ) : null}
           <Card className="border-[var(--accent)]/20 bg-[var(--accent-soft)]/30">
             <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
               <div>
@@ -615,6 +646,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
                 <span
                   key={ph}
                   title={ph}
+                  aria-current={state === "active" ? "step" : undefined}
                   className={cn(
                     "rounded-full px-2.5 py-1 text-xs font-medium",
                     state === "done" && "bg-[var(--success-bg)] text-[var(--success)]",

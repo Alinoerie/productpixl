@@ -16,6 +16,7 @@ import { SiteHeader } from "@/components/marketing/site-header";
 import { LandingGallery } from "@/components/marketing/landing-gallery";
 import { LandingBol } from "@/components/marketing/landing-bol";
 import { LandingCalculator } from "@/components/marketing/landing-calculator";
+import { LandingPricing } from "@/components/marketing/landing-pricing";
 import { LandingFaq } from "@/components/marketing/landing-faq";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 import { Button } from "@/components/ui/button";
@@ -217,6 +218,7 @@ export default async function HomePage() {
       <LandingGallery />
       <LandingBol />
       <LandingCalculator />
+      <LandingPricing />
 
       {/* Compare */}
       <section id="compare" className="border-y border-[var(--border)] bg-[var(--ink)] px-4 py-20 text-white">

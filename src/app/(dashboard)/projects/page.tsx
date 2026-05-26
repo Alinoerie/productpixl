@@ -56,9 +56,14 @@ export default async function ProjectsPage({
             <p className="mt-2 text-sm text-[var(--muted-fg)]">
               Start with an image run or generate listing copy from the studio.
             </p>
-            <Button asChild className="mt-6">
-              <Link href="/generate">Open image studio</Link>
-            </Button>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button asChild>
+                <Link href="/generate">Open image studio</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/copy">Generate listing copy</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -86,15 +91,28 @@ export default async function ProjectsPage({
                 Page {page} of {totalPages}
               </p>
               <div className="flex gap-2">
-                <Button asChild variant="outline" size="sm" disabled={page <= 1}>
-                  <Link href={page <= 1 ? "#" : `/projects?page=${page - 1}`}>Previous</Link>
-                </Button>
-                <Button asChild variant="outline" size="sm" disabled={page >= totalPages}>
-                  <Link href={page >= totalPages ? "#" : `/projects?page=${page + 1}`}>
+                {page <= 1 ? (
+                  <Button variant="outline" size="sm" disabled>
+                    Previous
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/projects?page=${page - 1}`}>Previous</Link>
+                  </Button>
+                )}
+                {page >= totalPages ? (
+                  <Button variant="outline" size="sm" disabled>
                     Next
                     <ChevronRight className="h-4 w-4" />
-                  </Link>
-                </Button>
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/projects?page=${page + 1}`}>
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
               </div>
             </div>
           ) : null}

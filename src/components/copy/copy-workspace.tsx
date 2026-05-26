@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertBanner } from "@/components/ui/alert-banner";
 import { useToast } from "@/components/ui/toast-provider";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { PageHeader } from "@/components/ui/page-header";
@@ -20,7 +19,7 @@ import { fetchJson } from "@/lib/fetch-json";
 import { CharCounter, LimitWarning } from "@/components/ui/char-counter";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft } from "@/lib/copy-draft";
-import { type MarketplaceId } from "@/lib/marketplaces";
+import { type MarketplaceId, getMarketplace } from "@/lib/marketplaces";
 
 type LinkedProduct = {
   id: string;
@@ -272,6 +271,8 @@ export function CopyWorkspace({
   const titleOverLimit = (copy?.title?.length ?? 0) > AMAZON_TITLE_MAX;
   const copyStep = copy?.title ? 2 : loading ? 1 : 0;
   const lacksCredits = initialCredits < 1;
+  const categoryLabel = `${getMarketplace(marketplace).label} category`;
+  const canRetry = Boolean(error && error !== "INSUFFICIENT_CREDITS" && form.name.trim() && !loading);
 
   const isDirty = useMemo(() => {
     if (!copy?.title || !savedBaseline) return false;
@@ -402,22 +403,30 @@ export function CopyWorkspace({
         <div className="rounded-xl border border-[var(--teal)]/30 bg-[var(--teal-soft)]/40 px-4 py-3 text-sm">
           Generating copy for <strong>{linkedProduct.name}</strong> — saves to your existing project.
         </div>
-      ) : null}
-
-      {fromGrader && copy?.title && !productId ? (
+      ) : fromGrader && copy?.title && !productId ? (
         <div className="rounded-xl border border-[var(--accent)]/20 bg-[var(--accent-soft)]/30 px-4 py-3 text-sm text-[var(--foreground)]">
           Imported from grader — save this listing to a project without spending a credit.
         </div>
       ) : null}
 
-      {error === "INSUFFICIENT_CREDITS" ? (
-        <AlertBanner
-          message="You need at least 1 credit to generate listing copy."
-          actionHref="/pricing"
-          actionLabel="Buy credits"
-        />
-      ) : error ? (
-        <p className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">{error}</p>
+      {error && error !== "INSUFFICIENT_CREDITS" ? (
+        <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
+          <p>{error}</p>
+          {canRetry ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="mt-3 border-[var(--error-border)]"
+              onClick={() => {
+                setError("");
+                void generate();
+              }}
+            >
+              Try again
+            </Button>
+          ) : null}
+        </div>
       ) : null}
 
       {!copy?.title && !loading && (
@@ -464,7 +473,9 @@ export function CopyWorkspace({
             </div>
             {(["name", "brandName", "category", "materials", "targetBuyer"] as const).map((key) => (
               <div key={key}>
-                <Label htmlFor={`copy-${key}`}>{FIELD_LABELS[key] ?? key}</Label>
+                <Label htmlFor={`copy-${key}`}>
+                  {key === "category" ? categoryLabel : FIELD_LABELS[key] ?? key}
+                </Label>
                 <Input
                   id={`copy-${key}`}
                   value={form[key]}

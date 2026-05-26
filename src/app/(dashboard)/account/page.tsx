@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PaymentSuccessNotice } from "@/components/account/payment-success-notice";
+import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { formatOrderStatus } from "@/lib/status-labels";
 
 function formatAmount(cents: number) {
@@ -15,7 +15,7 @@ function formatAmount(cents: number) {
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string }>;
+  searchParams: Promise<{ success?: string; canceled?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) return null;
@@ -38,13 +38,18 @@ export default async function AccountPage({
         description={session.user.email ?? undefined}
       />
 
-      {params.success ? (
-        <>
-          <PaymentSuccessNotice />
-          <p className="rounded-xl border border-[var(--success)]/20 bg-[var(--success-bg)] px-4 py-3 text-sm text-[var(--success)]">
-            Payment successful — credits added to your balance.
-          </p>
-        </>
+      {params.success ? <PaymentSuccessBanner /> : null}
+
+      {params.canceled ? (
+        <p
+          className="rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]"
+          role="alert"
+        >
+          Checkout canceled — no charges were made.{" "}
+          <Link href="/pricing" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
+            Try again
+          </Link>
+        </p>
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">

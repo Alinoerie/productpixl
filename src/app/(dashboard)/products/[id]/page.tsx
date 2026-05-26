@@ -69,11 +69,27 @@ export default async function ProductPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {completedAssets.length > 0 && !product.listingCopy?.title ? (
+            <Button asChild>
+              <Link href={`/copy?productId=${product.id}`}>Generate copy</Link>
+            </Button>
+          ) : null}
+          {product.listingCopy?.title ? (
+            <Button asChild variant="outline">
+              <Link href="/grader">Grade listing</Link>
+            </Button>
+          ) : null}
+          {product.status === "FAILED" ? (
+            <Button asChild>
+              <Link href="/generate">Retry run</Link>
+            </Button>
+          ) : (
+            <Button asChild variant="outline">
+              <Link href="/generate">New image run</Link>
+            </Button>
+          )}
           <Button asChild variant="outline">
             <Link href="/dashboard">Back to studio</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/generate">New image run</Link>
           </Button>
         </div>
       </div>
@@ -89,6 +105,7 @@ export default async function ProductPage({
       )}
 
       <ProductExportActions
+        productId={product.id}
         productName={product.name}
         assets={product.assets}
         listingCopy={
