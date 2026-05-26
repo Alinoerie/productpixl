@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Check, Save } from "lucide-react";
@@ -17,9 +17,10 @@ import { UploadDropzone } from "@/components/ui/upload-dropzone";
 import { MarketplacePicker } from "@/components/ui/marketplace-picker";
 import { StudioStepper } from "@/components/ui/studio-stepper";
 import { fetchJson } from "@/lib/fetch-json";
-import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX, charCountLabel } from "@/lib/amazon-limits";
+import { CharCounter, LimitWarning } from "@/components/ui/char-counter";
+import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
+import { loadCopyDraft } from "@/lib/copy-draft";
 import { type MarketplaceId } from "@/lib/marketplaces";
-import { cn } from "@/lib/utils";
 
 const COPY_STEPS = ["Details", "Generate", "Edit copy"];
 
@@ -31,18 +32,10 @@ const FIELD_LABELS: Record<string, string> = {
   targetBuyer: "Target buyer",
 };
 
-function CharCounter({ value, max }: { value: string; max: number }) {
-  const { label, over } = charCountLabel(value, max);
-  return (
-    <p className={cn("mt-1 text-right text-xs tabular-nums", over ? "text-red-600" : "text-[var(--muted-fg)]")}>
-      {label}
-    </p>
-  );
-}
-
 export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
   const router = useRouter();
   const { toast } = useToast();
+  const previewUrlRef = useRef<string | null>(null);
   const [imageUrl, setImageUrl] = useState("");
   const [preview, setPreview] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -77,6 +70,12 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
   });
 
   const reset = () => {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    }
+    setPreview("");
+    setImageUrl("");
     setCopy(null);
     setProductId(null);
     setSavedBaseline(null);
@@ -84,10 +83,34 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
     setLoading(false);
   };
 
+  useEffect(() => {
+    const draft = loadCopyDraft();
+    if (!draft?.title) return;
+    const baseline = {
+      title: draft.title,
+      bullets: draft.bullets,
+      description: draft.description ?? "",
+      backendKeywords: draft.backendKeywords ?? "",
+    };
+    setCopy({
+      title: draft.title,
+      bullets: draft.bullets,
+      description: draft.description,
+      backendKeywords: draft.backendKeywords,
+      status: "COMPLETE",
+    });
+    setSavedBaseline(baseline);
+    toast("Loaded listing from grader — edit and save to a project");
+  }, [toast]);
+
   const upload = async (file: File) => {
     setUploading(true);
     setError("");
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+    }
     const objectUrl = URL.createObjectURL(file);
+    previewUrlRef.current = objectUrl;
     setPreview(objectUrl);
     try {
       const fd = new FormData();
@@ -119,6 +142,10 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = null;
+      }
       setPreview("");
     } finally {
       setUploading(false);
@@ -189,13 +216,15 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
   const exportJson = () => {
     if (!copy) return;
     const blob = new Blob([JSON.stringify(copy, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
+    a.href = url;
     a.download = "listing-copy.json";
     a.click();
+    URL.revokeObjectURL(url);
   };
 
-  const titleCount = charCountLabel(copy?.title ?? "", AMAZON_TITLE_MAX);
+  const titleOverLimit = (copy?.title?.length ?? 0) > AMAZON_TITLE_MAX;
   const copyStep = copy?.title ? 2 : loading ? 1 : 0;
   const lacksCredits = initialCredits < 1;
 
@@ -255,6 +284,21 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [isDirty, saving, productId, saveCopy]);
 
+  useEffect(() => {
+    if (!isDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
+
   return (
     <div className="space-y-8">
       <WorkflowNotice
@@ -302,6 +346,10 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
                 onDrop={onDrop}
                 onFileSelect={upload}
                 onClear={() => {
+                  if (previewUrlRef.current) {
+                    URL.revokeObjectURL(previewUrlRef.current);
+                    previewUrlRef.current = null;
+                  }
                   setPreview("");
                   setImageUrl("");
                 }}
@@ -368,11 +416,11 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
 
       {copy?.title && (
         <div className="space-y-4">
-          {titleCount.over && (
-            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              Title exceeds Amazon&apos;s {AMAZON_TITLE_MAX}-character limit — trim before publishing.
-            </p>
-          )}
+          {titleOverLimit ? (
+            <LimitWarning
+              message={`Title exceeds Amazon's ${AMAZON_TITLE_MAX}-character limit — trim before publishing.`}
+            />
+          ) : null}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="text-base">Title</CardTitle>
@@ -383,7 +431,7 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
             </CardContent>
           </Card>
           {(copy.bullets as string[] | undefined)?.map((b, i) => {
-            const bulletCount = charCountLabel(b, AMAZON_BULLET_MAX);
+            const bulletOver = b.length > AMAZON_BULLET_MAX;
             return (
               <Card key={i}>
                 <CardHeader className="flex flex-row items-center justify-between gap-2">
@@ -391,9 +439,9 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
                   <CharCounter value={b} max={AMAZON_BULLET_MAX} />
                 </CardHeader>
                 <CardContent>
-                  {bulletCount.over && (
-                    <p className="mb-2 text-xs text-amber-700">Over {AMAZON_BULLET_MAX} characters</p>
-                  )}
+                  {bulletOver ? (
+                    <LimitWarning message={`Over ${AMAZON_BULLET_MAX} characters — trim before publishing.`} />
+                  ) : null}
                   <Textarea
                     value={b}
                     onChange={(e) => {

@@ -31,6 +31,7 @@ export function AppShellNav({ className }: { className?: string }) {
         <Link
           key={item.href}
           href={item.href}
+          aria-current={isActive(pathname, item.href) ? "page" : undefined}
           className={cn(
             "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
             isActive(pathname, item.href)
@@ -60,8 +61,9 @@ export function AppShellMobileNav() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-1 py-2.5 text-[10px] font-medium transition-colors",
+                "flex min-h-[44px] flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors",
                 active ? "text-[var(--accent)]" : "text-[var(--muted-fg)]"
               )}
             >

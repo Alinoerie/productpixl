@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
@@ -20,7 +19,8 @@ import { formatPipelinePhase, formatModuleLabel } from "@/lib/status-labels";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import { useToast } from "@/components/ui/toast-provider";
-import { Camera, Check, Loader2, Sparkles } from "lucide-react";
+import { ProductImageGallery } from "@/components/products/product-image-gallery";
+import { Camera, Check, Download, Loader2, Sparkles } from "lucide-react";
 import { type MarketplaceId } from "@/lib/marketplaces";
 
 interface ProductData {
@@ -82,6 +82,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
       prompt?: string;
     }[];
   } | null>(null);
+  const [downloading, setDownloading] = useState(false);
   const [pipelineFailed, setPipelineFailed] = useState(false);
 
   const [form, setForm] = useState<ProductData>({
@@ -277,6 +278,41 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
   const done = pipelineStatus?.phase === "COMPLETE";
   const lacksCredits = initialCredits < 1;
   const resultsLoading = step === 3 && !pipelineStatus?.steps?.length && !pipelineFailed;
+  const galleryAssets =
+    pipelineStatus?.steps?.map((s) => ({
+      id: s.id,
+      moduleId: s.id,
+      imageUrl: s.imageUrl ?? null,
+      qaScore: s.qaScore ?? null,
+      status: s.imageUrl ? "COMPLETE" : s.status,
+    })) ?? [];
+  const completedImages = galleryAssets.filter((a) => a.imageUrl);
+
+  const downloadImages = async () => {
+    setDownloading(true);
+    try {
+      let saved = 0;
+      const slug = form.name.replace(/\s+/g, "-").toLowerCase() || "product";
+      for (const [index, asset] of completedImages.entries()) {
+        if (!asset.imageUrl) continue;
+        const res = await fetch(asset.imageUrl);
+        if (!res.ok) throw new Error("Fetch failed");
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${slug}-${asset.moduleId}-${index + 1}.jpg`;
+        a.click();
+        URL.revokeObjectURL(url);
+        saved++;
+      }
+      toast(`Saved ${saved} image${saved === 1 ? "" : "s"}`);
+    } catch {
+      toast("Download failed — open images individually or try again", "error");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const PHASES = ["RECEIVING", "ANALYZING", "RESEARCHING", "SELECTING", "GENERATING", "QA", "COMPLETE"];
 
@@ -586,58 +622,51 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
             })}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy={resultsLoading}>
-            {resultsLoading
-              ? (promptPlan.length ? promptPlan : [{ moduleId: "L1" }, { moduleId: "L3" }, { moduleId: "L4" }]).map(
-                  (item) => (
-                    <Card key={item.moduleId} className="overflow-hidden">
-                      <CardContent className="p-0">
-                        <Skeleton className="aspect-square w-full rounded-none" />
-                        <div className="space-y-2 p-4">
-                          <Skeleton className="h-4 w-24" />
-                          <Skeleton className="h-3 w-full" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                )
-              : null}
-            {pipelineStatus?.steps?.map((s) => (
-              <Card key={s.id} className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="aspect-square bg-[var(--muted)]">
-                    {s.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={s.imageUrl} alt={`Generated ${formatModuleLabel(s.id)}`} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-[var(--muted-fg)]">
-                        {s.status}
+          {resultsLoading ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+              {(promptPlan.length ? promptPlan : [{ moduleId: "L1" }, { moduleId: "L3" }, { moduleId: "L4" }]).map(
+                (item) => (
+                  <Card key={item.moduleId} className="overflow-hidden">
+                    <CardContent className="p-0">
+                      <Skeleton className="aspect-square w-full rounded-none" />
+                      <div className="space-y-2 p-4">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-full" />
                       </div>
+                    </CardContent>
+                  </Card>
+                )
+              )}
+            </div>
+          ) : pipelineStatus?.steps?.length ? (
+            <>
+              {completedImages.length > 0 ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--muted)]/30 p-4">
+                  <p className="text-sm font-medium">
+                    {completedImages.length} of {galleryAssets.length} images ready
+                  </p>
+                  <Button type="button" variant="outline" size="sm" disabled={downloading} onClick={downloadImages}>
+                    {downloading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        Download images ({completedImages.length})
+                      </>
                     )}
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <p className="font-semibold">
-                        {formatModuleLabel(s.id)}
-                        {s.label ? ` — ${s.label}` : ""}
-                      </p>
-                      {s.qaScore != null && (
-                        <Badge variant="secondary">QA {s.qaScore}/10</Badge>
-                      )}
-                    </div>
-                    {s.prompt && (
-                      <details className="mt-3">
-                        <summary className="cursor-pointer text-xs font-medium text-[var(--muted-fg)]">
-                          View prompt used
-                        </summary>
-                        <Textarea className="mt-2 min-h-[160px] text-xs" value={s.prompt} readOnly />
-                      </details>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </Button>
+                </div>
+              ) : null}
+              <ProductImageGallery
+                productId={productId ?? "wizard"}
+                productName={form.name || "Product"}
+                assets={galleryAssets}
+                readOnly
+              />
+            </>
+          ) : null}
           {done && productId && (
             <div ref={completionRef} className="flex flex-wrap gap-3">
               <Button size="lg" className="rounded-xl" onClick={() => router.push(`/products/${productId}`)}>

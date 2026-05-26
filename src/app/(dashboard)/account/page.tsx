@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PaymentSuccessNotice } from "@/components/account/payment-success-notice";
 import { formatOrderStatus } from "@/lib/status-labels";
 
 function formatAmount(cents: number) {
@@ -37,11 +38,14 @@ export default async function AccountPage({
         description={session.user.email ?? undefined}
       />
 
-      {params.success && (
-        <p className="rounded-xl border border-[var(--success)]/20 bg-[var(--success-bg)] px-4 py-3 text-sm text-[var(--success)]">
-          Payment successful — credits added to your balance.
-        </p>
-      )}
+      {params.success ? (
+        <>
+          <PaymentSuccessNotice />
+          <p className="rounded-xl border border-[var(--success)]/20 bg-[var(--success-bg)] px-4 py-3 text-sm text-[var(--success)]">
+            Payment successful — credits added to your balance.
+          </p>
+        </>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="border-[var(--accent)]/20 bg-[var(--accent-soft)]/30">

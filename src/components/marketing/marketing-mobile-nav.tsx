@@ -4,15 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const LINKS = [
-  { href: "/#workflow", label: "How it works" },
-  { href: "/#gallery", label: "Gallery" },
-  { href: "/#europe", label: "EU & Bol" },
-  { href: "/grader", label: "Free grader" },
-  { href: "/#compare", label: "Why us" },
-  { href: "/#faq", label: "FAQ" },
-];
+import { MARKETING_NAV_LINKS } from "@/lib/marketing-links";
+import { cn } from "@/lib/utils";
 
 export function MarketingMobileNav({ signedIn }: { signedIn: boolean }) {
   const [open, setOpen] = useState(false);
@@ -43,7 +36,7 @@ export function MarketingMobileNav({ signedIn }: { signedIn: boolean }) {
   }, [open]);
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <Button
         ref={toggleRef}
         type="button"
@@ -70,11 +63,14 @@ export function MarketingMobileNav({ signedIn }: { signedIn: boolean }) {
             className="absolute left-0 right-0 top-16 z-50 border-b border-[var(--border)] bg-[var(--background)] px-4 py-4 shadow-[var(--shadow-md)]"
           >
             <ul className="space-y-1">
-              {LINKS.map((link) => (
+              {MARKETING_NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-[var(--muted)]"
+                    className={cn(
+                      "block rounded-lg px-3 py-2 text-sm font-medium hover:bg-[var(--muted)]",
+                      link.highlight === "teal" && "text-[var(--teal)]"
+                    )}
                     onClick={() => setOpen(false)}
                   >
                     {link.label}

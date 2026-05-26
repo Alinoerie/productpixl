@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Camera, FileText, Palette, Sparkles } from "lucide-react";
+import { Camera, CreditCard, FileText, Palette, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const actions = [
@@ -33,9 +33,27 @@ const actions = [
   },
 ];
 
-export function QuickActions({ className }: { className?: string }) {
+export function QuickActions({ credits, className }: { credits: number; className?: string }) {
+  const lowCredits = credits < 2;
+
   return (
     <div className={cn("grid gap-3 sm:grid-cols-2 lg:grid-cols-4", className)}>
+      {lowCredits ? (
+        <Link
+          href="/pricing"
+          className="group flex items-start gap-4 rounded-2xl border border-[var(--warning-border)] bg-[var(--warning-bg)] p-4 shadow-[var(--shadow-sm)] transition-all hover:shadow-[var(--shadow-md)] sm:col-span-2 lg:col-span-4"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--card)] text-[var(--warning)]">
+            <CreditCard className="h-5 w-5" strokeWidth={1.5} />
+          </span>
+          <span className="min-w-0">
+            <span className="block font-semibold text-[var(--warning)]">Top up credits</span>
+            <span className="mt-0.5 block text-xs text-[var(--muted-fg)]">
+              {credits} left — buy a pack before your next image or copy run
+            </span>
+          </span>
+        </Link>
+      ) : null}
       {actions.map((action) => (
         <Link
           key={action.href}

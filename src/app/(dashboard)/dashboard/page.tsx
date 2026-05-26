@@ -12,13 +12,14 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) return null;
 
-  const [products, user] = await Promise.all([
+  const [products, totalProjects, user] = await Promise.all([
     prisma.product.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
       take: 12,
       include: { assets: { orderBy: { moduleId: "asc" } }, listingCopy: true },
     }),
+    prisma.product.count({ where: { userId: session.user.id } }),
     prisma.user.findUnique({ where: { id: session.user.id }, select: { credits: true } }),
   ]);
 
@@ -57,7 +58,7 @@ export default async function DashboardPage() {
         <div className="relative mt-8 grid grid-cols-3 gap-4 border-t border-white/10 pt-8">
           {[
             { label: "Credits", value: String(credits), href: "/pricing" as const },
-            { label: "Projects", value: String(products.length) },
+            { label: "Projects", value: String(totalProjects) },
             { label: "Complete", value: String(complete) },
           ].map((s) => (
             <div key={s.label}>
@@ -78,7 +79,7 @@ export default async function DashboardPage() {
       </div>
 
       {credits < 2 && (
-        <div className="rounded-2xl border border-amber-200/80 bg-[var(--warning-bg)] px-4 py-3 text-sm text-amber-950">
+        <div className="rounded-2xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]">
           Running low on credits ({credits} left).{" "}
           <Link href="/pricing" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
             Top up before your next run
@@ -86,13 +87,17 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <QuickActions />
+      <QuickActions credits={credits} />
 
       <div>
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-serif text-2xl">Recent projects</h2>
-          {products.length > 0 && (
-            <span className="text-sm text-[var(--muted-fg)]">{products.length} saved</span>
+          {totalProjects > 0 && (
+            <span className="text-sm text-[var(--muted-fg)]">
+              {totalProjects > products.length
+                ? `Showing latest ${products.length} of ${totalProjects}`
+                : `${totalProjects} saved`}
+            </span>
           )}
         </div>
 

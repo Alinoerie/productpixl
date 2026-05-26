@@ -1,11 +1,5 @@
 import Link from "next/link";
-
-const links = [
-  { href: "/#workflow", label: "How it works" },
-  { href: "/#gallery", label: "Gallery" },
-  { href: "/grader", label: "Free grader" },
-  { href: "/login", label: "Sign in" },
-];
+import { MARKETING_FOOTER_LINKS } from "@/lib/marketing-links";
 
 export function SiteFooter() {
   return (
@@ -22,8 +16,8 @@ export function SiteFooter() {
             Listing studio for Amazon and EU marketplace sellers — one photo to gallery images and copy.
           </p>
         </div>
-        <nav className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
-          {links.map((link) => (
+        <nav className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-3">
+          {MARKETING_FOOTER_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}

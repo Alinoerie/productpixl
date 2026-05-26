@@ -18,10 +18,12 @@ export function ProductImageGallery({
   productId,
   productName,
   assets,
+  readOnly = false,
 }: {
   productId: string;
   productName: string;
   assets: GalleryAsset[];
+  readOnly?: boolean;
 }) {
   const [lightbox, setLightbox] = useState<GalleryAsset | null>(null);
   const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
@@ -121,7 +123,7 @@ export function ProductImageGallery({
                 {a.errorMessage ? (
                   <p className="mt-2 text-xs text-[var(--error)]">{a.errorMessage}</p>
                 ) : null}
-                {a.status === "COMPLETE" && a.imageUrl ? (
+                {a.status === "COMPLETE" && a.imageUrl && !readOnly ? (
                   <AssetSpotEdit productId={productId} assetId={a.id} moduleId={a.moduleId} />
                 ) : null}
               </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CharCounter } from "@/components/ui/char-counter";
+import { useToast } from "@/components/ui/toast-provider";
 import { fetchJson } from "@/lib/fetch-json";
-import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX, charCountLabel } from "@/lib/amazon-limits";
+import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
+import { saveCopyDraft } from "@/lib/copy-draft";
 import type { GraderResult } from "@/lib/listing-grader";
-import { cn } from "@/lib/utils";
 
 const SAMPLE = {
   title: "Zealots Energizing Liquid Hand Soap — Greek Olive Oil, Mandarin & Basil — 500ml",
@@ -29,6 +32,9 @@ const SAMPLE = {
 };
 
 export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const resultsRef = useRef<HTMLDivElement>(null);
   const [title, setTitle] = useState("");
   const [bullets, setBullets] = useState(["", "", "", "", ""]);
   const [description, setDescription] = useState("");
@@ -47,7 +53,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
     setError("");
   };
 
-  const grade = async () => {
+  const grade = useCallback(async () => {
     setLoading(true);
     setError("");
     setResult(null);
@@ -64,12 +70,26 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
       });
       if (!ok) throw new Error((data as { error?: string }).error || "Failed");
       setResult(data as GraderResult);
+      requestAnimationFrame(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Grading failed");
     } finally {
       setLoading(false);
     }
-  };
+  }, [title, bullets, description, keywords]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && title.trim() && !loading) {
+        e.preventDefault();
+        void grade();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [title, loading, grade]);
 
   const copyTips = async () => {
     if (!result) return;
@@ -84,11 +104,21 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
     ].join("\n");
     await navigator.clipboard.writeText(text);
     setTipsCopied(true);
+    toast("Improvement checklist copied");
     setTimeout(() => setTipsCopied(false), 2000);
   };
 
+  const openInCopyStudio = () => {
+    saveCopyDraft({
+      title,
+      bullets: bullets.filter((b) => b.trim()),
+      description,
+      backendKeywords: keywords,
+    });
+    router.push("/copy");
+  };
+
   const gradeClass = result ? `grade-${result.grade.toLowerCase()}` : "";
-  const titleCount = charCountLabel(title, AMAZON_TITLE_MAX);
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
@@ -103,14 +133,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
           <div>
             <div className="flex items-center justify-between">
               <Label htmlFor="grader-title">Product title</Label>
-              <span
-                className={cn(
-                  "text-xs tabular-nums",
-                  titleCount.over ? "font-medium text-red-600" : "text-[var(--muted-fg)]"
-                )}
-              >
-                {titleCount.label}
-              </span>
+              <CharCounter value={title} max={AMAZON_TITLE_MAX} />
             </div>
             <Input
               id="grader-title"
@@ -119,52 +142,58 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Your listing title"
             />
+            {!title.trim() ? (
+              <p className="mt-1 text-xs text-[var(--muted-fg)]">Enter a title to grade your listing.</p>
+            ) : null}
           </div>
-          {bullets.map((b, i) => {
-            const bulletCount = charCountLabel(b, AMAZON_BULLET_MAX);
-            return (
-              <div key={`bullet-${i}`}>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor={`grader-bullet-${i}`}>Bullet {i + 1}</Label>
-                  <span
-                    className={cn(
-                      "text-xs tabular-nums",
-                      bulletCount.over ? "font-medium text-red-600" : "text-[var(--muted-fg)]"
-                    )}
-                  >
-                    {bulletCount.label}
-                  </span>
-                </div>
-                <Textarea
-                  id={`grader-bullet-${i}`}
-                  value={b}
-                  maxLength={500}
-                  rows={2}
-                  onChange={(e) => {
-                    const next = [...bullets];
-                    next[i] = e.target.value;
-                    setBullets(next);
-                  }}
-                />
+          {bullets.map((b, i) => (
+            <div key={`bullet-${i}`}>
+              <div className="flex items-center justify-between">
+                <Label htmlFor={`grader-bullet-${i}`}>Bullet {i + 1}</Label>
+                <CharCounter value={b} max={AMAZON_BULLET_MAX} />
               </div>
-            );
-          })}
+              <Textarea
+                id={`grader-bullet-${i}`}
+                value={b}
+                maxLength={500}
+                rows={2}
+                onChange={(e) => {
+                  const next = [...bullets];
+                  next[i] = e.target.value;
+                  setBullets(next);
+                }}
+              />
+            </div>
+          ))}
           <div>
-            <Label>Description (optional)</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Label htmlFor="grader-description">Description (optional)</Label>
+            <Textarea
+              id="grader-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
           <div>
-            <Label>Backend keywords (optional)</Label>
-            <Input value={keywords} onChange={(e) => setKeywords(e.target.value)} />
+            <Label htmlFor="grader-keywords">Backend keywords (optional)</Label>
+            <Input
+              id="grader-keywords"
+              value={keywords}
+              onChange={(e) => setKeywords(e.target.value)}
+            />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error ? (
+            <p className="rounded-lg border border-[var(--error-border)] bg-[var(--error-bg)] px-3 py-2 text-sm text-[var(--error)]">
+              {error}
+            </p>
+          ) : null}
           <Button className="w-full" size="lg" onClick={grade} disabled={loading || !title.trim()}>
             {loading ? "Grading…" : "Grade my listing"}
           </Button>
+          <p className="text-center text-xs text-[var(--muted-fg)]">Tip: ⌘/Ctrl+Enter to grade</p>
         </CardContent>
       </Card>
 
-      <div className="space-y-4" aria-live="polite" aria-busy={loading}>
+      <div ref={resultsRef} className="space-y-4" aria-live="polite" aria-busy={loading}>
         {loading ? (
           <>
             <Skeleton className="h-32 w-full" />
@@ -232,11 +261,20 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
                   "Copy improvement checklist"
                 )}
               </Button>
-              <Button asChild className="flex-1">
-                <Link href={signedIn ? "/generate" : "/login"}>
-                  {signedIn ? "Generate gallery + copy →" : "Fix listing with ProductPixl →"}
-                </Link>
-              </Button>
+              {signedIn ? (
+                <>
+                  <Button type="button" className="flex-1" onClick={openInCopyStudio}>
+                    Open in Copy studio
+                  </Button>
+                  <Button asChild variant="outline" className="flex-1">
+                    <Link href="/generate">Generate gallery</Link>
+                  </Button>
+                </>
+              ) : (
+                <Button asChild className="flex-1">
+                  <Link href="/login">Fix listing with ProductPixl →</Link>
+                </Button>
+              )}
             </div>
           </>
         ) : (

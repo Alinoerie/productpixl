@@ -2,6 +2,8 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { MarketingMobileNav } from "@/components/marketing/marketing-mobile-nav";
+import { MARKETING_NAV_LINKS } from "@/lib/marketing-links";
+import { cn } from "@/lib/utils";
 
 export async function SiteHeader() {
   const session = await auth();
@@ -15,22 +17,19 @@ export async function SiteHeader() {
           </span>
           <span className="font-serif text-xl tracking-tight">ProductPixl</span>
         </Link>
-        <nav className="hidden items-center gap-6 text-sm font-medium text-[var(--muted-fg)] md:flex">
-          <Link href="/#workflow" className="hover:text-[var(--foreground)]">
-            How it works
-          </Link>
-          <Link href="/#gallery" className="hover:text-[var(--foreground)]">
-            Gallery
-          </Link>
-          <Link href="/#europe" className="hover:text-[var(--foreground)]">
-            EU & Bol
-          </Link>
-          <Link href="/grader" className="hover:text-[var(--teal)]">
-            Free grader
-          </Link>
-          <Link href="/#compare" className="hover:text-[var(--foreground)]">
-            Why us
-          </Link>
+        <nav className="hidden items-center gap-5 text-sm font-medium text-[var(--muted-fg)] lg:flex">
+          {MARKETING_NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "hover:text-[var(--foreground)]",
+                link.highlight === "teal" && "text-[var(--teal)] hover:text-[var(--teal)]"
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
         <div className="flex items-center gap-2">
           <MarketingMobileNav signedIn={!!session} />

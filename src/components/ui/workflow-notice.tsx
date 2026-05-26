@@ -18,10 +18,11 @@ export function WorkflowNotice({
 
   return (
     <div
+      role={low ? "alert" : undefined}
       className={cn(
         "flex flex-wrap items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 shadow-[var(--shadow-sm)]",
         low
-          ? "border-amber-300/60 bg-[var(--warning-bg)]"
+          ? "border-[var(--warning-border)] bg-[var(--warning-bg)]"
           : "border-[var(--border)] bg-[var(--card)]"
       )}
     >
@@ -33,7 +34,7 @@ export function WorkflowNotice({
             <>
               {" "}
               ·{" "}
-              <Link href="/pricing" className="text-[var(--accent)] underline-offset-2 hover:underline">
+              <Link href="/pricing" className="text-[var(--warning)] underline-offset-2 hover:underline">
                 You need more credits
               </Link>
             </>
@@ -43,7 +44,7 @@ export function WorkflowNotice({
       <div className="flex items-center gap-2">
         <CreditBadge initialCredits={initialCredits} />
         <Button asChild variant="outline" size="sm">
-          <Link href="/pricing">Buy credits</Link>
+          <Link href="/pricing">{low ? "Buy credits" : "Top up"}</Link>
         </Button>
       </div>
     </div>

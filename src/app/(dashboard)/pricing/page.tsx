@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Check, CreditCard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,11 +34,17 @@ export default async function PricingPage({
 
   return (
     <div className="space-y-12">
-      {params.canceled && (
-        <p className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/40 px-4 py-3 text-sm text-[var(--muted-fg)]">
-          Checkout canceled — no charges were made.
-        </p>
-      )}
+      {params.canceled ? (
+        <div
+          className="rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]"
+          role="alert"
+        >
+          Checkout canceled — no charges were made.{" "}
+          <Link href="/pricing" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
+            Pick a pack and try again
+          </Link>
+        </div>
+      ) : null}
       <PageHeader
         title="Credits that scale with your catalog"
         description="No $207/mo subscription like Pixii. One credit = one full image pipeline (L1 + L3 + L4) or one listing copy run. Buy when you need more — credits do not expire on a monthly clock."
