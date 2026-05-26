@@ -43,6 +43,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: rgb(180 83 9 / 0.18);
+  color: var(--foreground);
+}
+
 .font-serif {
   font-family: var(--font-instrument), Georgia, serif;
 }
@@ -96,6 +105,23 @@ body {
 
 .animate-pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.studio-panel {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-md);
+}
+
+.studio-panel-inner {
+  padding: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .studio-panel-inner {
+    padding: 2rem;
+  }
 }
 
 .grade-a { color: #166534; background: #ecfdf3; }

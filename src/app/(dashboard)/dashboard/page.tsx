@@ -3,6 +3,7 @@ import { ArrowRight, FileText, ImageIcon, Plus } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
+import { QuickActions } from "@/components/dashboard/quick-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,17 +57,37 @@ export default async function DashboardPage() {
         </div>
         <div className="relative mt-8 grid grid-cols-3 gap-4 border-t border-white/10 pt-8">
           {[
-            { label: "Credits", value: String(credits) },
+            { label: "Credits", value: String(credits), href: "/pricing" as const },
             { label: "Projects", value: String(products.length) },
             { label: "Complete", value: String(complete) },
           ].map((s) => (
             <div key={s.label}>
-              <p className="font-serif text-2xl">{s.value}</p>
-              <p className="text-xs uppercase tracking-wide text-white/50">{s.label}</p>
+              {s.href ? (
+                <Link href={s.href} className="group block rounded-lg transition-colors hover:bg-white/5">
+                  <p className="font-serif text-2xl group-hover:text-orange-200">{s.value}</p>
+                  <p className="text-xs uppercase tracking-wide text-white/50">{s.label}</p>
+                </Link>
+              ) : (
+                <>
+                  <p className="font-serif text-2xl">{s.value}</p>
+                  <p className="text-xs uppercase tracking-wide text-white/50">{s.label}</p>
+                </>
+              )}
             </div>
           ))}
         </div>
       </div>
+
+      {credits < 2 && (
+        <div className="rounded-2xl border border-amber-200/80 bg-[var(--warning-bg)] px-4 py-3 text-sm text-amber-950">
+          Running low on credits ({credits} left).{" "}
+          <Link href="/pricing" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
+            Top up before your next run
+          </Link>
+        </div>
+      )}
+
+      <QuickActions />
 
       <div>
         <div className="mb-6 flex items-center justify-between">
@@ -135,7 +156,8 @@ export default async function DashboardPage() {
                       {p.name}
                     </p>
                     <p className="mt-1 text-xs text-[var(--muted-fg)]">
-                      {p.pipelineType} · {new Date(p.createdAt).toLocaleDateString()}
+                      {p.assets.length > 0 ? `${p.assets.length} modules · ` : ""}
+                      {new Date(p.createdAt).toLocaleDateString()}
                       {p.listingCopy ? " · Copy ready" : ""}
                     </p>
                   </CardContent>

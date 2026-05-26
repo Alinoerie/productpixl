@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,14 @@ export default async function ProductPage({
 
   return (
     <div className="space-y-8">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-[var(--muted-fg)]">
+        <Link href="/dashboard" className="hover:text-[var(--foreground)]">
+          Studio
+        </Link>
+        <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
+        <span className="truncate text-[var(--foreground)]">{product.name}</span>
+      </nav>
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -92,23 +101,26 @@ export default async function ProductPage({
           <h2 className="mb-4 font-serif text-xl">Gallery images</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {product.assets.map((a) => (
-              <Card key={a.id} className="overflow-hidden">
+              <Card key={a.id} className="group overflow-hidden transition-shadow hover:shadow-[var(--shadow-md)]">
                 <CardContent className="p-0">
                   <div className="relative aspect-square bg-[var(--muted)]">
                     {a.imageUrl ? (
-                      <a href={a.imageUrl} target="_blank" rel="noreferrer">
+                      <a href={a.imageUrl} target="_blank" rel="noreferrer" className="block h-full">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={a.imageUrl}
                           alt={`${product.name} — ${formatModuleLabel(a.moduleId)}`}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                         />
                       </a>
                     ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-[var(--muted-fg)]">
-                        {formatProductStatus(a.status)}
+                      <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-[var(--muted-fg)]">
+                        <span className="animate-pulse-soft">{formatProductStatus(a.status)}</span>
                       </div>
                     )}
+                    <span className="absolute left-3 top-3 rounded-full bg-[var(--ink)]/80 px-2 py-0.5 font-serif text-xs text-white">
+                      {a.moduleId}
+                    </span>
                   </div>
                   <div className="p-4">
                     <p className="text-sm font-medium">

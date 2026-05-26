@@ -14,6 +14,7 @@ import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { fetchJson } from "@/lib/fetch-json";
 import { cn } from "@/lib/utils";
 import { formatPipelinePhase, formatModuleLabel } from "@/lib/status-labels";
+import { PageHeader } from "@/components/ui/page-header";
 import { Camera, Check, Loader2, Sparkles, Upload } from "lucide-react";
 import { MARKETPLACES, type MarketplaceId } from "@/lib/marketplaces";
 
@@ -55,6 +56,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
   const [preview, setPreview] = useState("");
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const [includePackaging, setIncludePackaging] = useState(false);
   const [marketplace, setMarketplace] = useState<MarketplaceId>("AMAZON_US");
   const [productId, setProductId] = useState<string | null>(null);
@@ -253,27 +255,45 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
         description="Review prompts before any image is generated — PHOILA listing pipeline."
       />
 
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Badge variant="outline" className="mb-3 border-[var(--accent)]/30 text-[var(--accent)]">
-            PHOILA pipeline
-          </Badge>
-          <h1 className="font-serif text-3xl md:text-4xl">Image studio</h1>
-          <p className="mt-2 text-[var(--muted-fg)]">
+      <PageHeader
+        eyebrow="PHOILA pipeline"
+        title="Image studio"
+        description={
+          <>
             L1 hero · L3 lifestyle · L4 detail
-            {includePackaging ? " · L8 packaging" : ""} — <strong className="text-[var(--foreground)]">1 credit</strong>
-          </p>
-        </div>
-      </div>
+            {includePackaging ? " · L8 packaging" : ""} —{" "}
+            <strong className="text-[var(--foreground)]">1 credit</strong>
+          </>
+        }
+      />
 
       {/* Stepper */}
-      <nav aria-label="Generation progress" className="flex items-center gap-0 overflow-x-auto pb-2">
-        {STEPS.map((label, i) => (
-          <div key={label} className="flex items-center">
-            <div
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-xs font-medium text-[var(--muted-fg)]">
+          <span>
+            Step {step + 1} of {STEPS.length}
+          </span>
+          <span className="text-[var(--foreground)]">{STEPS[step]}</span>
+        </div>
+        <div
+          className="h-1.5 overflow-hidden rounded-full bg-[var(--muted)]"
+          role="progressbar"
+          aria-valuenow={step + 1}
+          aria-valuemin={1}
+          aria-valuemax={STEPS.length}
+        >
+          <div
+            className="h-full rounded-full bg-[var(--accent)] transition-all duration-500 ease-out"
+            style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+          />
+        </div>
+        <nav aria-label="Generation progress" className="flex flex-wrap gap-2">
+          {STEPS.map((label, i) => (
+            <span
+              key={label}
               aria-current={step === i ? "step" : undefined}
               className={cn(
-                "flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap",
+                "rounded-full px-2.5 py-1 text-xs font-medium",
                 step === i
                   ? "bg-[var(--accent)] text-white"
                   : step > i
@@ -281,15 +301,12 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
                     : "bg-[var(--muted)] text-[var(--muted-fg)]"
               )}
             >
-              {step > i ? <Check className="h-3.5 w-3.5" /> : <span className="text-xs opacity-80">{i + 1}</span>}
+              {step > i ? "✓ " : ""}
               {label}
-            </div>
-            {i < STEPS.length - 1 && (
-              <div className={cn("mx-1 h-px w-6 sm:w-10", step > i ? "bg-[var(--success)]" : "bg-[var(--border)]")} />
-            )}
-          </div>
-        ))}
-      </nav>
+            </span>
+          ))}
+        </nav>
+      </div>
 
       {error === "INSUFFICIENT_CREDITS" ? (
         <AlertBanner
@@ -305,11 +322,24 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
         <Card className="overflow-hidden shadow-[var(--shadow-md)]">
           <CardContent className="space-y-6 p-6 md:p-8">
             <label
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const file = e.dataTransfer.files?.[0];
+                if (file?.type.startsWith("image/")) onFile(file);
+              }}
               className={cn(
                 "flex min-h-[280px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-colors",
-                preview
-                  ? "border-[var(--accent)]/40 bg-[var(--accent-soft)]/30"
-                  : "border-[var(--border)] bg-[var(--muted)]/40 hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]/20"
+                dragOver
+                  ? "border-[var(--accent)] bg-[var(--accent-soft)]/50"
+                  : preview
+                    ? "border-[var(--accent)]/40 bg-[var(--accent-soft)]/30"
+                    : "border-[var(--border)] bg-[var(--muted)]/40 hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]/20"
               )}
             >
               {preview ? (
@@ -496,7 +526,8 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
                   {promptPlan.map((item, index) => (
                     <div key={item.moduleId} className="space-y-2 rounded-lg border bg-white/70 p-3">
                       <p className="text-sm font-semibold">
-                        {index + 1}. {item.moduleId} · {item.label} ({item.resolution})
+                        {index + 1}. {formatModuleLabel(item.moduleId)}
+                        {item.label ? ` · ${item.label}` : ""} ({item.resolution})
                       </p>
                       <Textarea
                         className="min-h-[220px] text-xs leading-relaxed"

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { WorkflowNotice } from "@/components/ui/workflow-notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { fetchJson } from "@/lib/fetch-json";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX, charCountLabel } from "@/lib/amazon-limits";
 import { MARKETPLACES, type MarketplaceId } from "@/lib/marketplaces";
@@ -179,16 +180,16 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
         description="RUFUS-ready title, bullets, description, and backend keywords."
       />
 
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.15em] text-[var(--accent)]">
-          Copy pipeline
-        </p>
-        <h1 className="mt-2 font-serif text-3xl md:text-4xl">Listing copy</h1>
-        <p className="mt-2 text-[var(--muted-fg)]">
-          Title, 5 bullets, description, backend keywords — RUFUS-ready ·{" "}
-          <strong className="text-[var(--foreground)]">1 credit</strong>
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Copy pipeline"
+        title="Listing copy"
+        description={
+          <>
+            Title, 5 bullets, description, backend keywords — RUFUS-ready ·{" "}
+            <strong className="text-[var(--foreground)]">1 credit</strong>
+          </>
+        }
+      />
 
       {error === "INSUFFICIENT_CREDITS" ? (
         <AlertBanner
@@ -200,7 +201,7 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
       ) : null}
 
-      {!copy?.title && (
+      {!copy?.title && !loading && (
         <Card>
           <CardContent className="grid gap-4 pt-6 md:grid-cols-2">
             <div className="md:col-span-2">
@@ -282,6 +283,20 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
             <Button onClick={generate} disabled={loading || uploading || !form.name.trim()} className="md:col-span-2">
               {loading ? "Generating…" : "Generate copy (1 credit)"}
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {loading && !copy?.title && (
+        <Card className="border-[var(--accent)]/20 bg-[var(--accent-soft)]/20">
+          <CardContent className="flex items-center gap-4 py-10">
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
+            <div>
+              <p className="font-semibold">Writing your listing copy…</p>
+              <p className="mt-1 text-sm text-[var(--muted-fg)]">
+                Title, bullets, description, and backend keywords — usually under a minute.
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { SiteHeader } from "@/components/marketing/site-header";
+import { SiteFooter } from "@/components/marketing/site-footer";
 import { GraderTool } from "@/components/grader/grader-tool";
 import { ShowcaseSampleStrip } from "@/components/marketing/showcase-sample-strip";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ export default async function GraderPage() {
           </Button>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }

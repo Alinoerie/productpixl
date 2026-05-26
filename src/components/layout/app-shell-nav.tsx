@@ -46,7 +46,7 @@ export function AppShellMobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-1 overflow-x-auto border-t border-[var(--border)] px-4 py-2 md:hidden">
+    <nav className="flex gap-1.5 overflow-x-auto border-t border-[var(--border)] bg-[var(--card)]/80 px-3 py-2.5 md:hidden">
       {nav.map((item) => {
         const active =
           pathname === item.href ||
@@ -57,8 +57,10 @@ export function AppShellMobileNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium",
-              active ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--muted)]"
+              "shrink-0 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
+              active
+                ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                : "text-[var(--muted-fg)] hover:bg-[var(--muted)]"
             )}
           >
             {item.label}

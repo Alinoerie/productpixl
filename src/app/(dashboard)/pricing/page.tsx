@@ -1,6 +1,7 @@
 import { Check, CreditCard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
 import { CheckoutButton } from "@/components/pricing/checkout-button";
 
 const packs = [
@@ -36,16 +37,14 @@ export default async function PricingPage({
           Checkout canceled — no charges were made.
         </p>
       )}
-      <div className="max-w-2xl">
-        <Badge variant="outline" className="mb-4 border-[var(--accent)]/30 text-[var(--accent)]">
+      <PageHeader
+        title="Credits that scale with your catalog"
+        description="No $207/mo subscription like Pixii. One credit = one full image pipeline (L1 + L3 + L4) or one listing copy run. Buy when you need more — credits do not expire on a monthly clock."
+      >
+        <Badge variant="outline" className="border-[var(--accent)]/30 text-[var(--accent)]">
           Pay per generation
         </Badge>
-        <h1 className="font-serif text-3xl md:text-4xl">Credits that scale with your catalog</h1>
-        <p className="mt-4 text-[var(--muted-fg)]">
-          No $207/mo subscription like Pixii. One credit = one full image pipeline (L1 + L3 + L4) or one listing
-          copy run. Buy when you need more — credits do not expire on a monthly clock.
-        </p>
-      </div>
+      </PageHeader>
 
       <div className="grid gap-4 md:grid-cols-2">
         {packs.map((p) => (

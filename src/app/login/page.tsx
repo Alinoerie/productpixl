@@ -3,6 +3,7 @@ import { auth, signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { GoogleIcon } from "@/components/ui/google-icon";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 
 function safeCallbackUrl(raw?: string) {
@@ -63,8 +64,8 @@ export default async function LoginPage({
         <p className="text-xs text-white/40">Built for Amazon & EU marketplace sellers</p>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
+      <div className="flex flex-1 flex-col items-center justify-center bg-[var(--background)] px-4 py-12">
+        <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 shadow-[var(--shadow-lg)] md:p-10">
           <Link href="/" className="mb-8 inline-flex items-center gap-2 lg:hidden">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ink)] text-xs font-bold text-white">
               Px
@@ -77,7 +78,7 @@ export default async function LoginPage({
           </p>
 
           {errorMessage ? (
-            <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <p className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
               {errorMessage}
             </p>
           ) : null}
@@ -89,13 +90,22 @@ export default async function LoginPage({
               await signIn("google", { redirectTo: callbackUrl });
             }}
           >
-            <Button type="submit" className="h-12 w-full rounded-xl text-base" size="lg">
+            <Button
+              type="submit"
+              variant="outline"
+              className="h-12 w-full rounded-xl border-[var(--border-strong)] bg-white text-base hover:bg-[var(--muted)]/40"
+              size="lg"
+            >
+              <GoogleIcon className="h-5 w-5" />
               Continue with Google
             </Button>
           </form>
           <p className="mt-6 text-center text-xs text-[var(--muted-fg)]">
             New accounts receive 10 free generation credits.
           </p>
+        </div>
+        <div className="mt-10 w-full max-w-md lg:hidden">
+          <ShowcaseMosaic className="opacity-90" />
         </div>
       </div>
     </div>

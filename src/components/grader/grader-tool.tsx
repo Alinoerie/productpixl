@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchJson } from "@/lib/fetch-json";
+import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX, charCountLabel } from "@/lib/amazon-limits";
 import type { GraderResult } from "@/lib/listing-grader";
+import { cn } from "@/lib/utils";
 
 const SAMPLE = {
   title: "Zealots Energizing Liquid Hand Soap — Greek Olive Oil, Mandarin & Basil — 500ml",
@@ -67,6 +69,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
   };
 
   const gradeClass = result ? `grade-${result.grade.toLowerCase()}` : "";
+  const titleCount = charCountLabel(title, AMAZON_TITLE_MAX);
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
@@ -81,7 +84,14 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
           <div>
             <div className="flex items-center justify-between">
               <Label>Product title</Label>
-              <span className="text-xs text-[var(--muted-fg)]">{title.length}/200</span>
+              <span
+                className={cn(
+                  "text-xs tabular-nums",
+                  titleCount.over ? "font-medium text-red-600" : "text-[var(--muted-fg)]"
+                )}
+              >
+                {titleCount.label}
+              </span>
             </div>
             <Input
               value={title}
@@ -90,23 +100,33 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
               placeholder="Your listing title"
             />
           </div>
-          {bullets.map((b, i) => (
-            <div key={`bullet-${i}`}>
-              <div className="flex items-center justify-between">
-                <Label>Bullet {i + 1}</Label>
-                <span className="text-xs text-[var(--muted-fg)]">{b.length}/500</span>
+          {bullets.map((b, i) => {
+            const bulletCount = charCountLabel(b, AMAZON_BULLET_MAX);
+            return (
+              <div key={`bullet-${i}`}>
+                <div className="flex items-center justify-between">
+                  <Label>Bullet {i + 1}</Label>
+                  <span
+                    className={cn(
+                      "text-xs tabular-nums",
+                      bulletCount.over ? "font-medium text-red-600" : "text-[var(--muted-fg)]"
+                    )}
+                  >
+                    {bulletCount.label}
+                  </span>
+                </div>
+                <Input
+                  value={b}
+                  maxLength={500}
+                  onChange={(e) => {
+                    const next = [...bullets];
+                    next[i] = e.target.value;
+                    setBullets(next);
+                  }}
+                />
               </div>
-              <Input
-                value={b}
-                maxLength={500}
-                onChange={(e) => {
-                  const next = [...bullets];
-                  next[i] = e.target.value;
-                  setBullets(next);
-                }}
-              />
-            </div>
-          ))}
+            );
+          })}
           <div>
             <Label>Description (optional)</Label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />

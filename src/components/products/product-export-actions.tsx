@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Check, Copy, Download } from "lucide-react";
 
 type CopyPayload = {
@@ -58,22 +59,27 @@ export function ProductExportActions({
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {completedImages.length > 0 && (
-        <Button type="button" variant="outline" size="sm" onClick={downloadImages}>
-          <Download className="h-4 w-4" />
-          Download images ({completedImages.length})
-        </Button>
-      )}
-      {listingCopy?.title && (
-        <Button type="button" variant="outline" size="sm" onClick={copyAllListing}>
-          {copied === "listing" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          Copy listing text
-        </Button>
-      )}
-      <Button asChild variant="outline" size="sm">
-        <Link href="/grader">Grade listing copy</Link>
-      </Button>
-    </div>
+    <Card className="border-[var(--border)] bg-[var(--muted)]/30">
+      <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <p className="text-sm font-medium">Export & review</p>
+        <div className="flex flex-wrap gap-2">
+          {completedImages.length > 0 && (
+            <Button type="button" variant="outline" size="sm" onClick={downloadImages}>
+              <Download className="h-4 w-4" />
+              Download images ({completedImages.length})
+            </Button>
+          )}
+          {listingCopy?.title && (
+            <Button type="button" variant="outline" size="sm" onClick={copyAllListing}>
+              {copied === "listing" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied === "listing" ? "Copied" : "Copy listing text"}
+            </Button>
+          )}
+          <Button asChild variant="outline" size="sm">
+            <Link href="/grader">Grade listing copy</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

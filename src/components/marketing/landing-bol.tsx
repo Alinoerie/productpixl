@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Globe, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,22 +37,37 @@ export function LandingBol() {
               <Link href="/grader">Grade your listing free →</Link>
             </Button>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {eu.map((m) => (
-              <div
-                key={m.id}
-                className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-sm)]"
-              >
-                <p className="text-2xl">{m.flag}</p>
-                <p className="mt-2 font-semibold">{m.label}</p>
-                <p className="mt-2 text-xs leading-relaxed text-[var(--muted-fg)]">{m.copyNote}</p>
-                {m.rufusOptimized && (
-                  <span className="mt-3 inline-block rounded-full bg-[var(--teal-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--teal)]">
-                    RUFUS-ready
-                  </span>
-                )}
+          <div className="space-y-4">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-[var(--border)] shadow-[var(--shadow-md)]">
+              <Image
+                src="/showcase/zealots/l3-lifestyle.jpg"
+                alt="EU marketplace lifestyle product image generated from one photo"
+                fill
+                sizes="(max-width: 1024px) 100vw, 480px"
+                className="object-cover"
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                <p className="text-sm font-medium text-white">L3 lifestyle · Bol.com-ready tone</p>
+                <p className="text-xs text-white/70">From one seller upload</p>
               </div>
-            ))}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {eu.map((m) => (
+                <div
+                  key={m.id}
+                  className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]"
+                >
+                  <p className="text-2xl">{m.flag}</p>
+                  <p className="mt-2 font-semibold">{m.label}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-[var(--muted-fg)]">{m.copyNote}</p>
+                  {m.rufusOptimized && (
+                    <span className="mt-3 inline-block rounded-full bg-[var(--teal-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--teal)]">
+                      RUFUS-ready
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

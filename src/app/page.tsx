@@ -20,6 +20,7 @@ import { LandingFaq } from "@/components/marketing/landing-faq";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SiteFooter } from "@/components/marketing/site-footer";
 import { SHOWCASE_MODULE_SAMPLES } from "@/lib/showcase";
 
 const MODULES = [
@@ -299,9 +300,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-[var(--border)] px-4 py-8 text-center text-sm text-[var(--muted-fg)]">
-        ProductPixl — listing studio for marketplace sellers
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
