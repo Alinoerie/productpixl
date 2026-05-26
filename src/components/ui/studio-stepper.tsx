@@ -6,22 +6,39 @@ export function StudioStepper({
   steps,
   currentStep,
   label = "Progress",
+  statusText,
+  sticky = false,
 }: {
   steps: string[];
   currentStep: number;
   label?: string;
+  statusText?: string;
+  sticky?: boolean;
 }) {
   const progress = ((currentStep + 1) / steps.length) * 100;
   const stepLabel = steps[currentStep] ?? "";
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs font-medium text-[var(--muted-fg)]">
+    <div
+      className={cn(
+        "space-y-3",
+        sticky &&
+          "sticky top-14 z-20 -mx-4 border-b border-[var(--border)] bg-[var(--background)]/95 px-4 py-3 backdrop-blur-sm md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none"
+      )}
+    >
+      <div className="flex items-center justify-between gap-3 text-xs font-medium text-[var(--muted-fg)]">
         <span>
           Step {currentStep + 1} of {steps.length}
         </span>
-        <span className="text-[var(--foreground)]">{stepLabel}</span>
+        <span className="text-right text-[var(--foreground)]">
+          {statusText ?? stepLabel}
+        </span>
       </div>
+      {statusText ? (
+        <p className="text-xs text-[var(--muted-fg)]">
+          Current step: <span className="font-medium text-[var(--foreground)]">{stepLabel}</span>
+        </p>
+      ) : null}
       <div
         className="h-1.5 overflow-hidden rounded-full bg-[var(--muted)]"
         role="progressbar"
@@ -29,7 +46,11 @@ export function StudioStepper({
         aria-valuenow={currentStep + 1}
         aria-valuemin={1}
         aria-valuemax={steps.length}
-        aria-valuetext={`${label}: step ${currentStep + 1} of ${steps.length}, ${stepLabel}`}
+        aria-valuetext={
+          statusText
+            ? `${label}: step ${currentStep + 1} of ${steps.length}, ${stepLabel}, ${statusText}`
+            : `${label}: step ${currentStep + 1} of ${steps.length}, ${stepLabel}`
+        }
       >
         <div
           className="h-full rounded-full bg-[var(--accent)] transition-all duration-500 ease-out"

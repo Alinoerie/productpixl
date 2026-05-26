@@ -58,6 +58,8 @@ export function BrandProfileForm() {
     return JSON.stringify(profile) !== JSON.stringify(baseline);
   }, [profile, baseline]);
 
+  const profileComplete = Boolean(profile.displayName?.trim() && profile.tone?.trim());
+
   const uploadLogo = async (file: File) => {
     setUploadingLogo(true);
     setError("");
@@ -273,42 +275,80 @@ export function BrandProfileForm() {
           }}
         />
         <CardContent className="p-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)]">
-            Listing preview mockup
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)]">
+              Listing preview mockup
+            </p>
+            {profileComplete ? (
+              <span className="rounded-full border border-[var(--success-border)] bg-[var(--success-bg)] px-2.5 py-1 text-[10px] font-medium text-[var(--success)]">
+                Profile complete
+              </span>
+            ) : (
+              <span className="rounded-full border border-[var(--border)] bg-[var(--muted)]/50 px-2.5 py-1 text-[10px] font-medium text-[var(--muted-fg)]">
+                Add name + tone
+              </span>
+            )}
+          </div>
           <div className="mt-4 overflow-hidden rounded-xl border border-[var(--border)] bg-white shadow-[var(--shadow-sm)]">
-            <div className="aspect-square bg-[var(--muted)]/30 p-6">
+            <div
+              className="aspect-square p-6"
+              style={{
+                background: `linear-gradient(145deg, ${profile.primaryColor}12, ${profile.secondaryColor}18)`,
+              }}
+            >
               {profile.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={profile.logoUrl}
                   alt={`${profile.displayName || "Brand"} logo`}
-                  className="mx-auto h-12 max-w-[140px] object-contain"
+                  className="mx-auto h-14 max-w-[160px] object-contain"
                 />
               ) : (
                 <div
-                  className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg text-lg font-bold text-white"
+                  className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl text-xl font-bold text-white shadow-[var(--shadow-sm)]"
                   style={{ backgroundColor: profile.primaryColor }}
                 >
                   {(profile.displayName || "B").charAt(0)}
                 </div>
               )}
             </div>
-            <div className="space-y-2 p-4">
+            <div className="space-y-3 p-4">
               <h3 className="font-serif text-lg leading-snug" style={{ color: profile.primaryColor }}>
                 {profile.displayName || "Your brand"} — Sample product title
               </h3>
-              <p className="text-xs text-[var(--muted-fg)]">
-                Tone: {profile.tone || "Set your brand voice"}
-              </p>
-              <div
-                className="rounded-lg px-3 py-2 text-xs text-white"
-                style={{ backgroundColor: profile.secondaryColor }}
-              >
-                Bol.com & Amazon-ready · RUFUS-optimized copy
+              <ul className="space-y-1.5 text-xs text-[var(--muted-fg)]">
+                <li className="flex gap-2">
+                  <span style={{ color: profile.primaryColor }}>•</span>
+                  <span>
+                    {profile.tone
+                      ? `${profile.tone.charAt(0).toUpperCase()}${profile.tone.slice(1)} benefit-led bullet for marketplace shoppers`
+                      : "Set tone to preview how bullets will read"}
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span style={{ color: profile.primaryColor }}>•</span>
+                  <span>Secondary accent surfaces in EU marketplace callouts</span>
+                </li>
+              </ul>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span
+                  className="inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                  style={{ backgroundColor: profile.primaryColor }}
+                >
+                  Add to cart
+                </span>
+                <span
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-white"
+                  style={{ backgroundColor: profile.secondaryColor }}
+                >
+                  Bol.com & Amazon-ready
+                </span>
               </div>
             </div>
           </div>
+          <p className="mt-4 text-xs text-[var(--muted-fg)]">
+            Colors and tone flow into PHOILA image prompts and listing copy on every run.
+          </p>
         </CardContent>
       </Card>
       </div>

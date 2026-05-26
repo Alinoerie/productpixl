@@ -479,7 +479,13 @@ export function CopyWorkspace({
         }
       />
 
-      <StudioStepper steps={COPY_STEPS} currentStep={copyStep} label="Copy pipeline progress" />
+      <StudioStepper
+        steps={COPY_STEPS}
+        currentStep={copyStep}
+        label="Copy pipeline progress"
+        sticky
+        statusText={loading ? "Generating listing copy…" : undefined}
+      />
 
       {missingProductId ? (
         <p className="rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]">

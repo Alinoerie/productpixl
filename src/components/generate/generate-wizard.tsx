@@ -480,7 +480,23 @@ export function GenerateWizard({
       />
 
       <div ref={stepperRef}>
-        <StudioStepper steps={STEPS} currentStep={step} label="Generation progress" />
+        <StudioStepper
+          steps={STEPS}
+          currentStep={step}
+          label="Generation progress"
+          sticky
+          statusText={
+            step === 3 && pipelineStatus?.phase
+              ? formatPipelinePhase(pipelineStatus.phase)
+              : analyzing
+                ? "Analyzing product photo…"
+                : planningPrompts
+                  ? "Building prompt plan…"
+                  : uploading
+                    ? "Uploading photo…"
+                    : undefined
+          }
+        />
       </div>
 
       {missingProductId ? (

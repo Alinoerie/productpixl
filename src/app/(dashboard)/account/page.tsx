@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { CreditCard, Receipt } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
@@ -103,11 +104,26 @@ export default async function AccountPage({
         </CardHeader>
         <CardContent>
           {!user?.orders?.length ? (
-            <div className="rounded-xl border border-dashed border-[var(--border)] py-10 text-center">
-              <p className="text-sm text-[var(--muted-fg)]">No purchases yet.</p>
-              <Button asChild variant="outline" size="sm" className="mt-4">
-                <Link href="/pricing">View credit packs</Link>
-              </Button>
+            <div className="rounded-xl border border-dashed border-[var(--border)] px-6 py-10 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--muted)]/60">
+                <Receipt className="h-7 w-7 text-[var(--muted-fg)]" strokeWidth={1.5} />
+              </div>
+              <p className="mt-4 font-serif text-lg">No purchases yet</p>
+              <p className="mx-auto mt-2 max-w-sm text-sm text-[var(--muted-fg)]">
+                You started with 10 free credits. When you buy a Starter or Growth pack, receipts appear here with
+                status and credit totals.
+              </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <Button asChild>
+                  <Link href="/pricing">
+                    <CreditCard className="h-4 w-4" />
+                    View credit packs
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/generate">Use free credits</Link>
+                </Button>
+              </div>
             </div>
           ) : (
             <ul className="divide-y divide-[var(--border)]">
