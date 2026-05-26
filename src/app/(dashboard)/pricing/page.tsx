@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Check, CreditCard } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { CheckoutButton } from "@/components/pricing/checkout-button";
 import { CreditCalculator } from "@/components/pricing/credit-calculator";
+import { PricingBalance } from "@/components/pricing/pricing-balance";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { isCheckoutEnabled } from "@/lib/checkout";
 
@@ -35,9 +38,15 @@ export default async function PricingPage({
 }) {
   const params = await searchParams;
   const checkoutEnabled = isCheckoutEnabled();
+  const session = await auth();
+  const credits =
+    session?.user?.id != null
+      ? ((await prisma.user.findUnique({ where: { id: session.user.id }, select: { credits: true } }))?.credits ?? 0)
+      : 0;
 
   return (
     <div className="space-y-12">
+      {session?.user?.id ? <PricingBalance initialCredits={credits} /> : null}
       {params.success ? (
         <Suspense fallback={null}>
           <PaymentSuccessBanner />

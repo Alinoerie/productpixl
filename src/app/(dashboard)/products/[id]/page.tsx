@@ -16,7 +16,7 @@ import { ProductEditProvider } from "@/components/products/product-edit-context"
 import { ProductSectionNav } from "@/components/products/product-section-nav";
 import { ProductGradeBadge } from "@/components/products/product-grade-badge";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
-import { getMarketplace } from "@/lib/marketplaces";
+import { getMarketplace, type MarketplaceId } from "@/lib/marketplaces";
 import {
   formatProductStatus,
   statusBadgeClass,
@@ -169,6 +169,7 @@ export default async function ProductPage({
         <ProductExportActions
           productId={product.id}
           productName={product.name}
+          marketplaceId={product.marketplace as MarketplaceId}
           assets={product.assets}
           listingCopy={
             product.listingCopy

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
+import { CreditUsageGuide } from "@/components/account/credit-usage-guide";
 import { formatOrderStatus } from "@/lib/status-labels";
 
 function formatAmount(cents: number) {
@@ -58,12 +59,14 @@ export default async function AccountPage({
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="border-[var(--accent)]/20 bg-[var(--accent-soft)]/30">
+        <Card className={credits < 2 ? "border-[var(--warning-border)] bg-[var(--warning-bg)]/30" : "border-[var(--accent)]/20 bg-[var(--accent-soft)]/30"}>
           <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent)]">Balance</p>
               <p className="mt-1 font-serif text-4xl">{credits}</p>
-              <p className="text-sm text-[var(--muted-fg)]">generation credits</p>
+              <p className="text-sm text-[var(--muted-fg)]">
+                {credits < 2 ? "Top up before your next run" : "generation credits remaining"}
+              </p>
             </div>
             <Button asChild>
               <Link href="/pricing">Buy credits</Link>
@@ -74,6 +77,9 @@ export default async function AccountPage({
           <CardContent className="flex h-full flex-col justify-center gap-3 p-6">
             <p className="text-sm font-medium">Quick links</p>
             <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/projects">All projects</Link>
+              </Button>
               <Button asChild variant="outline" size="sm">
                 <Link href="/generate">Image studio</Link>
               </Button>
@@ -87,6 +93,8 @@ export default async function AccountPage({
           </CardContent>
         </Card>
       </div>
+
+      <CreditUsageGuide />
 
       <Card>
         <CardHeader>

@@ -765,26 +765,52 @@ export function CopyWorkspace({
               <Textarea value={copy.title} onChange={(e) => setCopy({ ...copy, title: e.target.value })} />
             </CardContent>
           </Card>
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium text-[var(--muted-fg)]">Bullets</p>
-            {((copy.bullets as string[]) ?? []).length < 5 ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setCopy({
-                    ...copy,
-                    bullets: [...((copy.bullets as string[]) ?? []), ""],
-                  })
-                }
-              >
-                <Plus className="h-4 w-4" />
-                Add bullet
-              </Button>
-            ) : null}
-          </div>
-          {(copy.bullets as string[] | undefined)?.map((b, i) => {
+          <details className="rounded-2xl border border-[var(--border)] bg-[var(--card)] md:contents">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 marker:content-none md:hidden [&::-webkit-details-marker]:hidden">
+              <span className="text-sm font-medium">
+                Bullets ({((copy.bullets as string[]) ?? []).length})
+              </span>
+              <span className="text-xs text-[var(--muted-fg)]">Tap to expand</span>
+            </summary>
+            <div className="space-y-4 border-t border-[var(--border)] p-4 pt-3 md:contents md:border-0 md:p-0">
+              <div className="hidden items-center justify-between gap-2 md:flex">
+                <p className="text-sm font-medium text-[var(--muted-fg)]">Bullets</p>
+                {((copy.bullets as string[]) ?? []).length < 5 ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCopy({
+                        ...copy,
+                        bullets: [...((copy.bullets as string[]) ?? []), ""],
+                      })
+                    }
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add bullet
+                  </Button>
+                ) : null}
+              </div>
+              <div className="flex justify-end md:hidden">
+                {((copy.bullets as string[]) ?? []).length < 5 ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCopy({
+                        ...copy,
+                        bullets: [...((copy.bullets as string[]) ?? []), ""],
+                      })
+                    }
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add bullet
+                  </Button>
+                ) : null}
+              </div>
+              {(copy.bullets as string[] | undefined)?.map((b, i) => {
             const bulletOver = b.length > AMAZON_BULLET_MAX;
             return (
               <Card key={`bullet-${i}`}>
@@ -835,6 +861,8 @@ export function CopyWorkspace({
               </Card>
             );
           })}
+            </div>
+          </details>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="text-base">Description</CardTitle>

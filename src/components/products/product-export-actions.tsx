@@ -8,6 +8,13 @@ import { Check, Copy, Download, ImageIcon, Loader2, FileText } from "lucide-reac
 import { useToast } from "@/components/ui/toast-provider";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { downloadGalleryZip } from "@/lib/download-gallery-zip";
+import {
+  formatListingCsv,
+  formatListingPlain,
+  listingExportFilename,
+  type ListingExportPayload,
+} from "@/lib/export-listing";
+import { getMarketplace, type MarketplaceId } from "@/lib/marketplaces";
 
 type CopyPayload = {
   title?: string | null;
@@ -19,15 +26,18 @@ type CopyPayload = {
 export function ProductExportActions({
   productId,
   productName,
+  marketplaceId,
   assets,
   listingCopy,
 }: {
   productId: string;
   productName: string;
+  marketplaceId: MarketplaceId;
   assets: { moduleId: string; imageUrl: string | null }[];
   listingCopy: CopyPayload | null;
 }) {
   const { toast } = useToast();
+  const marketplace = getMarketplace(marketplaceId);
   const [copied, setCopied] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<string | null>(null);
@@ -46,29 +56,64 @@ export function ProductExportActions({
 
   const copyAllListing = async () => {
     if (!listingCopy?.title) return;
-    const bullets = (listingCopy.bullets ?? []).map((b, i) => `${i + 1}. ${b}`).join("\n");
-    const text = [
-      listingCopy.title,
-      "",
-      bullets,
-      "",
-      listingCopy.description ?? "",
-      "",
-      `Keywords: ${listingCopy.backendKeywords ?? ""}`,
-    ].join("\n");
-    await copyText("listing", text);
+    const payload: ListingExportPayload = {
+      title: listingCopy.title,
+      bullets: listingCopy.bullets ?? [],
+      description: listingCopy.description,
+      backendKeywords: listingCopy.backendKeywords,
+    };
+    await copyText("listing", formatListingPlain(payload, marketplaceId));
   };
 
   const exportListingJson = () => {
     if (!listingCopy?.title) return;
-    const blob = new Blob([JSON.stringify(listingCopy, null, 2)], { type: "application/json" });
+    const blob = new Blob(
+      [JSON.stringify({ ...listingCopy, marketplace: marketplaceId }, null, 2)],
+      { type: "application/json" }
+    );
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${slug}-listing.json`;
+    a.download = listingExportFilename(slug, marketplaceId, "json");
     a.click();
     URL.revokeObjectURL(url);
     toast("Listing JSON downloaded");
+  };
+
+  const exportListingCsv = () => {
+    if (!listingCopy?.title) return;
+    const payload: ListingExportPayload = {
+      title: listingCopy.title,
+      bullets: listingCopy.bullets ?? [],
+      description: listingCopy.description,
+      backendKeywords: listingCopy.backendKeywords,
+    };
+    const blob = new Blob([formatListingCsv(payload, marketplaceId)], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = listingExportFilename(slug, marketplaceId, "csv");
+    a.click();
+    URL.revokeObjectURL(url);
+    toast(`${marketplace.label} CSV downloaded`);
+  };
+
+  const exportListingTxt = () => {
+    if (!listingCopy?.title) return;
+    const payload: ListingExportPayload = {
+      title: listingCopy.title,
+      bullets: listingCopy.bullets ?? [],
+      description: listingCopy.description,
+      backendKeywords: listingCopy.backendKeywords,
+    };
+    const blob = new Blob([formatListingPlain(payload, marketplaceId)], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = listingExportFilename(slug, marketplaceId, "txt");
+    a.click();
+    URL.revokeObjectURL(url);
+    toast(`${marketplace.label} listing downloaded`);
   };
 
   const downloadImages = async () => {
@@ -126,7 +171,7 @@ export function ProductExportActions({
             <p className="text-sm font-semibold">Export & review</p>
             <p className="mt-1 text-xs text-[var(--muted-fg)]">
               {exportReady
-                ? "Gallery and listing copy are ready — download or copy below."
+                ? `${marketplace.flag} ${marketplace.label} — gallery and copy ready to export.`
                 : hasImages
                   ? "Images ready — add listing copy to finish export."
                   : "Copy ready — add gallery images to finish export."}
@@ -173,7 +218,15 @@ export function ProductExportActions({
             <>
               <Button type="button" variant="outline" size="sm" onClick={copyAllListing}>
                 {copied === "listing" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied === "listing" ? "Copied" : "Copy listing text"}
+                {copied === "listing" ? "Copied" : `Copy for ${marketplace.label}`}
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={exportListingTxt}>
+                <Download className="h-4 w-4" />
+                Download .txt
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={exportListingCsv}>
+                <Download className="h-4 w-4" />
+                Download .csv
               </Button>
               <Button type="button" variant="outline" size="sm" onClick={exportListingJson}>
                 <Download className="h-4 w-4" />

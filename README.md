@@ -47,12 +47,12 @@ pnpm inngest:dev
 | Brand profile (colors, tone, logo) | `/brand` |
 | Free listing grader (A–F) | `/grader` |
 | Spot-edit single module | Product page → 1 credit |
-| Export hub (images + copy JSON) | `/products/[id]#export` |
+| Export hub (images + copy JSON/CSV/TXT) | `/products/[id]#export` |
 | Marketplaces | Amazon US/UK/DE, Bol.com, Shopify |
 
 **Credits:** 10 free on signup · 1 credit per image run, copy run, or spot-edit.
 
-**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready and failed-project filters, gallery ZIP download, in-app unsaved guards on project/copy/brand pages, failed-module retry in gallery, payment success polling after Stripe checkout, and grader → copy draft flow with persisted grades.
+**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready and failed-project filters, marketplace-aware export (txt/csv/json + gallery ZIP), in-app unsaved guards on project/copy/brand pages, failed-module retry in gallery, payment success polling after Stripe checkout, and grader → copy draft flow with persisted grades.
 
 ## Pipeline docs
 
@@ -69,8 +69,9 @@ pnpm inngest:dev
 - [ ] `/generate` — marketplace picker + pipeline completes → export/copy CTAs
 - [ ] `/copy` — regenerate copy, bullet add/remove, per-field copy, fixed mobile save bar, unsaved guard
 - [ ] `/generate` — navigation guard during multi-step runs, gallery ZIP on completion
-- [ ] `/products/[id]` — readiness checklist, section nav, export hub (ZIP + JSON), gallery filters + failed-module retry, spot-edit on completed assets
-- [ ] `/pricing` — Stripe checkout return shows credit refresh banner
+- [ ] `/products/[id]` — readiness checklist, section nav, marketplace export (ZIP + txt/csv/json), gallery filters + failed-module retry, spot-edit on completed assets
+- [ ] `/account` — balance, credit usage guide, order history, payment return banner
+- [ ] `/pricing` — current balance, credit packs, checkout return banner
 
 ## Stub mode
 
