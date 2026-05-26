@@ -14,6 +14,7 @@ import { ProductReadiness } from "@/components/products/product-readiness";
 import { ProductMobileActions } from "@/components/products/product-mobile-actions";
 import { ProductEditProvider } from "@/components/products/product-edit-context";
 import { ProductSectionNav } from "@/components/products/product-section-nav";
+import { ProductGradeBadge } from "@/components/products/product-grade-badge";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { getMarketplace } from "@/lib/marketplaces";
 import {
@@ -71,11 +72,12 @@ export default async function ProductPage({
               <Badge className={statusBadgeClass(product.status)}>
                 {formatProductStatus(product.status)}
               </Badge>
-              {product.listingCopy?.grade ? (
-                <Badge variant="secondary" className="bg-[var(--success-bg)] text-[var(--success)]">
-                  Graded {product.listingCopy.grade}
-                  {product.listingCopy.gradeScore != null ? ` · ${product.listingCopy.gradeScore}` : ""}
-                </Badge>
+              {product.listingCopy?.title ? (
+                <ProductGradeBadge
+                  productId={product.id}
+                  initialGrade={product.listingCopy.grade}
+                  initialScore={product.listingCopy.gradeScore}
+                />
               ) : null}
             </div>
             <p className="mt-2 text-sm text-[var(--muted-fg)]">

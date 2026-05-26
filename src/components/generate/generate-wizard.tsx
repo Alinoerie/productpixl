@@ -27,6 +27,7 @@ import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { Camera, Check, Download, Loader2, Sparkles } from "lucide-react";
 import { type MarketplaceId } from "@/lib/marketplaces";
 import { getMarketplace } from "@/lib/marketplaces";
+import { downloadGalleryZip } from "@/lib/download-gallery-zip";
 
 interface ProductData {
   name: string;
@@ -424,22 +425,12 @@ export function GenerateWizard({
   const downloadImages = async () => {
     setDownloading(true);
     try {
-      let saved = 0;
       const slug = form.name.replace(/\s+/g, "-").toLowerCase() || "product";
-      for (const [index, asset] of completedImages.entries()) {
-        if (!asset.imageUrl) continue;
-        const res = await fetch(asset.imageUrl);
-        if (!res.ok) throw new Error("Fetch failed");
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${slug}-${asset.moduleId}-${index + 1}.jpg`;
-        a.click();
-        URL.revokeObjectURL(url);
-        saved++;
-      }
-      toast(`Saved ${saved} image${saved === 1 ? "" : "s"}`);
+      const items = completedImages
+        .filter((asset): asset is typeof asset & { imageUrl: string } => Boolean(asset.imageUrl))
+        .map((asset) => ({ moduleId: asset.moduleId, imageUrl: asset.imageUrl }));
+      const saved = await downloadGalleryZip(items, slug);
+      toast(`Downloaded ${slug}-gallery.zip (${saved} image${saved === 1 ? "" : "s"})`);
     } catch {
       toast("Download failed — open images individually or try again", "error");
     } finally {
@@ -921,7 +912,7 @@ export function GenerateWizard({
                     ) : (
                       <>
                         <Download className="h-4 w-4" />
-                        Download images ({completedImages.length})
+                        Download gallery.zip ({completedImages.length})
                       </>
                     )}
                   </Button>

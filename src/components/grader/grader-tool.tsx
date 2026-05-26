@@ -74,9 +74,10 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
         }),
       });
       if (!ok) throw new Error((data as { error?: string }).error || "Failed");
-      setResult(data as GraderResult);
+      const graded = data as GraderResult;
+      setResult(graded);
       if (draftProductId) {
-        markProductGraded(draftProductId);
+        markProductGraded(draftProductId, { grade: graded.grade, score: graded.score });
       }
       requestAnimationFrame(() => {
         scoreSummaryRef.current?.focus();
@@ -140,6 +141,12 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
       productId: draftProductId ?? undefined,
     });
     router.push(draftProductId ? `/copy?productId=${draftProductId}` : "/copy");
+  };
+
+  const returnToProject = () => {
+    if (!draftProductId) return;
+    router.push(`/products/${draftProductId}`);
+    router.refresh();
   };
 
   const generateHref = draftProductId ? `/generate?productId=${draftProductId}` : "/generate";
@@ -224,12 +231,18 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
               {error}
             </p>
           ) : null}
-          <Button className="w-full" size="lg" onClick={grade} disabled={loading || !title.trim()}>
+          <Button className="hidden w-full md:inline-flex" size="lg" onClick={grade} disabled={loading || !title.trim()}>
             {loading ? "Grading…" : "Grade my listing"}
           </Button>
-          <p className="text-center text-xs text-[var(--muted-fg)]">Tip: ⌘/Ctrl+Enter to grade</p>
+          <p className="hidden text-center text-xs text-[var(--muted-fg)] md:block">Tip: ⌘/Ctrl+Enter to grade</p>
         </CardContent>
       </Card>
+
+      <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
+        <Button className="w-full" size="lg" onClick={grade} disabled={loading || !title.trim()}>
+          {loading ? "Grading…" : "Grade my listing"}
+        </Button>
+      </div>
 
       <div ref={resultsRef} className="space-y-4" aria-live="polite" aria-busy={loading}>
         {loading ? (
@@ -315,8 +328,8 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
                     <Link href={generateHref}>Generate gallery</Link>
                   </Button>
                   {draftProductId ? (
-                    <Button asChild variant="outline" className="flex-1">
-                      <Link href={`/products/${draftProductId}`}>Return to project</Link>
+                    <Button type="button" variant="outline" className="flex-1" onClick={returnToProject}>
+                      Return to project
                     </Button>
                   ) : null}
                 </>

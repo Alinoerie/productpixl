@@ -52,7 +52,7 @@ pnpm inngest:dev
 
 **Credits:** 10 free on signup · 1 credit per image run, copy run, or spot-edit.
 
-**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist, payment success polling after Stripe checkout, and grader → copy draft flow.
+**Studio UX:** Project handoffs via `?productId=` on generate/copy, listing readiness checklist with section jump nav, export-ready projects filter, gallery ZIP download, in-app unsaved-copy guard on project pages, payment success polling after Stripe checkout, and grader → copy draft flow with persisted grades.
 
 ## Pipeline docs
 
@@ -67,7 +67,7 @@ pnpm inngest:dev
 - [ ] `/brand` — save colors/tone → reflected in generation
 - [ ] `/generate` — marketplace picker + pipeline completes → export/copy CTAs
 - [ ] `/copy` — regenerate copy, completion handoff, save to project
-- [ ] `/products/[id]` — readiness checklist, export hub, spot-edit on completed asset
+- [ ] `/products/[id]` — readiness checklist, section nav, export hub (ZIP + JSON), unsaved-copy guard, spot-edit on completed asset
 - [ ] `/pricing` — Stripe checkout return shows credit refresh banner
 
 ## Stub mode

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, Circle } from "lucide-react";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
-import { isProductGraded, GRADE_UPDATED_EVENT } from "@/lib/grade-session";
+import { isProductGraded, getProductGrade, GRADE_UPDATED_EVENT } from "@/lib/grade-session";
 import { cn } from "@/lib/utils";
 
 export function ProductReadiness({
@@ -32,14 +32,27 @@ export function ProductReadiness({
   const hasImages = imageCount > 0;
   const readyToExport = hasImages && hasCopy;
   const [sessionGraded, setSessionGraded] = useState(false);
+  const [sessionGrade, setSessionGrade] = useState<string | null>(null);
+  const [sessionScore, setSessionScore] = useState<number | null>(null);
   const isGraded = Boolean(grade) || sessionGraded;
 
   useEffect(() => {
-    const refresh = () => setSessionGraded(isProductGraded(productId));
+    const refresh = () => {
+      setSessionGraded(isProductGraded(productId));
+      const snapshot = getProductGrade(productId);
+      if (snapshot) {
+        setSessionGrade(snapshot.grade);
+        setSessionScore(snapshot.score);
+      }
+    };
     refresh();
     const onGrade = (event: Event) => {
-      const detail = (event as CustomEvent<{ productId?: string }>).detail;
-      if (!detail?.productId || detail.productId === productId) refresh();
+      const detail = (event as CustomEvent<{ productId?: string; grade?: string; score?: number }>).detail;
+      if (!detail?.productId || detail.productId === productId) {
+        refresh();
+        if (detail.grade) setSessionGrade(detail.grade);
+        if (detail.score != null) setSessionScore(detail.score);
+      }
     };
     const onVisible = () => {
       if (document.visibilityState === "visible") refresh();
@@ -56,8 +69,14 @@ export function ProductReadiness({
     };
   }, [productId]);
 
+  const displayGrade = grade ?? sessionGrade;
+  const displayScore = gradeScore ?? sessionScore;
   const gradeLabel =
-    grade && gradeScore != null ? `Graded · ${grade} (${gradeScore})` : "Grade listing";
+    displayGrade && displayScore != null
+      ? `Graded · ${displayGrade} (${displayScore})`
+      : displayGrade
+        ? `Graded · ${displayGrade}`
+        : "Grade listing";
 
   const steps = [
     {

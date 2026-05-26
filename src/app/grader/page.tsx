@@ -39,7 +39,7 @@ export default async function GraderPage() {
     return (
       <StudioProviders>
         <AppShell>
-          <div className="space-y-8">
+          <div className="space-y-8 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
             <PageHeader
               eyebrow="Free tool"
               title="Amazon Listing Grader"

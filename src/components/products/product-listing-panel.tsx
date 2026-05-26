@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Copy, Loader2, Save } from "lucide-react";
+import { Check, Copy, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,11 @@ export function ProductListingPanel({
       keywords !== saved.keywords
     );
   }, [title, bullets, description, keywords, saved]);
+
+  const copyField = async (label: string, text: string) => {
+    await navigator.clipboard.writeText(text);
+    toast(`${label} copied`);
+  };
 
   const copyAll = async () => {
     const text = [
@@ -142,7 +147,13 @@ export function ProductListingPanel({
               </>
             )}
           </Button>
-          <Button type="button" size="sm" disabled={!isDirty || saving} onClick={save}>
+          <Button
+            type="button"
+            size="sm"
+            disabled={!isDirty || saving}
+            onClick={save}
+            className={isDirty ? "hidden md:inline-flex" : undefined}
+          >
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" /> Saving…
@@ -166,7 +177,13 @@ export function ProductListingPanel({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-base">Title</CardTitle>
-            <CharCounter value={title} max={AMAZON_TITLE_MAX} />
+            <div className="flex items-center gap-2">
+              <CharCounter value={title} max={AMAZON_TITLE_MAX} />
+              <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => copyField("Title", title)}>
+                <Copy className="h-3.5 w-3.5" />
+                <span className="sr-only">Copy title</span>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <Label htmlFor="listing-title" className="sr-only">
@@ -181,13 +198,52 @@ export function ProductListingPanel({
           </CardContent>
         </Card>
 
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-medium text-[var(--muted-fg)]">Bullets</p>
+          {bullets.length < 5 ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setBullets([...bullets, ""])}
+            >
+              <Plus className="h-4 w-4" />
+              Add bullet
+            </Button>
+          ) : null}
+        </div>
+
         {bullets.map((b, i) => {
           const bulletOver = b.length > AMAZON_BULLET_MAX;
           return (
             <Card key={`bullet-${i}`}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
                 <CardTitle className="text-base">Bullet {i + 1}</CardTitle>
-                <CharCounter value={b} max={AMAZON_BULLET_MAX} />
+                <div className="flex items-center gap-1">
+                  <CharCounter value={b} max={AMAZON_BULLET_MAX} />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2"
+                    onClick={() => copyField(`Bullet ${i + 1}`, b)}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span className="sr-only">Copy bullet {i + 1}</span>
+                  </Button>
+                  {bullets.length > 1 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-[var(--muted-fg)] hover:text-[var(--error)]"
+                      onClick={() => setBullets(bullets.filter((_, idx) => idx !== i))}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="sr-only">Remove bullet {i + 1}</span>
+                    </Button>
+                  ) : null}
+                </div>
               </CardHeader>
               <CardContent>
                 {bulletOver ? (
@@ -211,8 +267,20 @@ export function ProductListingPanel({
         })}
 
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-base">Description</CardTitle>
+            {description ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => copyField("Description", description)}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                <span className="sr-only">Copy description</span>
+              </Button>
+            ) : null}
           </CardHeader>
           <CardContent>
             <Label htmlFor="listing-description" className="sr-only">
@@ -228,8 +296,20 @@ export function ProductListingPanel({
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-base">Backend keywords</CardTitle>
+            {keywords ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => copyField("Keywords", keywords)}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                <span className="sr-only">Copy keywords</span>
+              </Button>
+            ) : null}
           </CardHeader>
           <CardContent>
             <Label htmlFor="listing-keywords" className="sr-only">
