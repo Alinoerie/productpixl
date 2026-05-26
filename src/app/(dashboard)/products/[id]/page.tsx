@@ -6,9 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ProductLiveStatus } from "@/components/products/product-live-status";
+import { ProductLiveGallery } from "@/components/products/product-live-gallery";
+import { ProductDeleteButton } from "@/components/products/product-delete-button";
 import { ProductExportActions } from "@/components/products/product-export-actions";
-import { ProductImageGallery } from "@/components/products/product-image-gallery";
 import { ProductListingPanel } from "@/components/products/product-listing-panel";
 import { getMarketplace } from "@/lib/marketplaces";
 import {
@@ -34,6 +34,14 @@ export default async function ProductPage({
 
   const bullets = (product.listingCopy?.bullets as string[] | null) ?? [];
   const completedAssets = product.assets.filter((a) => a.status === "COMPLETE" && a.imageUrl);
+  const galleryAssets = product.assets.map((a) => ({
+    id: a.id,
+    moduleId: a.moduleId,
+    imageUrl: a.imageUrl,
+    qaScore: a.qaScore,
+    status: a.status,
+    errorMessage: a.errorMessage,
+  }));
 
   return (
     <div className="space-y-8">
@@ -71,7 +79,7 @@ export default async function ProductPage({
       </div>
 
       {product.status === "FAILED" && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
           Generation failed. Try a new run from{" "}
           <Link href="/generate" className="font-medium underline">
             Image studio
@@ -95,15 +103,14 @@ export default async function ProductPage({
         }
       />
 
-      {product.status === "PROCESSING" && <ProductLiveStatus productId={product.id} />}
-
-      {product.assets.length > 0 ? (
-        <ProductImageGallery
+      {product.assets.length > 0 || product.status === "PROCESSING" ? (
+        <ProductLiveGallery
           productId={product.id}
           productName={product.name}
-          assets={product.assets}
+          initialAssets={galleryAssets}
+          initialStatus={product.status}
         />
-      ) : product.status !== "PROCESSING" ? (
+      ) : (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">
             <p className="font-serif text-lg">No images yet</p>
@@ -115,7 +122,7 @@ export default async function ProductPage({
             </Button>
           </CardContent>
         </Card>
-      ) : null}
+      )}
 
       {product.listingCopy?.title ? (
         <ProductListingPanel
@@ -140,6 +147,10 @@ export default async function ProductPage({
           </CardContent>
         </Card>
       ) : null}
+
+      <div className="border-t border-[var(--border)] pt-6">
+        <ProductDeleteButton productId={product.id} productName={product.name} />
+      </div>
     </div>
   );
 }

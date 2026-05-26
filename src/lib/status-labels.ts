@@ -38,6 +38,19 @@ export function formatModuleLabel(moduleId: string) {
   return label ? `${moduleId} · ${label}` : moduleId;
 }
 
+export function formatOrderStatus(status: string) {
+  const labels: Record<string, string> = {
+    PENDING: "Pending",
+    paid: "Paid",
+    PAID: "Paid",
+    complete: "Complete",
+    COMPLETE: "Complete",
+    failed: "Failed",
+    FAILED: "Failed",
+  };
+  return labels[status] ?? status.replace(/_/g, " ").toLowerCase();
+}
+
 export function statusBadgeClass(status: string) {
   switch (status) {
     case "COMPLETE":

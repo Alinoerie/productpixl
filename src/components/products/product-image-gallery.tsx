@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { X, ZoomIn } from "lucide-react";
 import { formatModuleLabel } from "@/lib/status-labels";
 import { AssetSpotEdit } from "@/components/products/asset-spot-edit";
@@ -24,7 +24,19 @@ export function ProductImageGallery({
   assets: GalleryAsset[];
 }) {
   const [lightbox, setLightbox] = useState<GalleryAsset | null>(null);
+  const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  const openLightbox = (asset: GalleryAsset, el: HTMLElement) => {
+    setTriggerEl(el);
+    setLightbox(asset);
+  };
+
+  const closeLightbox = () => {
+    setLightbox(null);
+    triggerEl?.focus();
+  };
 
   useEffect(() => {
     if (!lightbox) return;
@@ -34,14 +46,35 @@ export function ProductImageGallery({
     closeRef.current?.focus();
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightbox(null);
+      if (e.key === "Escape") {
+        closeLightbox();
+        return;
+      }
+      if (e.key !== "Tab" || !dialogRef.current) return;
+
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
+
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
     };
-  }, [lightbox]);
+  }, [lightbox, triggerEl]);
 
   return (
     <>
@@ -58,7 +91,7 @@ export function ProductImageGallery({
                   <button
                     type="button"
                     className="relative block h-full w-full"
-                    onClick={() => setLightbox(a)}
+                    onClick={(e) => openLightbox(a, e.currentTarget)}
                     aria-label={`View ${formatModuleLabel(a.moduleId)} full size`}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -86,7 +119,7 @@ export function ProductImageGallery({
                   {a.qaScore != null ? ` · QA ${a.qaScore}/10` : ""}
                 </p>
                 {a.errorMessage ? (
-                  <p className="mt-2 text-xs text-red-600">{a.errorMessage}</p>
+                  <p className="mt-2 text-xs text-[var(--error)]">{a.errorMessage}</p>
                 ) : null}
                 {a.status === "COMPLETE" && a.imageUrl ? (
                   <AssetSpotEdit productId={productId} assetId={a.id} moduleId={a.moduleId} />
@@ -99,17 +132,18 @@ export function ProductImageGallery({
 
       {lightbox?.imageUrl ? (
         <div
+          ref={dialogRef}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-label={`${formatModuleLabel(lightbox.moduleId)} preview`}
-          onClick={() => setLightbox(null)}
+          onClick={closeLightbox}
         >
           <button
             ref={closeRef}
             type="button"
             className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
-            onClick={() => setLightbox(null)}
+            onClick={closeLightbox}
             aria-label="Close preview"
           >
             <X className="h-5 w-5" />
@@ -120,6 +154,7 @@ export function ProductImageGallery({
               src={lightbox.imageUrl}
               alt={`${productName} — ${formatModuleLabel(lightbox.moduleId)}`}
               className="max-h-[85vh] w-auto rounded-xl object-contain shadow-2xl"
+              tabIndex={0}
             />
             <p className="mt-3 text-center text-sm text-white/80">
               {formatModuleLabel(lightbox.moduleId)}

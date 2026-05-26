@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,21 +26,29 @@ export function BrandProfileForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [baseline, setBaseline] = useState<BrandProfileData | null>(null);
 
   useEffect(() => {
     fetchJson<{ profile: BrandProfileData }>("/api/brand-profile")
       .then(({ data }) => {
-        setProfile({
+        const loaded = {
           displayName: data.profile.displayName ?? "",
           primaryColor: data.profile.primaryColor,
           secondaryColor: data.profile.secondaryColor,
           tone: data.profile.tone,
           logoUrl: data.profile.logoUrl ?? "",
           guidelines: data.profile.guidelines ?? "",
-        });
+        };
+        setProfile(loaded);
+        setBaseline(loaded);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const isDirty = useMemo(() => {
+    if (!baseline) return false;
+    return JSON.stringify(profile) !== JSON.stringify(baseline);
+  }, [profile, baseline]);
 
   const uploadLogo = async (file: File) => {
     setUploadingLogo(true);
@@ -70,6 +78,7 @@ export function BrandProfileForm() {
       body: JSON.stringify(profile),
     });
     if (ok) {
+      setBaseline(profile);
       setSaved(true);
       toast("Brand profile saved");
       setTimeout(() => setSaved(false), 2500);
@@ -196,11 +205,14 @@ export function BrandProfileForm() {
               placeholder="Always show EU energy label, never show hands, etc."
             />
           </div>
-          <Button onClick={save} className="w-full">
-            {saved ? "Saved ✓" : "Save brand profile"}
+          <Button onClick={save} className="w-full" disabled={!isDirty}>
+            {saved ? "Saved ✓" : isDirty ? "Save brand profile" : "No changes to save"}
           </Button>
+          {isDirty ? (
+            <p className="text-xs text-[var(--muted-fg)]">Unsaved changes — save before leaving this page.</p>
+          ) : null}
           {error ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
+            <p className="rounded-lg border border-[var(--error-border)] bg-[var(--error-bg)] px-3 py-2 text-sm text-[var(--error)]">{error}</p>
           ) : null}
         </CardContent>
       </Card>

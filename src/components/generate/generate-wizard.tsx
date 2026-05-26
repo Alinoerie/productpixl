@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { formatPipelinePhase, formatModuleLabel } from "@/lib/status-labels";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
+import { useToast } from "@/components/ui/toast-provider";
 import { Camera, Check, Loader2, Sparkles } from "lucide-react";
 import { type MarketplaceId } from "@/lib/marketplaces";
 
@@ -54,7 +55,10 @@ const STEPS = ["Upload", "Product info", "Prompt plan", "Results"];
 
 export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
   const router = useRouter();
+  const { toast } = useToast();
   const previewUrlRef = useRef<string | null>(null);
+  const stepperRef = useRef<HTMLDivElement>(null);
+  const completionRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
   const [imageUrl, setImageUrl] = useState("");
   const [preview, setPreview] = useState("");
@@ -227,26 +231,48 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
   };
 
   const pollStatus = useCallback(async () => {
-    if (!productId) return;
-    const { ok, data } = await fetchJson<{ pipelineStatus?: typeof pipelineStatus; status?: string }>(
-      `/api/products/${productId}/status`
-    );
-    if (ok) {
-      setPipelineStatus(data.pipelineStatus as typeof pipelineStatus);
-      if (data.status === "FAILED") {
-        setPipelineFailed(true);
-        return;
-      }
-      if (data.status === "COMPLETE" || data.status === "FAILED") return;
-    }
+    if (!productId) return null;
+    const { ok, data } = await fetchJson<{
+      pipelineStatus?: typeof pipelineStatus;
+      status?: string;
+    }>(`/api/products/${productId}/status`);
+    if (!ok) return null;
+    setPipelineStatus(data.pipelineStatus as typeof pipelineStatus);
+    return data.status ?? null;
   }, [productId]);
 
   useEffect(() => {
     if (step !== 3 || !productId) return;
-    pollStatus();
-    const id = setInterval(pollStatus, 2000);
-    return () => clearInterval(id);
-  }, [step, productId, pollStatus]);
+
+    let stopped = false;
+
+    const check = async () => {
+      if (stopped) return;
+      const status = await pollStatus();
+      if (!status || (status !== "COMPLETE" && status !== "FAILED")) return;
+
+      stopped = true;
+      if (status === "FAILED") {
+        setPipelineFailed(true);
+        toast("Generation failed", "error");
+      } else {
+        toast("Gallery generation complete");
+        completionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      router.refresh();
+    };
+
+    void check();
+    const id = window.setInterval(() => void check(), 2000);
+    return () => {
+      stopped = true;
+      window.clearInterval(id);
+    };
+  }, [step, productId, pollStatus, router, toast]);
+
+  useEffect(() => {
+    stepperRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [step]);
 
   const done = pipelineStatus?.phase === "COMPLETE";
   const lacksCredits = initialCredits < 1;
@@ -273,7 +299,9 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
         }
       />
 
-      <StudioStepper steps={STEPS} currentStep={step} label="Generation progress" />
+      <div ref={stepperRef}>
+        <StudioStepper steps={STEPS} currentStep={step} label="Generation progress" />
+      </div>
 
       {error === "INSUFFICIENT_CREDITS" ? (
         <AlertBanner
@@ -611,7 +639,7 @@ export function GenerateWizard({ initialCredits }: { initialCredits: number }) {
             ))}
           </div>
           {done && productId && (
-            <div className="flex flex-wrap gap-3">
+            <div ref={completionRef} className="flex flex-wrap gap-3">
               <Button size="lg" className="rounded-xl" onClick={() => router.push(`/products/${productId}`)}>
                 View full project
               </Button>

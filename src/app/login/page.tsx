@@ -2,8 +2,7 @@ import Link from "next/link";
 import { auth, signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { GoogleIcon } from "@/components/ui/google-icon";
+import { GoogleSignInForm } from "@/components/auth/google-sign-in-form";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 
 function safeCallbackUrl(raw?: string) {
@@ -78,28 +77,17 @@ export default async function LoginPage({
           </p>
 
           {errorMessage ? (
-            <p className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <p className="mt-6 rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
               {errorMessage}
             </p>
           ) : null}
 
-          <form
-            className="mt-8"
+          <GoogleSignInForm
             action={async () => {
               "use server";
               await signIn("google", { redirectTo: callbackUrl });
             }}
-          >
-            <Button
-              type="submit"
-              variant="outline"
-              className="h-12 w-full rounded-xl border-[var(--border-strong)] bg-white text-base hover:bg-[var(--muted)]/40"
-              size="lg"
-            >
-              <GoogleIcon className="h-5 w-5" />
-              Continue with Google
-            </Button>
-          </form>
+          />
           <p className="mt-6 text-center text-xs text-[var(--muted-fg)]">
             New accounts receive 10 free generation credits.
           </p>

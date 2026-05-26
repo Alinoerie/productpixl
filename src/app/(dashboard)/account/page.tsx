@@ -5,6 +5,11 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatOrderStatus } from "@/lib/status-labels";
+
+function formatAmount(cents: number) {
+  return new Intl.NumberFormat("en-EU", { style: "currency", currency: "EUR" }).format(cents / 100);
+}
 
 export default async function AccountPage({
   searchParams,
@@ -33,7 +38,7 @@ export default async function AccountPage({
       />
 
       {params.success && (
-        <p className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <p className="rounded-xl border border-[var(--success)]/20 bg-[var(--success-bg)] px-4 py-3 text-sm text-[var(--success)]">
           Payment successful — credits added to your balance.
         </p>
       )}
@@ -84,11 +89,14 @@ export default async function AccountPage({
           ) : (
             <ul className="divide-y divide-[var(--border)]">
               {user.orders.map((o) => (
-                <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
-                  <span>
-                    {o.package} · {o.credits} credits
-                  </span>
-                  <Badge variant="secondary">{o.status}</Badge>
+                <li key={o.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+                  <div>
+                    <p className="font-medium capitalize">{o.package} pack · {o.credits} credits</p>
+                    <p className="text-xs text-[var(--muted-fg)]">
+                      {new Date(o.createdAt).toLocaleDateString()} · {formatAmount(o.amount)}
+                    </p>
+                  </div>
+                  <Badge variant="secondary">{formatOrderStatus(o.status)}</Badge>
                 </li>
               ))}
             </ul>

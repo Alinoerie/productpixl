@@ -239,6 +239,22 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
     }
   }, [productId, copy, toast]);
 
+  const startOver = () => {
+    if (isDirty && !window.confirm("Discard unsaved copy edits?")) return;
+    reset();
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        if (isDirty && !saving && productId) void saveCopy();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isDirty, saving, productId, saveCopy]);
+
   return (
     <div className="space-y-8">
       <WorkflowNotice
@@ -463,10 +479,13 @@ export function CopyWorkspace({ initialCredits }: { initialCredits: number }) {
             <Button asChild variant="outline">
               <Link href="/grader">Grade this copy</Link>
             </Button>
-            <Button variant="ghost" onClick={reset}>
+            <Button variant="ghost" onClick={startOver}>
               Start over
             </Button>
           </div>
+          {isDirty ? (
+            <p className="text-xs text-[var(--muted-fg)]">Unsaved edits — save to project or use ⌘/Ctrl+S.</p>
+          ) : null}
         </div>
       )}
     </div>
