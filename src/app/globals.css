@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+/* ProductPixl — Copper Horizon brand system (see docs/BRAND.md) */
+:root {
+  --background: #f3ede4;
+  --foreground: #121110;
+  --card: #fffdf9;
+  --card-elevated: #ffffff;
+  --border: #d9cec2;
+  --border-strong: #c4b5a5;
+  --muted: #ebe4da;
+  --muted-fg: #5a534c;
+  --accent: #b45309;
+  --accent-hover: #92400e;
+  --accent-soft: #fef3e8;
+  --accent-fg: #fffaf7;
+  --teal: #0d5c63;
+  --teal-soft: #e8f4f4;
+  --ink: #121110;
+  --ink-muted: #3d3834;
+  --success: #166534;
+  --success-bg: #ecfdf3;
+  --warning: #b45309;
+  --warning-bg: #fef3e8;
+  --shadow-sm: 0 1px 2px rgb(18 17 16 / 0.05);
+  --shadow-md: 0 8px 28px rgb(18 17 16 / 0.09);
+  --shadow-lg: 0 24px 56px rgb(18 17 16 / 0.14);
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-instrument);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-serif {
+  font-family: var(--font-instrument), Georgia, serif;
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(rgb(18 17 16 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(18 17 16 / 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.bg-hero-glow {
+  background:
+    radial-gradient(ellipse 80% 55% at 50% -15%, rgb(180 83 9 / 0.16), transparent),
+    radial-gradient(ellipse 45% 35% at 100% 0%, rgb(13 92 99 / 0.08), transparent),
+    var(--background);
+}
+
+.bg-teal-glow {
+  background: linear-gradient(135deg, var(--teal-soft) 0%, var(--accent-soft) 100%);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.grade-a { color: #166534; background: #ecfdf3; }
+.grade-b { color: #0d5c63; background: #e8f4f4; }
+.grade-c { color: #b45309; background: #fef3e8; }
+.grade-d { color: #9a3412; background: #ffedd5; }
+.grade-f { color: #991b1b; background: #fef2f2; }

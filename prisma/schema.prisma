@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  name             String?
+  image            String?
+  credits          Int       @default(10)
+  stripeCustomerId String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  brands       Brand[]
+  brandProfile BrandProfile?
+  products     Product[]
+  orders       Order[]
+}
+
+model BrandProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  displayName    String?
+  primaryColor   String   @default("#B45309")
+  secondaryColor String   @default("#0D5C63")
+  tone           String   @default("premium, trustworthy, conversion-focused")
+  logoUrl        String?
+  guidelines     String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Brand {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  logoUrl     String?
+  amazonUrl   String?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+}
+
+model Product {
+  id              String  @id @default(cuid())
+  name            String
+  inputImageUrl   String
+  brandId         String?
+  userId          String
+  pipelineType    String  @default("LISTING")
+  marketplace     String  @default("AMAZON_US")
+
+  dimensions      String?
+  weight          String?
+  materials       String?
+  colors          String?
+  keyFeatures     String?
+  targetBuyer     String?
+  competitors     String?
+  brandGuidelines String?
+  amazonCategory  String?
+  brandRegistered Boolean @default(false)
+
+  analysisJson  Json?
+  researchJson  Json?
+  status        String  @default("QUEUED")
+  pipelineStatus Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand       Brand?       @relation(fields: [brandId], references: [id])
+  assets      Asset[]
+  listingCopy ListingCopy?
+}
+
+model Asset {
+  id           String   @id @default(cuid())
+  productId    String
+  moduleId     String
+  pipelineType String   @default("LISTING")
+  imageUrl     String?
+  status       String   @default("PENDING")
+  qaScore      Int?
+  retryCount   Int      @default(0)
+  errorMessage String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ListingCopy {
+  id               String   @id @default(cuid())
+  productId        String   @unique
+  marketplace      String   @default("AMAZON_US")
+  title            String?
+  bullets          Json?
+  description      String?  @db.Text
+  backendKeywords  String?
+  status           String   @default("PENDING")
+  errorMessage     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  userId          String
+  stripeSessionId String?  @unique
+  stripePaymentId String?
+  package         String
+  credits         Int
+  amount          Int
+  status          String   @default("PENDING")
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
