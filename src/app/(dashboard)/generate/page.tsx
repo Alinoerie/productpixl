@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { GenerateWizard } from "@/components/generate/generate-wizard";
-import { isBrandProfileConfigured } from "@/lib/brand-profile";
+import { isBrandProfileConfigured, getBrandProfileForUser } from "@/lib/brand-profile";
 import { type MarketplaceId } from "@/lib/marketplaces";
 
 export default async function GeneratePage({
@@ -22,6 +22,8 @@ export default async function GeneratePage({
       where: { id: params.productId, userId: session.user.id },
     });
     if (product) {
+      const analysis = product.analysisJson as { brandName?: string } | null;
+      const brandProfile = await getBrandProfileForUser(session.user.id);
       linkedProduct = {
         id: product.id,
         name: product.name,
@@ -33,6 +35,7 @@ export default async function GeneratePage({
         keyFeatures: product.keyFeatures,
         targetBuyer: product.targetBuyer,
         amazonCategory: product.amazonCategory,
+        brandName: analysis?.brandName ?? brandProfile.displayName ?? "",
       };
     }
   }

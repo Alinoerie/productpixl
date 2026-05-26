@@ -22,6 +22,7 @@ import { BrandSetupNudge } from "@/components/ui/brand-setup-nudge";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { AMAZON_BULLET_MAX, AMAZON_TITLE_MAX } from "@/lib/amazon-limits";
 import { loadCopyDraft } from "@/lib/copy-draft";
+import { useLiveCredits } from "@/hooks/use-live-credits";
 import { type MarketplaceId, getMarketplace } from "@/lib/marketplaces";
 
 type LinkedProduct = {
@@ -33,6 +34,7 @@ type LinkedProduct = {
   keyFeatures?: string | null;
   targetBuyer?: string | null;
   amazonCategory?: string | null;
+  brandName?: string;
   listingCopy?: {
     title: string;
     bullets: string[];
@@ -56,14 +58,17 @@ export function CopyWorkspace({
   linkedProduct = null,
   missingProductId = false,
   brandConfigured = true,
+  defaultBrandName = "",
 }: {
   initialCredits: number;
   linkedProduct?: LinkedProduct | null;
   missingProductId?: boolean;
   brandConfigured?: boolean;
+  defaultBrandName?: string;
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const [credits] = useLiveCredits(initialCredits);
   const previewUrlRef = useRef<string | null>(null);
   const [linkedProductId, setLinkedProductId] = useState<string | null>(linkedProduct?.id ?? null);
   const [fromGrader, setFromGrader] = useState(false);
@@ -93,7 +98,7 @@ export function CopyWorkspace({
 
   const [form, setForm] = useState({
     name: "",
-    brandName: "",
+    brandName: defaultBrandName,
     category: "",
     materials: "",
     keyFeatures: "",
@@ -143,7 +148,7 @@ export function CopyWorkspace({
     setMarketplace(linkedProduct.marketplace);
     setForm({
       name: linkedProduct.name,
-      brandName: "",
+      brandName: linkedProduct.brandName ?? defaultBrandName,
       category: linkedProduct.amazonCategory ?? "",
       materials: linkedProduct.materials ?? "",
       keyFeatures: linkedProduct.keyFeatures ?? "",
@@ -170,7 +175,7 @@ export function CopyWorkspace({
       });
       setSavedBaseline(baseline);
     }
-  }, [linkedProduct]);
+  }, [linkedProduct, defaultBrandName]);
 
   const upload = async (file: File) => {
     setUploading(true);
@@ -300,7 +305,7 @@ export function CopyWorkspace({
 
   const titleOverLimit = (copy?.title?.length ?? 0) > AMAZON_TITLE_MAX;
   const copyStep = copy?.title ? 2 : loading ? 1 : 0;
-  const lacksCredits = initialCredits < 1;
+  const lacksCredits = credits < 1;
   const categoryLabel = `${getMarketplace(marketplace).label} category`;
   const canRetry = Boolean(error && error !== "INSUFFICIENT_CREDITS" && form.name.trim() && !loading);
 
@@ -412,7 +417,7 @@ export function CopyWorkspace({
   return (
     <div className="space-y-8">
       <WorkflowNotice
-        initialCredits={initialCredits}
+        initialCredits={credits}
         description="RUFUS-ready title, bullets, description, and backend keywords."
       />
 

@@ -30,9 +30,15 @@ function SubmitButton() {
   );
 }
 
-export function GoogleSignInForm({ action }: { action: () => Promise<void> }) {
+export function GoogleSignInForm({
+  action,
+  errorDescribedBy,
+}: {
+  action: () => Promise<void>;
+  errorDescribedBy?: string;
+}) {
   return (
-    <form className="mt-8" action={action}>
+    <form className="mt-8" action={action} aria-describedby={errorDescribedBy}>
       <SubmitButton />
     </form>
   );

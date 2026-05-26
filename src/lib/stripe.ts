@@ -14,7 +14,8 @@ export type CreditPackageKey = keyof typeof CREDIT_PACKAGES;
 export async function createCheckoutSession(
   userId: string,
   email: string,
-  packageKey: CreditPackageKey
+  packageKey: CreditPackageKey,
+  returnTo = "/generate"
 ) {
   const pkg = CREDIT_PACKAGES[packageKey];
   const priceId =
@@ -23,6 +24,9 @@ export async function createCheckoutSession(
       : process.env.STRIPE_PRICE_GROWTH;
 
   const baseUrl = process.env.AUTH_URL ?? "http://localhost:3000";
+  const safeReturn =
+    returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo.split("?")[0] : "/generate";
+  const successUrl = `${baseUrl}${safeReturn}?success=true`;
 
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = priceId
     ? [{ price: priceId, quantity: 1 }]
@@ -49,7 +53,7 @@ export async function createCheckoutSession(
       package: packageKey,
       credits: String(pkg.credits),
     },
-    success_url: `${baseUrl}/generate?success=true`,
+    success_url: successUrl,
     cancel_url: `${baseUrl}/pricing?canceled=true`,
   });
 }

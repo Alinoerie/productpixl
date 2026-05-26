@@ -75,7 +75,7 @@ export default async function ProductPage({
             {completedAssets.length > 0 ? ` · ${completedAssets.length} images` : ""}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="hidden flex-wrap gap-2 md:flex">
           {completedAssets.length > 0 && !product.listingCopy?.title ? (
             <Button asChild>
               <Link href={`/copy?productId=${product.id}`}>Generate copy</Link>

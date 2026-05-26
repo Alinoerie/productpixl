@@ -42,9 +42,13 @@ Keep all visuals and implied styling consistent with this brand.`;
 }
 
 export async function isBrandProfileConfigured(userId: string): Promise<boolean> {
-  const row = await prisma.brandProfile.findUnique({
-    where: { userId },
-    select: { id: true, displayName: true },
-  });
-  return Boolean(row?.displayName?.trim());
+  const row = await prisma.brandProfile.findUnique({ where: { userId } });
+  if (!row) return false;
+  if (row.displayName?.trim()) return true;
+  if (row.guidelines?.trim()) return true;
+  if (row.logoUrl) return true;
+  if (row.tone && row.tone !== DEFAULT_BRAND_PROFILE.tone) return true;
+  if (row.primaryColor && row.primaryColor !== DEFAULT_BRAND_PROFILE.primaryColor) return true;
+  if (row.secondaryColor && row.secondaryColor !== DEFAULT_BRAND_PROFILE.secondaryColor) return true;
+  return false;
 }

@@ -2,6 +2,7 @@ import { inngest, COPY_PIPELINE_EVENT } from "../client";
 import { prisma } from "@/lib/prisma";
 import { runCopyResearch } from "@/pipelines/tavily";
 import { generateListingCopy } from "@/pipelines/copy-gen";
+import { getBrandProfileForUser } from "@/lib/brand-profile";
 
 export const copyPipeline = inngest.createFunction(
   { id: "copy-pipeline-run", retries: 3 },
@@ -32,15 +33,18 @@ export const copyPipeline = inngest.createFunction(
       prisma.product.findUniqueOrThrow({ where: { id: productId } })
     );
 
+    const brandProfile = await step.run("brand", () => getBrandProfileForUser(product.userId));
+
     const research = await step.run("research", () =>
       runCopyResearch(intake.name, intake.category, marketplace)
     );
 
     const copy = await step.run("generate", async () => {
       const analysis = product.analysisJson as { keyObservations?: string } | null;
+      const brandName = intake.brandName || brandProfile.displayName || "";
       return generateListingCopy({
         productName: intake.name,
-        brandName: intake.brandName,
+        brandName,
         category: intake.category,
         marketplace,
         materials: intake.materials,
@@ -50,6 +54,7 @@ export const copyPipeline = inngest.createFunction(
         researchSnippets: research.snippets,
         keywords: research.keywords,
         competitorTitles: research.competitorTitles,
+        brandProfile,
       });
     });
 

@@ -77,12 +77,17 @@ export default async function LoginPage({
           </p>
 
           {errorMessage ? (
-            <p className="mt-6 rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
+            <p
+              id="login-error"
+              role="alert"
+              className="mt-6 rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]"
+            >
               {errorMessage}
             </p>
           ) : null}
 
           <GoogleSignInForm
+            errorDescribedBy={errorMessage ? "login-error" : undefined}
             action={async () => {
               "use server";
               await signIn("google", { redirectTo: callbackUrl });

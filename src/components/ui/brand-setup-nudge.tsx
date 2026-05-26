@@ -23,7 +23,7 @@ export function BrandSetupNudge({ configured }: { configured: boolean }) {
         <div>
           <p className="text-sm font-semibold">Set your brand once</p>
           <p className="mt-0.5 text-sm text-[var(--muted-fg)]">
-            Colors and tone feed every image run — consistent gallery shots without repeating yourself.
+            Colors and tone feed every image and copy run — consistent listings without repeating yourself.
           </p>
         </div>
       </div>

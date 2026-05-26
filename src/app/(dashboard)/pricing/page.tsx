@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { Check, CreditCard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { CheckoutButton } from "@/components/pricing/checkout-button";
 import { CreditCalculator } from "@/components/pricing/credit-calculator";
+import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { isCheckoutEnabled } from "@/lib/checkout";
 
 const packs = [
@@ -29,13 +31,18 @@ const packs = [
 export default async function PricingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ canceled?: string }>;
+  searchParams: Promise<{ canceled?: string; success?: string }>;
 }) {
   const params = await searchParams;
   const checkoutEnabled = isCheckoutEnabled();
 
   return (
     <div className="space-y-12">
+      {params.success ? (
+        <Suspense fallback={null}>
+          <PaymentSuccessBanner />
+        </Suspense>
+      ) : null}
       {params.canceled ? (
         <div
           className="rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]"

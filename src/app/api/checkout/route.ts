@@ -9,7 +9,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { package: packageKey } = (await req.json()) as { package?: CreditPackageKey };
+  const { package: packageKey, returnTo } = (await req.json()) as {
+    package?: CreditPackageKey;
+    returnTo?: string;
+  };
   if (!packageKey || !["starter", "growth"].includes(packageKey)) {
     return NextResponse.json({ error: "Invalid package" }, { status: 400 });
   }
@@ -17,7 +20,8 @@ export async function POST(req: NextRequest) {
   const checkout = await createCheckoutSession(
     session.user.id,
     session.user.email,
-    packageKey
+    packageKey,
+    returnTo
   );
 
   await prisma.order.create({

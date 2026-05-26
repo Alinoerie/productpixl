@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { WorkflowNotice } from "@/components/ui/workflow-notice";
 import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-alert";
 import { BrandSetupNudge } from "@/components/ui/brand-setup-nudge";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
+import { useLiveCredits } from "@/hooks/use-live-credits";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
 import { MarketplacePicker } from "@/components/ui/marketplace-picker";
 import { StudioStepper } from "@/components/ui/studio-stepper";
@@ -67,6 +68,7 @@ type LinkedProduct = {
   keyFeatures?: string | null;
   targetBuyer?: string | null;
   amazonCategory?: string | null;
+  brandName?: string;
 };
 
 export function GenerateWizard({
@@ -84,6 +86,7 @@ export function GenerateWizard({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const [credits, setCredits] = useLiveCredits(initialCredits);
   const previewUrlRef = useRef<string | null>(null);
   const stepperRef = useRef<HTMLDivElement>(null);
   const completionRef = useRef<HTMLDivElement>(null);
@@ -200,7 +203,7 @@ export function GenerateWizard({
     setMarketplace(linkedProduct.marketplace);
     setForm({
       name: linkedProduct.name,
-      brandName: "",
+      brandName: linkedProduct.brandName ?? "",
       category: linkedProduct.amazonCategory ?? "",
       dimensions: linkedProduct.dimensions ?? "",
       materials: linkedProduct.materials ?? "",
@@ -327,7 +330,7 @@ export function GenerateWizard({
   }, [step]);
 
   const done = pipelineStatus?.phase === "COMPLETE";
-  const lacksCredits = initialCredits < 1;
+  const lacksCredits = credits < 1;
   const resultsLoading = step === 3 && !pipelineStatus?.steps?.length && !pipelineFailed;
   const galleryAssets =
     pipelineStatus?.steps?.map((s) => ({
@@ -403,11 +406,15 @@ export function GenerateWizard({
   return (
     <div className="space-y-8">
       <WorkflowNotice
-        initialCredits={initialCredits}
+        initialCredits={credits}
         description="PHOILA image pipeline — review prompts before any image is generated."
       />
 
-      {paymentSuccess ? <PaymentSuccessBanner /> : null}
+      {paymentSuccess ? (
+        <Suspense fallback={null}>
+          <PaymentSuccessBanner onCreditsUpdated={setCredits} />
+        </Suspense>
+      ) : null}
 
       <BrandSetupNudge configured={brandConfigured} />
 

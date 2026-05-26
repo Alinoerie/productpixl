@@ -2,6 +2,7 @@ import Replicate from "replicate";
 import { z } from "zod";
 import { extractReplicateText, parseJsonFromModel } from "@/lib/replicate-output";
 import { isStubMode, sleep } from "@/lib/utils";
+import { brandContextBlock, type BrandProfileData } from "@/lib/brand-profile";
 
 export const listingCopySchema = z.object({
   title: z.string().max(200),
@@ -24,6 +25,7 @@ export async function generateListingCopy(params: {
   researchSnippets: string[];
   keywords: string[];
   competitorTitles: string[];
+  brandProfile?: BrandProfileData;
 }): Promise<ListingCopyOutput> {
   if (isStubMode()) {
     await sleep(1500);
@@ -43,12 +45,13 @@ export async function generateListingCopy(params: {
 
   const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
   const isBol = params.marketplace === "BOL_NL";
+  const brandBlock = params.brandProfile ? `\n${brandContextBlock(params.brandProfile)}` : "";
   const system = `You are a marketplace listing copywriter for ${params.marketplace}.
 Write in English unless marketplace is BOL_NL (then Dutch is preferred for customer-facing copy).
 Optimize for Amazon A9 keyword relevance AND semantic/RUFUS-style discovery (benefit-led, answer shopper questions in bullets).
 Return ONLY valid JSON: { "title": string (max 200 chars), "bullets": [5 strings], "description": string, "backendKeywords": string (comma-separated, max 250 bytes) }
 Follow marketplace policy: no promotional claims, no competitor names, factual benefits.
-${isBol ? "Bol.com tone: direct, trustworthy, less aggressive US marketing hype." : ""}`;
+${isBol ? "Bol.com tone: direct, trustworthy, less aggressive US marketing hype." : ""}${brandBlock}`;
 
   const user = JSON.stringify({
     product: params.productName,

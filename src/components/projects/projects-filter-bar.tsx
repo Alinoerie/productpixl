@@ -96,6 +96,7 @@ export function ProjectsFilterBar({
                 ? "bg-[var(--accent)] text-white"
                 : "bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)]"
             )}
+            aria-pressed={status === opt.value}
           >
             {opt.label}
           </button>
@@ -113,6 +114,7 @@ export function ProjectsFilterBar({
                 ? "bg-[var(--teal)] text-white"
                 : "bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)]"
             )}
+            aria-pressed={copy === opt.value}
           >
             {opt.label}
           </button>

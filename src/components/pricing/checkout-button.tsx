@@ -36,6 +36,7 @@ export function CheckoutButton({
       <Button
         className="w-full"
         disabled={loading}
+        aria-busy={loading}
         onClick={async () => {
           setLoading(true);
           setError("");
@@ -43,7 +44,10 @@ export function CheckoutButton({
             const res = await fetch("/api/checkout", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ package: packageKey }),
+              body: JSON.stringify({
+                package: packageKey,
+                returnTo: `${window.location.pathname}${window.location.search}`,
+              }),
             });
             const data = await res.json();
             if (!res.ok) {
