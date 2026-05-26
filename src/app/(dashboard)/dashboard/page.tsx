@@ -14,7 +14,7 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) return null;
 
-  const [products, totalProjects, user, activeRuns, brandConfigured] = await Promise.all([
+  const [products, totalProjects, user, activeRuns, exportReady, brandConfigured] = await Promise.all([
     prisma.product.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
@@ -24,16 +24,22 @@ export default async function DashboardPage() {
     prisma.product.count({ where: { userId: session.user.id } }),
     prisma.user.findUnique({ where: { id: session.user.id }, select: { credits: true } }),
     prisma.product.findMany({
-      where: { userId: session.user.id, status: { in: ["PROCESSING", "FAILED"] } },
+      where: { userId: session.user.id, status: { in: ["QUEUED", "PROCESSING", "FAILED"] } },
       orderBy: { updatedAt: "desc" },
       take: 3,
       select: { id: true, name: true, status: true },
+    }),
+    prisma.product.count({
+      where: {
+        userId: session.user.id,
+        listingCopy: { title: { not: null } },
+        assets: { some: { imageUrl: { not: null } } },
+      },
     }),
     isBrandProfileConfigured(session.user.id),
   ]);
 
   const credits = user?.credits ?? 0;
-  const complete = products.filter((p) => p.status === "COMPLETE").length;
 
   return (
     <div className="space-y-10">
@@ -68,7 +74,7 @@ export default async function DashboardPage() {
           {[
             { label: "Credits", value: String(credits), href: "/pricing" as const },
             { label: "Projects", value: String(totalProjects) },
-            { label: "Complete", value: String(complete) },
+            { label: "Export-ready", value: String(exportReady) },
           ].map((s) => (
             <div key={s.label}>
               {s.href ? (
@@ -103,9 +109,11 @@ export default async function DashboardPage() {
       {activeRuns.length > 0 ? (
         <div className="rounded-2xl border border-[var(--accent)]/25 bg-[var(--accent-soft)]/25 px-4 py-4">
           <p className="text-sm font-semibold">
-            {activeRuns.filter((p) => p.status === "PROCESSING").length > 0
-              ? `${activeRuns.filter((p) => p.status === "PROCESSING").length} run${
-                  activeRuns.filter((p) => p.status === "PROCESSING").length === 1 ? "" : "s"
+            {activeRuns.filter((p) => p.status === "PROCESSING" || p.status === "QUEUED").length > 0
+              ? `${activeRuns.filter((p) => p.status === "PROCESSING" || p.status === "QUEUED").length} run${
+                  activeRuns.filter((p) => p.status === "PROCESSING" || p.status === "QUEUED").length === 1
+                    ? ""
+                    : "s"
                 } in progress`
               : "Needs attention"}
           </p>
@@ -124,7 +132,11 @@ export default async function DashboardPage() {
                         : "shrink-0 text-[var(--accent)]"
                     }
                   >
-                    {p.status === "FAILED" ? "Failed · Retry" : "Processing…"}
+                    {p.status === "FAILED"
+                      ? "Failed · Retry"
+                      : p.status === "QUEUED"
+                        ? "Starting…"
+                        : "Processing…"}
                   </span>
                 </Link>
               </li>
@@ -165,15 +177,19 @@ export default async function DashboardPage() {
                 </div>
                 <h3 className="mt-6 font-serif text-xl">Your studio is empty</h3>
                 <p className="mt-2 max-w-sm text-sm text-[var(--muted-fg)] md:max-w-md">
-                  Drop a product photo to run the PHOILA image pipeline — L1 hero, L3 lifestyle, L4 detail in one
-                  credit.
+                  Start with an image run or generate listing copy — every run saves as a project you can return to.
                 </p>
-                <Button asChild className="mt-8" size="lg">
-                  <Link href="/generate">
-                    Start first run
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
+                <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
+                  <Button asChild size="lg">
+                    <Link href="/generate">
+                      Open image studio
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg">
+                    <Link href="/copy">Generate listing copy</Link>
+                  </Button>
+                </div>
               </div>
               <div>
                 <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)] md:text-left">

@@ -226,8 +226,12 @@ export function GenerateWizard({
       setImageUrl(linkedProduct.inputImageUrl);
       setPreview(linkedProduct.inputImageUrl);
       setStep(1);
+    } else {
+      setStep(1);
     }
   }, [linkedProduct]);
+
+  const copyOnlyHandoff = Boolean(linkedProduct && !linkedProduct.inputImageUrl);
 
   const buildPromptPlan = useCallback(async () => {
     setError("");
@@ -490,13 +494,22 @@ export function GenerateWizard({
 
       {linkedProduct ? (
         <div className="rounded-xl border border-[var(--teal)]/30 bg-[var(--teal-soft)]/40 px-4 py-3 text-sm">
-          Continuing run for <strong>{linkedProduct.name}</strong> — product photo and details are pre-filled.
+          {copyOnlyHandoff ? (
+            <>
+              Listing copy saved for <strong>{linkedProduct.name}</strong> — upload a product photo below to
+              generate gallery images. Product details are already filled in.
+            </>
+          ) : (
+            <>
+              Continuing run for <strong>{linkedProduct.name}</strong> — product photo and details are pre-filled.
+            </>
+          )}
         </div>
       ) : null}
 
       {error === "INSUFFICIENT_CREDITS" ? <InsufficientCreditsAlert /> : null}
 
-      {error && error !== "INSUFFICIENT_CREDITS" ? (
+      {error && error !== "INSUFFICIENT_CREDITS" && step !== 0 && step !== 2 ? (
         <p className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">{error}</p>
       ) : null}
 
@@ -531,6 +544,26 @@ export function GenerateWizard({
               emptyHint="JPG, PNG or WEBP · max 20MB · No ASIN needed"
               inputId="generate-upload"
             />
+            {error && error !== "INSUFFICIENT_CREDITS" ? (
+              <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
+                <p>{error}</p>
+                {imageUrl ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-3 border-[var(--error-border)]"
+                    disabled={analyzing || uploading}
+                    onClick={() => {
+                      setError("");
+                      void analyze();
+                    }}
+                  >
+                    Try again
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
             <div className={cn(mobileStickyFooter, "-mx-6 -mb-6 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:mb-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none")}>
               <Button
                 onClick={analyze}
@@ -561,8 +594,45 @@ export function GenerateWizard({
         <Card className="shadow-[var(--shadow-md)]">
           <CardContent className="grid gap-4 p-6 md:grid-cols-2 md:p-8">
             <p className="md:col-span-2 text-sm text-[var(--muted-fg)]">
-              Review AI-extracted product data. Edit anything before generation — this feeds your PHOILA prompts.
+              {copyOnlyHandoff && !imageUrl
+                ? "Review saved product details, upload a photo, then continue to the prompt plan."
+                : "Review AI-extracted product data. Edit anything before generation — this feeds your PHOILA prompts."}
             </p>
+            {!imageUrl ? (
+              <div className="md:col-span-2 space-y-2 rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)]/40 p-4">
+                <Label htmlFor="generate-upload-step1">Product photo (required for gallery)</Label>
+                <UploadDropzone
+                  preview={preview}
+                  previewAlt="Product photo preview"
+                  dragOver={dragOver}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOver(true);
+                  }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    const file = e.dataTransfer.files?.[0];
+                    if (file?.type.startsWith("image/")) onFile(file);
+                  }}
+                  onFileSelect={onFile}
+                  onClear={() => {
+                    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+                    previewUrlRef.current = null;
+                    setPreview("");
+                    setImageUrl("");
+                  }}
+                  disabled={uploading || analyzing}
+                  minHeight="min-h-[180px]"
+                  emptyHint="PHOILA needs a product photo to generate images"
+                  inputId="generate-upload-step1"
+                />
+                {uploading ? (
+                  <p className="text-xs text-[var(--muted-fg)]">Uploading photo…</p>
+                ) : null}
+              </div>
+            ) : null}
             <div className="md:col-span-2">
               <Label className="mb-2 block">Marketplace</Label>
               <MarketplacePicker
@@ -620,9 +690,9 @@ export function GenerateWizard({
                   setPromptPlan([]);
                   setStep(2);
                 }}
-                disabled={!form.name.trim()}
+                disabled={!form.name.trim() || !imageUrl || uploading}
               >
-                Next
+                {imageUrl ? "Next" : "Upload photo to continue"}
               </Button>
             </div>
           </CardContent>
@@ -668,6 +738,24 @@ export function GenerateWizard({
                 Edit prompt text before any image2image call is sent
               </li>
             </ul>
+            {error && error !== "INSUFFICIENT_CREDITS" ? (
+              <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
+                <p>{error}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="mt-3 border-[var(--error-border)]"
+                  disabled={planningPrompts || !imageUrl}
+                  onClick={() => {
+                    setError("");
+                    void buildPromptPlan();
+                  }}
+                >
+                  Retry prompt plan
+                </Button>
+              </div>
+            ) : null}
             <div className="space-y-3">
               <Button
                 variant="outline"
@@ -684,6 +772,13 @@ export function GenerateWizard({
                   "Generate prompt plan"
                 )}
               </Button>
+              {planningPrompts && promptPlan.length === 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-48 w-full rounded-xl" />
+                  ))}
+                </div>
+              ) : null}
               {promptPlan.length > 0 && (
                 <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--muted)]/30 p-4">
                   <p className="text-sm font-medium">

@@ -16,7 +16,7 @@ const PAGE_SIZE = 24;
 
 function buildWhere(
   userId: string,
-  filters: { status?: string; copy?: string; q?: string }
+  filters: { status?: string; copy?: string; images?: string; q?: string }
 ): Prisma.ProductWhereInput {
   const where: Prisma.ProductWhereInput = { userId };
 
@@ -38,6 +38,12 @@ function buildWhere(
     ];
   }
 
+  if (filters.images === "with") {
+    where.assets = { some: { imageUrl: { not: null } } };
+  } else if (filters.images === "without") {
+    where.NOT = { assets: { some: { imageUrl: { not: null } } } };
+  }
+
   return where;
 }
 
@@ -48,7 +54,7 @@ function FiltersFallback() {
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; status?: string; copy?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; copy?: string; images?: string; q?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) return null;
@@ -56,7 +62,7 @@ export default async function ProjectsPage({
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
   const skip = (page - 1) * PAGE_SIZE;
-  const filters = { status: params.status, copy: params.copy, q: params.q };
+  const filters = { status: params.status, copy: params.copy, images: params.images, q: params.q };
   const where = buildWhere(session.user.id, filters);
 
   const [products, filtered, total] = await Promise.all([
@@ -72,7 +78,7 @@ export default async function ProjectsPage({
   ]);
 
   const totalPages = Math.max(1, Math.ceil(filtered / PAGE_SIZE));
-  const hasFilters = Boolean(filters.status || filters.copy || filters.q?.trim());
+  const hasFilters = Boolean(filters.status || filters.copy || filters.images || filters.q?.trim());
 
   return (
     <div className="space-y-8">

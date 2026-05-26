@@ -77,6 +77,7 @@ export function CopyWorkspace({
   const completionRef = useRef<HTMLDivElement>(null);
   const awaitingCompletion = useRef(false);
   const [showCompletionNudge, setShowCompletionNudge] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"regenerate" | "discard" | null>(null);
   const [linkedProductId, setLinkedProductId] = useState<string | null>(linkedProduct?.id ?? null);
   const [fromGrader, setFromGrader] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
@@ -270,18 +271,13 @@ export function CopyWorkspace({
   };
 
   const regenerateCopy = async () => {
-    if (
-      !window.confirm(
-        "Regenerate listing copy? This replaces the current text and costs 1 credit."
-      )
-    ) {
-      return;
-    }
     setCopy(null);
     setSavedBaseline(null);
     setShowCompletionNudge(false);
     await generate();
   };
+
+  const requestRegenerate = () => setConfirmAction("regenerate");
 
   useEffect(() => {
     if (!productId) return;
@@ -421,7 +417,10 @@ export function CopyWorkspace({
   }, [productId, copy, toast]);
 
   const startOver = () => {
-    if (isDirty && !window.confirm("Discard unsaved copy edits?")) return;
+    if (isDirty) {
+      setConfirmAction("discard");
+      return;
+    }
     reset();
   };
 
@@ -509,6 +508,65 @@ export function CopyWorkspace({
       ) : null}
 
       {error === "INSUFFICIENT_CREDITS" ? <InsufficientCreditsAlert /> : null}
+
+      {confirmAction === "regenerate" ? (
+        <div
+          className="rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm"
+          role="alertdialog"
+          aria-labelledby="copy-regenerate-title"
+        >
+          <p id="copy-regenerate-title" className="font-medium text-[var(--foreground)]">
+            Regenerate listing copy?
+          </p>
+          <p className="mt-1 text-[var(--muted-fg)]">
+            This replaces the current text and costs <strong>1 credit</strong>.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => setConfirmAction(null)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={lacksCredits || loading}
+              onClick={() => {
+                setConfirmAction(null);
+                void regenerateCopy();
+              }}
+            >
+              Regenerate copy
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {confirmAction === "discard" ? (
+        <div
+          className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm"
+          role="alertdialog"
+          aria-labelledby="copy-discard-title"
+        >
+          <p id="copy-discard-title" className="text-[var(--error)]">
+            Discard unsaved copy edits and start over?
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => setConfirmAction(null)}>
+              Keep editing
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              onClick={() => {
+                setConfirmAction(null);
+                reset();
+              }}
+            >
+              Discard edits
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {error && error !== "INSUFFICIENT_CREDITS" ? (
         <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
@@ -828,7 +886,7 @@ export function CopyWorkspace({
                 type="button"
                 variant="outline"
                 disabled={lacksCredits || saving}
-                onClick={() => void regenerateCopy()}
+                onClick={() => requestRegenerate()}
               >
                 <RefreshCw className="h-4 w-4" />
                 Regenerate (1 credit)

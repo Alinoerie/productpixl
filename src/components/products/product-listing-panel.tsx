@@ -237,6 +237,24 @@ export function ProductListingPanel({
           Unsaved edits — press Save or use ⌘/Ctrl+S.
         </p>
       ) : null}
+
+      {isDirty ? (
+        <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
+          <div className="mx-auto flex max-w-lg gap-2">
+            <Button type="button" className="flex-1" disabled={saving} onClick={save}>
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" /> Save changes
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

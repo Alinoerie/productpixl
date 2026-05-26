@@ -60,6 +60,7 @@ export function DashboardProjectCard({
   }, [id, status, router]);
 
   const thumbs = initialThumbs;
+  const exportReady = hasCopy && hasImages;
 
   return (
     <Card className="overflow-hidden transition-all hover:border-[var(--accent)]/40 hover:shadow-[var(--shadow-md)]">
@@ -89,7 +90,13 @@ export function DashboardProjectCard({
                   </span>
                 </>
               ) : (
-                <span className="text-sm text-[var(--muted-fg)]">{formatProductStatus(status)}</span>
+                <span className="text-sm text-[var(--muted-fg)]">
+                  {hasCopy && !hasImages
+                    ? "Copy saved"
+                    : hasImages && !hasCopy
+                      ? "Images only"
+                      : formatProductStatus(status)}
+                </span>
               )}
             </div>
           )}
@@ -111,8 +118,25 @@ export function DashboardProjectCard({
           <p className="font-semibold leading-snug group-hover/title:text-[var(--accent)]">{name}</p>
           <p className="mt-1 text-xs text-[var(--muted-fg)]">
             {new Date(createdAt).toLocaleDateString()}
-            {hasCopy ? " · Copy ready" : ""}
+            {exportReady ? " · Ready to export" : hasCopy ? " · Copy ready" : hasImages ? " · Images ready" : ""}
           </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {hasCopy ? (
+              <Badge variant="secondary" className="text-[10px]">
+                Copy
+              </Badge>
+            ) : null}
+            {hasImages ? (
+              <Badge variant="secondary" className="text-[10px]">
+                Images
+              </Badge>
+            ) : null}
+            {exportReady ? (
+              <Badge className="bg-[var(--success-bg)] text-[10px] text-[var(--success)] hover:bg-[var(--success-bg)]">
+                Export-ready
+              </Badge>
+            ) : null}
+          </div>
         </Link>
         {status === "FAILED" ? (
           <Button asChild size="sm" variant="outline" className="mt-3 w-full">

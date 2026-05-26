@@ -19,10 +19,17 @@ const COPY_OPTIONS = [
   { value: "without", label: "Missing copy" },
 ] as const;
 
+const IMAGES_OPTIONS = [
+  { value: "", label: "Any images" },
+  { value: "with", label: "Has images" },
+  { value: "without", label: "Missing images" },
+] as const;
+
 export function buildProjectsQuery(params: Record<string, string | undefined>) {
   const q = new URLSearchParams();
   if (params.status) q.set("status", params.status);
   if (params.copy) q.set("copy", params.copy);
+  if (params.images) q.set("images", params.images);
   if (params.q) q.set("q", params.q);
   if (params.page && params.page !== "1") q.set("page", params.page);
   const s = q.toString();
@@ -40,12 +47,14 @@ export function ProjectsFilterBar({
   const searchParams = useSearchParams();
   const status = searchParams.get("status") ?? "";
   const copy = searchParams.get("copy") ?? "";
+  const images = searchParams.get("images") ?? "";
   const q = searchParams.get("q") ?? "";
 
   const push = (next: Record<string, string>) => {
     const merged = {
       status: next.status ?? status,
       copy: next.copy ?? copy,
+      images: next.images ?? images,
       q: next.q ?? q,
     };
     router.push(`/projects${buildProjectsQuery({ ...merged, page: "1" })}`);
@@ -58,7 +67,7 @@ export function ProjectsFilterBar({
           Showing <strong className="text-[var(--foreground)]">{filtered}</strong>
           {filtered !== total ? ` of ${total}` : ""} project{filtered === 1 ? "" : "s"}
         </p>
-        {(status || copy || q) ? (
+        {(status || copy || images || q) ? (
           <Link
             href="/projects"
             className="text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
@@ -77,6 +86,7 @@ export function ProjectsFilterBar({
       >
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-fg)]" />
         <Input
+          key={q}
           name="q"
           defaultValue={q}
           placeholder="Search by product name…"
@@ -115,6 +125,24 @@ export function ProjectsFilterBar({
                 : "bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)]"
             )}
             aria-pressed={copy === opt.value}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {IMAGES_OPTIONS.map((opt) => (
+          <button
+            key={opt.value || "all-images"}
+            type="button"
+            onClick={() => push({ images: opt.value })}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+              images === opt.value
+                ? "bg-[var(--accent)] text-white"
+                : "bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)]"
+            )}
+            aria-pressed={images === opt.value}
           >
             {opt.label}
           </button>
