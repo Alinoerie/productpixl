@@ -160,10 +160,18 @@ async function main() {
       onboardingComplete: true,
     },
   });
-  await prisma.user.update({ where: { id: user.id }, data: { credits: 10 } });
-  pass("DB setup", "brand profile + 10 credits for smoke test user");
+  const smokeCredits = process.env.SMOKE_PRESERVE_CREDITS === "1" ? user.credits : 10;
+  if (process.env.SMOKE_PRESERVE_CREDITS !== "1") {
+    await prisma.user.update({ where: { id: user.id }, data: { credits: 10 } });
+  }
+  pass(
+    "DB setup",
+    process.env.SMOKE_PRESERVE_CREDITS === "1"
+      ? `brand profile ready (${smokeCredits.toLocaleString()} credits preserved)`
+      : "brand profile + 10 credits for smoke test user"
+  );
 
-  const cookie = await sessionCookie(user.id, 10);
+  const cookie = await sessionCookie(user.id, smokeCredits);
 
   // --- Lib layer (real Replicate when token set) ---
   const analysis = await timed("Lib analyzeProductImage", () => analyzeProductImage(imageUrl));

@@ -64,6 +64,39 @@ pnpm inngest:dev
 - [`docs/image-pipelines/`](docs/image-pipelines/)
 - [`docs/text-pipelines/amazon-listing-copy.md`](docs/text-pipelines/amazon-listing-copy.md)
 
+## End-to-end testing (your account)
+
+**Production:** https://productpixl.vercel.app — sign in with Google as `alinoerie@gmail.com` (or your own account).
+
+Before a full studio run on **Vercel**, connect background jobs:
+
+1. Open [Inngest on Vercel Marketplace](https://vercel.com/marketplace/inngest) → **Install** → connect the **productpixl** project.
+2. Redeploy (or push to `main`). Vercel will add `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` automatically.
+3. Run readiness check:
+
+```bash
+pnpm test:e2e-ready
+```
+
+**Test account prep** (already done for `alinoerie@gmail.com`):
+
+```bash
+npx tsx scripts/set-user-credits.ts alinoerie@gmail.com 9999999
+npx tsx scripts/reset-stuck-products.ts alinoerie@gmail.com   # if old runs stuck at Queued
+```
+
+**Local E2E** (Inngest dev server — no cloud keys needed):
+
+```bash
+pnpm dev                    # http://localhost:3001
+pnpm inngest:dev            # separate terminal
+pnpm test:e2e-ready
+```
+
+Set `AUTH_URL=http://localhost:3001` and add Google redirect URI `http://localhost:3001/api/auth/callback/google`.
+
+Suggested user journey: sign in → `/dashboard` → `/generate` (upload photo, review credits quote, generate) → open project → `/copy` or spot-edit → export from product page → `/grader` (free) → `/account` (balance).
+
 ## Manual test checklist
 
 - [ ] Sign in with Google → redirected to `/onboarding` if brand not complete; dashboard shows 10 credits after

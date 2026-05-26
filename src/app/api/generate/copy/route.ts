@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { inngest, COPY_PIPELINE_EVENT } from "@/inngest/client";
 import type { ProductIntakeData } from "@/lib/product-intake";
 import { quoteCopyRun } from "@/lib/credit-pricing";
+import { isInngestConfigured, inngestNotConfiguredResponse } from "@/lib/inngest-config";
 import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
 
 export async function POST(req: NextRequest) {
@@ -30,6 +31,10 @@ export async function POST(req: NextRequest) {
   }
 
   const quote = quoteCopyRun({ marketplace, intake: productData });
+  if (!isInngestConfigured()) {
+    return inngestNotConfiguredResponse();
+  }
+
   const user = await requireCredits(session.user.id, quote.total);
   if (!user) {
     const available = await getUserCredits(session.user.id);
@@ -87,15 +92,38 @@ export async function POST(req: NextRequest) {
     data: { credits: { decrement: quote.total } },
   });
 
-  await inngest.send({
-    name: COPY_PIPELINE_EVENT,
-    data: {
-      productId,
-      marketplace,
-      intake: productData,
-      chargedCredits: quote.total,
-    },
-  });
+  try {
+    await inngest.send({
+      name: COPY_PIPELINE_EVENT,
+      data: {
+        productId,
+        marketplace,
+        intake: productData,
+        chargedCredits: quote.total,
+      },
+    });
+  } catch (err) {
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { credits: { increment: quote.total } },
+    });
+    await prisma.product.update({
+      where: { id: productId },
+      data: { status: "FAILED" },
+    });
+    await prisma.listingCopy.update({
+      where: { productId },
+      data: {
+        status: "FAILED",
+        errorMessage: err instanceof Error ? err.message : "Failed to start background job",
+      },
+    });
+    console.error("[generate/copy] inngest.send failed:", err);
+    return NextResponse.json(
+      { error: "Could not start copy generation. Credits were not charged." },
+      { status: 503 }
+    );
+  }
 
   return NextResponse.json({ success: true, productId, creditsCharged: quote.total });
 }

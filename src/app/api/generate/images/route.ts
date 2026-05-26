@@ -5,6 +5,7 @@ import { inngest, IMAGE_PIPELINE_EVENT } from "@/inngest/client";
 import type { ProductIntakeData } from "@/lib/product-intake";
 import type { ProductAnalysis } from "@/lib/ai";
 import { quoteImageRun } from "@/lib/credit-pricing";
+import { isInngestConfigured, inngestNotConfiguredResponse } from "@/lib/inngest-config";
 import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
 
 export async function POST(req: NextRequest) {
@@ -41,6 +42,10 @@ export async function POST(req: NextRequest) {
     marketplace,
     intake: productData,
   });
+
+  if (!isInngestConfigured()) {
+    return inngestNotConfiguredResponse();
+  }
 
   const user = await requireCredits(session.user.id, quote.total);
   if (!user) {
@@ -96,17 +101,43 @@ export async function POST(req: NextRequest) {
     data: { credits: { decrement: quote.total } },
   });
 
-  await inngest.send({
-    name: IMAGE_PIPELINE_EVENT,
-    data: {
-      productId,
-      includePackaging,
-      promptOverrides,
-      analysis,
-      intake: productData,
-      chargedCredits: quote.total,
-    },
-  });
+  try {
+    await inngest.send({
+      name: IMAGE_PIPELINE_EVENT,
+      data: {
+        productId,
+        includePackaging,
+        promptOverrides,
+        analysis,
+        intake: productData,
+        chargedCredits: quote.total,
+      },
+    });
+  } catch (err) {
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { credits: { increment: quote.total } },
+    });
+    await prisma.product.update({
+      where: { id: productId },
+      data: {
+        status: "FAILED",
+        pipelineStatus: {
+          phase: "FAILED",
+          error: err instanceof Error ? err.message : "Failed to start background job",
+          steps: [],
+          currentStepIndex: 0,
+          startedAt: new Date().toISOString(),
+          completedAt: new Date().toISOString(),
+        },
+      },
+    });
+    console.error("[generate/images] inngest.send failed:", err);
+    return NextResponse.json(
+      { error: "Could not start generation. Credits were not charged." },
+      { status: 503 }
+    );
+  }
 
   return NextResponse.json({ success: true, productId, creditsCharged: quote.total });
 }
