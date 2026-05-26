@@ -95,6 +95,7 @@ export function GenerateWizard({
   const previewUrlRef = useRef<string | null>(null);
   const stepperRef = useRef<HTMLDivElement>(null);
   const completionRef = useRef<HTMLDivElement>(null);
+  const failedRef = useRef<HTMLDivElement>(null);
   const [linkedProductId, setLinkedProductId] = useState<string | null>(linkedProduct?.id ?? null);
   const [step, setStep] = useState(0);
   const [imageUrl, setImageUrl] = useState("");
@@ -281,7 +282,7 @@ export function GenerateWizard({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            existingProductId: linkedProductId ?? undefined,
+            existingProductId: productId ?? linkedProductId ?? undefined,
             inputImageUrl: imageUrl,
             includePackaging,
             marketplace,
@@ -304,6 +305,14 @@ export function GenerateWizard({
       const msg = e instanceof Error ? e.message : "Generation failed";
       setError(msg === "INSUFFICIENT_CREDITS" ? "INSUFFICIENT_CREDITS" : msg);
     }
+  };
+
+  const retryGeneration = async () => {
+    setPipelineFailed(false);
+    setPollTimedOut(false);
+    setPipelineStatus(null);
+    setError("");
+    await startGeneration();
   };
 
   const pollStatus = useCallback(async () => {
@@ -354,6 +363,17 @@ export function GenerateWizard({
       window.clearInterval(id);
     };
   }, [step, productId, pollStatus, router, toast]);
+
+  useEffect(() => {
+    if (!pipelineFailed && !pollTimedOut) return;
+    requestAnimationFrame(() => {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      failedRef.current?.scrollIntoView({
+        behavior: prefersReduced ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+  }, [pipelineFailed, pollTimedOut]);
 
   useEffect(() => {
     if (!productId || pipelineStatus?.phase !== "COMPLETE") return;
@@ -846,23 +866,36 @@ export function GenerateWizard({
 
       {step === 3 && (
         <div className="space-y-6">
+          <p className="sr-only" aria-live="polite">
+            {pipelineFailed ? "Image generation failed" : pollTimedOut ? "Image generation timed out" : ""}
+          </p>
           {pipelineFailed || pollTimedOut ? (
-            <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-4 text-sm text-[var(--error)]">
-              <p>
+            <div
+              ref={failedRef}
+              role="alert"
+              className="scroll-mt-24 rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-4 text-sm text-[var(--error)]"
+            >
+              <p className="font-medium text-[var(--foreground)]">
+                {pollTimedOut ? "Generation timed out" : "Image generation failed"}
+              </p>
+              <p className="mt-2 text-[var(--error)]">
                 {pollTimedOut
-                  ? "Generation timed out. Check Inngest is running locally, open your project, or retry your prompt plan."
-                  : "Image generation failed. Check Inngest is running locally, or go back and retry your prompt plan."}
+                  ? "The pipeline took too long. Check Inngest is running locally, open your project to see partial results, or retry with the same prompt plan."
+                  : "Something went wrong during the image pipeline. Open your project for details, retry with the same prompts, or adjust your prompt plan."}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
+                <Button type="button" size="sm" disabled={!promptPlan.length || lacksCredits} onClick={() => void retryGeneration()}>
+                  Retry generation
+                </Button>
                 {productId ? (
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/products/${productId}`}>Open project</Link>
                   </Button>
                 ) : null}
                 <Button type="button" size="sm" variant="outline" onClick={() => resetWizard("prompt")}>
-                  Back to prompt plan
+                  Edit prompt plan
                 </Button>
-                <Button type="button" size="sm" onClick={() => resetWizard("fresh")}>
+                <Button type="button" size="sm" variant="outline" onClick={() => resetWizard("fresh")}>
                   Start fresh
                 </Button>
               </div>

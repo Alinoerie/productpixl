@@ -36,9 +36,17 @@ export default async function NotFound() {
             </Button>
           </>
         ) : (
-          <Button asChild>
-            <Link href="/login">Sign in</Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href="/grader">Free grader</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/pricing">Pricing</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/login">Sign in</Link>
+            </Button>
+          </>
         )}
       </div>
     </main>

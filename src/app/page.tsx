@@ -98,6 +98,9 @@ export default async function HomePage() {
                 <Button asChild size="lg" variant="outline" className="rounded-xl">
                   <Link href="/grader">Free listing grader</Link>
                 </Button>
+                <Button asChild size="lg" variant="ghost" className="rounded-xl">
+                  <Link href="/pricing">View pricing</Link>
+                </Button>
               </div>
               <p className="mt-6 text-sm text-[var(--muted-fg)]">
                 10 free credits · No credit card · Pay per generation, not per month

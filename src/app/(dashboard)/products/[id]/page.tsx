@@ -14,6 +14,7 @@ import { ProductReadiness } from "@/components/products/product-readiness";
 import { ProductMobileActions } from "@/components/products/product-mobile-actions";
 import { ProductEditProvider } from "@/components/products/product-edit-context";
 import { ProductSectionNav } from "@/components/products/product-section-nav";
+import { ProductOnboardingCard } from "@/components/products/product-onboarding-card";
 import { ProductGradeBadge } from "@/components/products/product-grade-badge";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
 import { getMarketplace, type MarketplaceId } from "@/lib/marketplaces";
@@ -41,6 +42,11 @@ export default async function ProductPage({
   const bullets = (product.listingCopy?.bullets as string[] | null) ?? [];
   const completedAssets = product.assets.filter((a) => a.status === "COMPLETE" && a.imageUrl);
   const hasGallery = product.assets.length > 0 || product.status === "PROCESSING";
+  const isNewProject =
+    completedAssets.length === 0 &&
+    !product.listingCopy?.title &&
+    product.status !== "PROCESSING" &&
+    product.status !== "QUEUED";
   const galleryAssets = product.assets.map((a) => ({
     id: a.id,
     moduleId: a.moduleId,
@@ -133,6 +139,8 @@ export default async function ProductPage({
           hasCopy={Boolean(product.listingCopy?.title)}
           hasGallery={hasGallery || completedAssets.length === 0}
         />
+
+        {isNewProject ? <ProductOnboardingCard productId={product.id} /> : null}
 
         {product.status === "FAILED" && (
           <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">

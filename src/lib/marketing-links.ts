@@ -4,7 +4,7 @@ export const MARKETING_NAV_LINKS = [
   { href: "/#europe", label: "EU & Bol" },
   { href: "/grader", label: "Free grader", highlight: "teal" as const },
   { href: "/#compare", label: "Why us" },
-  { href: "/#pricing", label: "Pricing" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/#faq", label: "FAQ" },
   { href: "/#calculator", label: "Calculator" },
 ];
