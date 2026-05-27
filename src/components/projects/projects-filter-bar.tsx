@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { Loader2, Search } from "lucide-react";
+import { useEffect, useState, useTransition, useRef } from "react";
+import { Loader2, Search, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
@@ -37,6 +37,122 @@ const PIPELINE_OPTIONS = [
   { value: "VIDEO", label: "Video" },
 ] as const;
 
+const SORT_OPTIONS = [
+  { value: "updatedAt", label: "Last Updated" },
+  { value: "createdAt", label: "Date Created" },
+  { value: "name", label: "Name" },
+  { value: "status", label: "Status" },
+] as const;
+
+type SortField = "updatedAt" | "createdAt" | "name" | "status";
+
+function SortIcon({ field, currentSort, currentOrder }: { field: SortField; currentSort: string; currentOrder: string }) {
+  if (currentSort !== field) {
+    return <ChevronsUpDown className="h-3 w-3 inline-block ml-1 opacity-40" />;
+  }
+  return currentOrder === "asc"
+    ? <ChevronUp className="h-3 w-3 inline-block ml-1" />
+    : <ChevronDown className="h-3 w-3 inline-block ml-1" />;
+}
+
+function SearchableSlugSelect({
+  label,
+  value,
+  onChange,
+  placeholder,
+  "aria-label": ariaLabel,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  "aria-label": string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  const inputId = `slug-${label.replace(/\s+/g, "-").toLowerCase()}`;
+
+  // All possible options would come from the server; here we show a text input
+  // that acts as a searchable filter. When open=true we show a dropdown-like list.
+  const displayValue = value ? value : "";
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          "flex w-full items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs text-left transition-colors",
+          value ? "text-[var(--foreground)]" : "text-[var(--muted-fg)]",
+          open && "ring-2 ring-[var(--accent)]"
+        )}
+        aria-label={ariaLabel}
+        id={inputId}
+      >
+        <span className="flex-1 truncate">
+          {value ? `${label}: ${value}` : placeholder}
+        </span>
+        <ChevronsUpDown className="h-3 w-3 flex-shrink-0 opacity-50" />
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-md)]">
+          <div className="p-1">
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={`Search ${label.toLowerCase()}…`}
+              className="h-7 text-xs"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setOpen(false);
+                  setSearch("");
+                }
+              }}
+            />
+          </div>
+          <div className="max-h-48 overflow-y-auto py-1">
+            <button
+              type="button"
+              onClick={() => { onChange(""); setOpen(false); setSearch(""); }}
+              className={cn(
+                "flex w-full items-center px-3 py-1.5 text-xs text-left hover:bg-[var(--muted)]",
+                !value && "font-medium text-[var(--accent)]"
+              )}
+            >
+              All {label}s
+            </button>
+            {search.trim() && (
+              <button
+                type="button"
+                onClick={() => {
+                  onChange(search.trim());
+                  setOpen(false);
+                  setSearch("");
+                }}
+                className="flex w-full items-center px-3 py-1.5 text-xs text-left text-[var(--accent)] hover:bg-[var(--muted)]"
+              >
+                Use: &ldquo;{search.trim()}&rdquo;
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function buildProjectsQuery(params: Record<string, string | undefined>) {
   const q = new URLSearchParams();
   if (params.brandId) q.set("brandId", params.brandId);
@@ -49,6 +165,8 @@ export function buildProjectsQuery(params: Record<string, string | undefined>) {
   if (params.playbookSlug) q.set("playbookSlug", params.playbookSlug);
   if (params.templateSlug) q.set("templateSlug", params.templateSlug);
   if (params.page && params.page !== "1") q.set("page", params.page);
+  if (params.sort) q.set("sort", params.sort);
+  if (params.order) q.set("order", params.order);
   const s = q.toString();
   return s ? `?${s}` : "";
 }
@@ -78,6 +196,8 @@ export function ProjectsFilterBar({
   const playbookSlug = searchParams.get("playbookSlug") ?? "";
   const templateSlug = searchParams.get("templateSlug") ?? "";
   const q = searchParams.get("q") ?? "";
+  const sort = searchParams.get("sort") ?? "updatedAt";
+  const order = searchParams.get("order") ?? "desc";
   const [search, setSearch] = useState(q);
 
   useEffect(() => {
@@ -95,10 +215,20 @@ export function ProjectsFilterBar({
       playbookSlug: next.playbookSlug ?? playbookSlug,
       templateSlug: next.templateSlug ?? templateSlug,
       q: next.q ?? q,
+      sort: next.sort ?? sort,
+      order: next.order ?? order,
     };
     startTransition(() => {
       router.push(`/projects${buildProjectsQuery({ ...merged, page: "1" })}`);
     });
+  };
+
+  const toggleSort = (field: SortField) => {
+    if (sort === field) {
+      push({ order: order === "asc" ? "desc" : "asc" });
+    } else {
+      push({ sort: field, order: "asc" });
+    }
   };
 
   useEffect(() => {
@@ -281,20 +411,40 @@ export function ProjectsFilterBar({
         ))}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Input
-          name="playbookSlug"
+        <SearchableSlugSelect
+          label="Playbook"
           value={playbookSlug}
-          onChange={(e) => push({ playbookSlug: e.target.value.trim() })}
-          placeholder="Filter by playbook slug…"
+          onChange={(v) => push({ playbookSlug: v })}
+          placeholder="Filter by playbook…"
           aria-label="Filter by playbook slug"
         />
-        <Input
-          name="templateSlug"
+        <SearchableSlugSelect
+          label="Template"
           value={templateSlug}
-          onChange={(e) => push({ templateSlug: e.target.value.trim() })}
-          placeholder="Filter by template slug…"
+          onChange={(v) => push({ templateSlug: v })}
+          placeholder="Filter by template…"
           aria-label="Filter by template slug"
         />
+      </div>
+      <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-3">
+        <span className="text-xs text-[var(--muted-fg)]">Sort by:</span>
+        {SORT_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => toggleSort(opt.value as SortField)}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+              sort === opt.value
+                ? "bg-[var(--accent)] text-white"
+                : "bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)]"
+            )}
+            aria-pressed={sort === opt.value}
+          >
+            {opt.label}
+            <SortIcon field={opt.value as SortField} currentSort={sort} currentOrder={order} />
+          </button>
+        ))}
       </div>
     </div>
   );

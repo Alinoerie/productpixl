@@ -22,9 +22,33 @@ export function ProjectsSelectableGrid({ products }: { products: ProjectItem[] }
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
+  function selectAll() {
+    setSelected(products.map((p) => p.id));
+  }
+
+  function deselectAll() {
+    setSelected([]);
+  }
+
+  const allVisibleSelected = products.length > 0 && products.every((p) => selected.includes(p.id));
+
   return (
     <div className="space-y-4">
-      <ProjectsBulkActions selectedIds={selected} onClear={() => setSelected([])} />
+      <div className="flex items-center gap-3">
+        <ProjectsBulkActions selectedIds={selected} onClear={() => setSelected([])} />
+        <div className="ml-auto flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={allVisibleSelected}
+            onChange={() => (allVisibleSelected ? deselectAll() : selectAll())}
+            aria-label={allVisibleSelected ? "Deselect all visible" : "Select all visible"}
+            className="h-4 w-4 accent-[var(--accent)]"
+          />
+          <span className="text-xs text-[var(--muted-fg)]">
+            {allVisibleSelected ? "All visible selected" : "Select all visible"}
+          </span>
+        </div>
+      </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((p) => {
           const checked = selected.includes(p.id);

@@ -158,6 +158,8 @@ export default async function ProjectsPage({
     playbookSlug?: string;
     templateSlug?: string;
     pipelineType?: string;
+    sort?: string;
+    order?: string;
   }>;
 }) {
   const session = await auth();
@@ -166,6 +168,12 @@ export default async function ProjectsPage({
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
   const skip = (page - 1) * PAGE_SIZE;
+
+  // Sort defaults: updatedAt desc
+  const sortField = ["updatedAt", "createdAt", "name", "status"].includes(params.sort ?? "")
+    ? (params.sort as "updatedAt" | "createdAt" | "name" | "status")
+    : "updatedAt";
+  const sortOrder = params.order === "asc" ? "asc" : "desc";
 
   const [brands, activeBrandId] = await Promise.all([
     prisma.brand.findMany({
@@ -189,13 +197,24 @@ export default async function ProjectsPage({
     playbookSlug: params.playbookSlug,
     templateSlug: params.templateSlug,
     pipelineType: params.pipelineType,
+    sort: sortField,
+    order: sortOrder,
   };
   const where = buildWhere(session.user.id, filters);
+
+  const orderBy: Prisma.ProductOrderByWithRelationInput =
+    sortField === "name"
+      ? { name: sortOrder }
+      : sortField === "status"
+      ? { status: sortOrder }
+      : sortField === "createdAt"
+      ? { createdAt: sortOrder }
+      : { updatedAt: sortOrder };
 
   const [products, filtered, total] = await Promise.all([
     prisma.product.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy,
       skip,
       take: PAGE_SIZE,
       include: { assets: { orderBy: { moduleId: "asc" } }, listingCopies: true },
@@ -291,6 +310,41 @@ export default async function ProjectsPage({
         })()
       ) : (
         <>
+          {totalPages > 1 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-6">
+              <p className="text-sm text-[var(--muted-fg)]">
+                Page {page} of {totalPages}
+                {hasFilters ? " (filtered)" : ""}
+              </p>
+              <div className="flex gap-2">
+                {page <= 1 ? (
+                  <Button variant="outline" size="sm" disabled>
+                    Previous
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/projects${buildProjectsQuery({ ...filters, page: String(page - 1) })}`}>
+                      Previous
+                    </Link>
+                  </Button>
+                )}
+                {page >= totalPages ? (
+                  <Button variant="outline" size="sm" disabled>
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/projects${buildProjectsQuery({ ...filters, page: String(page + 1) })}`}>
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : null}
+
           <ProjectsSelectableGrid
             products={products.map((p) => {
               const thumbs = p.assets.filter((a) => a.imageUrl).slice(0, 4);

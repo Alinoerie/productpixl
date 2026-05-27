@@ -97,6 +97,7 @@ export function AplusStudioWorkspace({
   const [marketplace, setMarketplace] = useState<MarketplaceId>("AMAZON_US");
   const [productId, setProductId] = useState<string | null>(null);
   const [runStatus, setRunStatus] = useState<string | null>(null);
+  const [pollTimedOut, setPollTimedOut] = useState(false);
   const [error, setError] = useState("");
   const [planningPrompts, setPlanningPrompts] = useState(false);
   const [promptPlan, setPromptPlan] = useState<PromptPlanItem[]>([]);
@@ -262,17 +263,30 @@ export function AplusStudioWorkspace({
     }
   };
 
+  // Reset poll timeout when product or step changes
+  useEffect(() => {
+    setPollTimedOut(false);
+  }, [productId, step]);
+
   useEffect(() => {
     if (!productId || step !== 2) return;
+    const MAX_POLLS = 75; // 75 × 4s = 5 minutes max poll
+    let count = 0;
     const poll = async () => {
+      count++;
       const { ok, data } = await fetchJson<{
         status?: string;
         pipelineStatus?: PipelineStatusShape;
       }>(`/api/products/${productId}/status`);
-      if (!ok) return;
+      if (!ok) {
+        if (count >= MAX_POLLS) { setPollTimedOut(true); return; }
+        setTimeout(poll, 4000);
+        return;
+      }
       if (data.pipelineStatus) setPipelineStatus(data.pipelineStatus);
       setRunStatus(data.status ?? null);
       if (data.status === "COMPLETE" || data.status === "FAILED") return;
+      if (count >= MAX_POLLS) { setPollTimedOut(true); return; }
       setTimeout(poll, 4000);
     };
     void poll();
@@ -348,6 +362,15 @@ export function AplusStudioWorkspace({
       {error && error !== "INSUFFICIENT_CREDITS" ? (
         <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
           <PipelineErrorMessage message={toSellerPipelineError(error)} supportSubject="ProductPixl A+ generation issue" />
+        </div>
+      ) : null}
+
+      {pollTimedOut ? (
+        <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
+          <PipelineErrorMessage
+            message="Generation is taking longer than expected. Please try again or contact support if the problem persists."
+            supportSubject="ProductPixl A+ generation timeout"
+          />
         </div>
       ) : null}
 

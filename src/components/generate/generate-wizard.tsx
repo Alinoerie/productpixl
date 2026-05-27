@@ -130,6 +130,11 @@ export function GenerateWizard({
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
   const [backgroundLocked, setBackgroundLocked] = useState(false);
   const [lockedBackground, setLockedBackground] = useState("");
+
+  // Clear savedAnalysis when image changes — new image invalidates prior AI analysis
+  useEffect(() => {
+    setSavedAnalysis(null);
+  }, [imageUrl]);
   const [projectListingCopy, setProjectListingCopy] = useState<{
     title: string;
     bullets: string[];
