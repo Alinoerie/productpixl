@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
+import { NotifyMeForm } from "@/components/marketing/notify-me-form";
 
 export const metadata: Metadata = {
   title: "Pricing — ProductPixl",
@@ -90,16 +91,7 @@ export default function PricingPage() {
                   <p className="text-sm text-[var(--muted-fg)]">Best value for serious sellers</p>
                 </div>
                 <div className="mt-auto space-y-3">
-                  <div className="flex gap-2">
-                    <input
-                      type="email"
-                      placeholder="Enter your email"
-                      className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm placeholder:text-[var(--muted-fg)] focus:border-[var(--accent)]/50 focus:outline-none"
-                    />
-                  </div>
-                  <Button className="btn-primary amber-glow w-full rounded-xl">
-                    Notify me when checkout opens
-                  </Button>
+                  <NotifyMeForm placeholder="Your email" buttonText="Get free credits" />
                 </div>
               </div>
             </div>
@@ -194,7 +186,7 @@ export default function PricingPage() {
                   </td>
                 </tr>
                 <tr className="hover:bg-[var(--card)]/50">
-                  <td className="px-6 py-4 text-sm">Bol.com integration</td>
+                  <td className="px-6 py-4 text-sm">EU marketplace export</td>
                   <td className="px-6 py-4 text-center">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--accent)]">
                       <polyline points="20 6 9 17 4 12"/>
@@ -294,13 +286,13 @@ export default function PricingPage() {
 
             <details className="group rounded-xl border border-[var(--border)]">
               <summary className="flex cursor-pointer items-center justify-between px-6 py-4 font-medium">
-                Does it work with Bol.com?
+                Does it work with Amazon EU marketplaces?
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-180">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </summary>
               <div className="px-6 pb-4 text-sm text-[var(--muted-fg)]">
-                Yes, ProductPixl integrates directly with Bol.com. You can export generated images and content straight to your Bol.com listings.
+                Yes, ProductPixl supports export to Amazon EU and UK marketplaces. Generate images and copy, then export directly to your listings.
               </div>
             </details>
           </div>

@@ -60,7 +60,7 @@ export async function SiteHeader() {
               </Link>
               <Link
                 href="/login"
-                className="bg-amber-500 text-black rounded-lg px-4 py-2 text-sm font-semibold hover:amber-glow transition-all"
+                className="bg-[var(--accent)] text-black rounded-lg px-4 py-2 text-sm font-semibold hover:amber-glow transition-all"
               >
                 Start free
               </Link>
@@ -120,7 +120,7 @@ function MobileMenu({ session }: { session: boolean }) {
             <Link
               href="/login"
               onClick={() => setOpen(false)}
-              className="bg-amber-500 text-black rounded-lg px-4 py-2.5 text-sm font-semibold text-center hover:amber-glow transition-all"
+              className="bg-[var(--accent)] text-black rounded-lg px-4 py-2.5 text-sm font-semibold text-center hover:amber-glow transition-all"
             >
               Start free
             </Link>

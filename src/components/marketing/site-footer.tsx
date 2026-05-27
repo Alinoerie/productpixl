@@ -8,9 +8,7 @@ const PRODUCT_LINKS = [
 ];
 
 const COMPANY_LINKS = [
-  { href: "/about", label: "About" },
-  { href: "/blog", label: "Blog" },
-  { href: "/contact", label: "Contact" },
+  { href: "mailto:hello@productpixl.com", label: "Contact" },
 ];
 
 const LEGAL_LINKS = [
