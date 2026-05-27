@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { GenerateWizard } from "@/components/generate/generate-wizard";
-import { StudioPageShell } from "@/components/layout/studio-page-shell";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
 import { type MarketplaceId } from "@/lib/marketplaces";
 
@@ -49,21 +48,14 @@ export default async function ContentStudioImagesPage({
   const missingProductId = Boolean(params.productId && session?.user?.id && !linkedProduct);
 
   return (
-    <StudioPageShell
-      eyebrow="Content studio"
-      title="Images"
-      description="Upload a product photo, confirm details, then generate hero, lifestyle, and detail images."
-      hideGuide
-    >
-      <GenerateWizard
-        initialCredits={session?.user?.credits ?? 0}
-        linkedProduct={linkedProduct}
-        missingProductId={missingProductId}
-        defaultBrandName={defaultBrandName}
-        templateSlug={templateSlug}
-        paymentSuccess={params.success === "true"}
-        hidePageHeader
-      />
-    </StudioPageShell>
+    <GenerateWizard
+      initialCredits={session?.user?.credits ?? 0}
+      linkedProduct={linkedProduct}
+      missingProductId={missingProductId}
+      defaultBrandName={defaultBrandName}
+      templateSlug={templateSlug}
+      paymentSuccess={params.success === "true"}
+      hidePageHeader
+    />
   );
 }

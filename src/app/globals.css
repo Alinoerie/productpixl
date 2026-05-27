@@ -187,3 +187,45 @@ html {
 .mobile-fixed-above-nav {
   bottom: var(--mobile-nav-offset);
 }
+
+@keyframes studio-dash {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.studio-dash-animate {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Crect fill='none' stroke='%236366f1' stroke-width='2' stroke-dasharray='8 6' x='1' y='1' width='calc(100%25 - 2px)' height='calc(100%25 - 2px)' rx='16'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+}
+
+@keyframes studio-scan {
+  0% {
+    top: 0;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+.studio-scan-line {
+  animation: studio-scan 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-dash-animate {
+    background-image: none;
+  }
+  .studio-scan-line {
+    animation: none;
+    display: none;
+  }
+}

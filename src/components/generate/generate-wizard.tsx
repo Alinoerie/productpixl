@@ -12,13 +12,20 @@ import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-a
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { useLiveCredits } from "@/hooks/use-live-credits";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
-import { StudioStepper } from "@/components/ui/studio-stepper";
+import { StepRail } from "@/components/studio/step-rail";
+import { DropZone } from "@/components/studio/drop-zone";
+import { StudioPreview } from "@/components/studio/studio-preview";
+import { ModulePreviewPanel } from "@/components/studio/module-preview-panel";
+import { useImageStudioStore } from "@/stores/image-studio-store";
 import { StudioSuccessBanner } from "@/components/ui/studio-success-banner";
 import { ProductIntakeFields } from "@/components/product/product-intake-fields";
 import { fetchJson } from "@/lib/fetch-json";
 import { EMPTY_PRODUCT_INTAKE, type ProductIntakeData } from "@/lib/product-intake";
-import { quoteImageRun } from "@/lib/credit-pricing";
+import { quoteImageRun, quoteImageModuleBreakdown } from "@/lib/credit-pricing";
 import { CreditsRequiredLine } from "@/components/ui/credits-required-line";
+import { CreditEstimateBar } from "@/components/studio/credit-estimate-bar";
+import { VisionAnalysisCard } from "@/components/studio/vision-analysis-card";
+import { MasonryGallery } from "@/components/studio/masonry-gallery";
 import type { ProductAnalysis } from "@/lib/ai";
 import { cn } from "@/lib/utils";
 import { formatPipelinePhase, formatModuleLabel } from "@/lib/status-labels";
@@ -27,9 +34,8 @@ import type { PipelineStatusShape } from "@/lib/pipeline-progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import { useToast } from "@/components/ui/toast-provider";
-import { ProductImageGallery } from "@/components/products/product-image-gallery";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
-import { Camera, Check, Download, Loader2, Sparkles } from "lucide-react";
+import { Camera, Check, Download, Images, Loader2, Sparkles } from "lucide-react";
 import { type MarketplaceId } from "@/lib/marketplaces";
 import { getMarketplace } from "@/lib/marketplaces";
 import { getVisualTemplate } from "@/lib/templates/catalog";
@@ -46,7 +52,10 @@ interface PromptPlanItem {
   prompt: string;
 }
 
-const STEPS = ["Product & plan", "Gallery"];
+const STEP_RAIL = [
+  { id: "plan", label: "Product & plan", icon: Camera },
+  { id: "gallery", label: "Gallery", icon: Images },
+];
 
 type LinkedProduct = {
   id: string;
@@ -140,6 +149,16 @@ export function GenerateWizard({
   const imageQuote = useMemo(
     () =>
       quoteImageRun({
+        includePackaging,
+        marketplace,
+        intake: intakePayload(),
+      }),
+    [includePackaging, marketplace, intakePayload]
+  );
+
+  const imageModuleBreakdown = useMemo(
+    () =>
+      quoteImageModuleBreakdown({
         includePackaging,
         marketplace,
         intake: intakePayload(),
@@ -494,7 +513,14 @@ export function GenerateWizard({
   const marketplaceLabel = getMarketplace(marketplace).label;
   const moduleSummary = includePackaging ? "Hero · Lifestyle · Detail · Packaging" : "Hero · Lifestyle · Detail";
   const template = templateSlug ? getVisualTemplate(templateSlug) : undefined;
-  const displayStep = step >= 3 ? 1 : 0;
+  const railIndex = step >= 3 ? 1 : 0;
+  const setImagePreview = useImageStudioStore((s) => s.setPreviewUrl);
+  const setImageCreditTotal = useImageStudioStore((s) => s.setCreditTotal);
+
+  useEffect(() => {
+    setImagePreview(preview);
+    setImageCreditTotal(imageQuote.total);
+  }, [preview, imageQuote.total, setImagePreview, setImageCreditTotal]);
 
   return (
     <div className="space-y-8">
@@ -537,23 +563,7 @@ export function GenerateWizard({
       )}
 
       <div id="studio-steps" ref={stepperRef} className="scroll-mt-24">
-        <StudioStepper
-          steps={STEPS}
-          currentStep={displayStep}
-          label="Generation progress"
-          sticky
-          statusText={
-            displayStep === 1 && pipelineStatus?.phase
-              ? formatPipelinePhase(pipelineStatus.phase)
-              : analyzing
-                ? "Analyzing product photo…"
-                : planningPrompts
-                  ? "Building prompt plan…"
-                  : uploading
-                    ? "Uploading photo…"
-                    : undefined
-          }
-        />
+        <StepRail steps={STEP_RAIL} currentIndex={railIndex} />
       </div>
 
       {missingProductId ? (
@@ -594,13 +604,17 @@ export function GenerateWizard({
         </div>
       ) : null}
 
+      <div className={cn("grid gap-8", step < 3 && "xl:grid-cols-[minmax(0,1fr)_320px]")}>
+        <div className="min-w-0 space-y-8">
+
       {step === 0 && (
         <Card className="overflow-hidden shadow-[var(--shadow-md)]">
           <CardContent className="space-y-6 p-6 md:p-8">
-            <UploadDropzone
+            <DropZone
               preview={preview}
-              previewAlt="Product photo preview"
               dragOver={dragOver}
+              scanning={analyzing}
+              disabled={uploading || analyzing}
               onDragOver={(e) => {
                 e.preventDefault();
                 setDragOver(true);
@@ -619,8 +633,6 @@ export function GenerateWizard({
                 setPreview("");
                 setImageUrl("");
               }}
-              disabled={uploading || analyzing}
-              minHeight="min-h-[280px]"
               emptyTitle="Drop your product photo"
               emptyHint="JPG, PNG or WEBP · max 20MB · No ASIN needed"
               inputId="generate-upload"
@@ -720,6 +732,11 @@ export function GenerateWizard({
                 {uploading ? (
                   <p className="text-xs text-[var(--muted-fg)]">Uploading photo…</p>
                 ) : null}
+              </div>
+            ) : null}
+            {savedAnalysis ? (
+              <div className="md:col-span-2">
+                <VisionAnalysisCard analysis={savedAnalysis} />
               </div>
             ) : null}
             <ProductIntakeFields
@@ -898,24 +915,37 @@ export function GenerateWizard({
                 </Button>
               ) : null}
             </div>
-            <div className={cn(mobileStickyFooter, "-mx-6 flex gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none")}>
-              <Button variant="outline" onClick={() => setStep(1)}>
+            <div className={cn(mobileStickyFooter, "-mx-6 flex flex-col gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none")}>
+              <Button variant="outline" onClick={() => setStep(1)} className="self-start">
                 Back
               </Button>
-              <Button
-                onClick={startGeneration}
-                className="flex-1 rounded-xl"
-                size="lg"
+              <CreditEstimateBar
+                modules={imageModuleBreakdown}
+                total={imageQuote.total}
+                caveat={imageQuote.detailLine}
+                ctaLabel={
+                  lacksCredits
+                    ? "Need credits to start"
+                    : `Start generation (${imageQuote.total.toLocaleString()} credits)`
+                }
+                onCta={startGeneration}
                 disabled={!promptPlan.length || planningPrompts || lacksCredits}
-              >
-                {lacksCredits
-                  ? "Need credits to start"
-                  : `Start generation (${imageQuote.total.toLocaleString()} credits)`}
-              </Button>
+                loading={planningPrompts}
+                loadingLabel="Building plan…"
+              />
             </div>
           </CardContent>
         </Card>
       )}
+
+        </div>
+
+        {step < 3 ? (
+          <StudioPreview title="Module preview">
+            <ModulePreviewPanel previewUrl={preview} outputs={completedImages.length ? galleryAssets : undefined} />
+          </StudioPreview>
+        ) : null}
+      </div>
 
       {step === 3 && (
         <div className="space-y-6">
@@ -1043,12 +1073,7 @@ export function GenerateWizard({
                   </Button>
                 </div>
               ) : null}
-              <ProductImageGallery
-                productId={productId ?? "wizard"}
-                productName={form.name || "Product"}
-                assets={galleryAssets}
-                readOnly
-              />
+              <MasonryGallery assets={galleryAssets} />
             </>
           ) : null}
           <p className="sr-only" aria-live="polite">

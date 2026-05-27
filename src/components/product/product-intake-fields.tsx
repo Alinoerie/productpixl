@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MarketplaceGuidance } from "@/components/ui/marketplace-guidance";
 import { MarketplacePicker } from "@/components/ui/marketplace-picker";
 import { ReferenceImageUpload } from "@/components/product/reference-image-upload";
+import { FloatingLabelField } from "@/components/product/floating-label-field";
+import { CategoryCombobox } from "@/components/product/category-combobox";
 import type { ProductIntakeData } from "@/lib/product-intake";
 import { type MarketplaceId } from "@/lib/marketplaces";
 import { getMarketplace } from "@/lib/marketplaces";
@@ -22,6 +23,9 @@ export function ProductIntakeFields({
   onReferenceImagesChange,
   variant = "images",
   disabled,
+  multiMarketplace = false,
+  marketplaces,
+  onMarketplacesChange,
 }: {
   form: ProductIntakeData;
   onChange: (next: ProductIntakeData) => void;
@@ -31,6 +35,9 @@ export function ProductIntakeFields({
   onReferenceImagesChange: (urls: string[]) => void;
   variant?: "images" | "copy";
   disabled?: boolean;
+  multiMarketplace?: boolean;
+  marketplaces?: MarketplaceId[];
+  onMarketplacesChange?: (ids: MarketplaceId[]) => void;
 }) {
   const [optionalOpen, setOptionalOpen] = useState(false);
   const categoryLabel = `${getMarketplace(marketplace).label} category`;
@@ -46,6 +53,9 @@ export function ProductIntakeFields({
           onChange={onMarketplaceChange}
           noteField={variant === "copy" ? "copyNote" : "imageNote"}
           name={`${variant}-marketplace`}
+          multi={multiMarketplace}
+          values={marketplaces ?? [marketplace]}
+          onMultiChange={onMarketplacesChange}
         />
         <div className="mt-3">
           <MarketplaceGuidance marketplaceId={marketplace} variant={variant === "copy" ? "copy" : "images"} />
@@ -56,23 +66,29 @@ export function ProductIntakeFields({
         Required for generation
       </p>
 
-      {(
-        [
-          ["name", "Product name"],
-          ["brandName", "Brand name"],
-          ["category", categoryLabel],
-        ] as const
-      ).map(([key, label]) => (
-        <div key={key}>
-          <Label htmlFor={`intake-${key}`}>{label}</Label>
-          <Input
-            id={`intake-${key}`}
-            value={form[key]}
-            onChange={(e) => setField(key, e.target.value)}
-            disabled={disabled}
-          />
-        </div>
-      ))}
+      <FloatingLabelField
+        id="intake-name"
+        label="Product name"
+        value={form.name}
+        onChange={(v) => setField("name", v)}
+        disabled={disabled}
+      />
+      <FloatingLabelField
+        id="intake-brandName"
+        label="Brand name"
+        value={form.brandName}
+        onChange={(v) => setField("brandName", v)}
+        disabled={disabled}
+      />
+      <div className="md:col-span-2">
+        <CategoryCombobox
+          id="intake-category"
+          label={categoryLabel}
+          value={form.category}
+          onChange={(v) => setField("category", v)}
+          disabled={disabled}
+        />
+      </div>
 
       <div className="md:col-span-2 border-t border-[var(--border)] pt-4">
         <button
@@ -92,42 +108,44 @@ export function ProductIntakeFields({
 
         {optionalOpen ? (
           <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {(
-              [
-                ["dimensions", "Dimensions / size"],
-                ["materials", "Materials"],
-                ["colors", "Colors"],
-              ] as const
-            ).map(([key, label]) => (
-              <div key={key}>
-                <Label htmlFor={`intake-${key}`}>{label}</Label>
-                <Input
-                  id={`intake-${key}`}
-                  value={form[key]}
-                  onChange={(e) => setField(key, e.target.value)}
-                  disabled={disabled}
-                />
-              </div>
-            ))}
+            <FloatingLabelField
+              id="intake-dimensions"
+              label="Dimensions / size"
+              value={form.dimensions ?? ""}
+              onChange={(v) => setField("dimensions", v)}
+              disabled={disabled}
+            />
+            <FloatingLabelField
+              id="intake-materials"
+              label="Materials"
+              value={form.materials ?? ""}
+              onChange={(v) => setField("materials", v)}
+              disabled={disabled}
+            />
+            <FloatingLabelField
+              id="intake-colors"
+              label="Colors"
+              value={form.colors ?? ""}
+              onChange={(v) => setField("colors", v)}
+              disabled={disabled}
+            />
 
             <div className="md:col-span-2">
-              <Label htmlFor="intake-vibe">Product vibe</Label>
-              <Input
+              <FloatingLabelField
                 id="intake-vibe"
+                label="Product vibe"
                 value={form.vibe ?? ""}
-                onChange={(e) => setField("vibe", e.target.value)}
-                placeholder="clean spa, rugged outdoor, minimalist luxury…"
+                onChange={(v) => setField("vibe", v)}
                 disabled={disabled}
               />
             </div>
 
             <div className="md:col-span-2">
-              <Label htmlFor="intake-use-case">Primary use case</Label>
-              <Input
+              <FloatingLabelField
                 id="intake-use-case"
+                label="Primary use case"
                 value={form.useCase ?? ""}
-                onChange={(e) => setField("useCase", e.target.value)}
-                placeholder="Daily kitchen hand washing, gym recovery…"
+                onChange={(v) => setField("useCase", v)}
                 disabled={disabled}
               />
             </div>
@@ -153,26 +171,21 @@ export function ProductIntakeFields({
               />
             </div>
 
-            <div>
-              <Label htmlFor="intake-buyer">Target buyer</Label>
-              <Input
-                id="intake-buyer"
-                value={form.targetBuyer ?? ""}
-                onChange={(e) => setField("targetBuyer", e.target.value)}
-                disabled={disabled}
-              />
-            </div>
+            <FloatingLabelField
+              id="intake-buyer"
+              label="Target buyer"
+              value={form.targetBuyer ?? ""}
+              onChange={(v) => setField("targetBuyer", v)}
+              disabled={disabled}
+            />
 
-            <div>
-              <Label htmlFor="intake-competitors">Competitors to differentiate from</Label>
-              <Input
-                id="intake-competitors"
-                value={form.competitors ?? ""}
-                onChange={(e) => setField("competitors", e.target.value)}
-                placeholder="Generic Amazon alternatives…"
-                disabled={disabled}
-              />
-            </div>
+            <FloatingLabelField
+              id="intake-competitors"
+              label="Competitors to differentiate from"
+              value={form.competitors ?? ""}
+              onChange={(v) => setField("competitors", v)}
+              disabled={disabled}
+            />
 
             {variant === "images" ? (
               <div className="md:col-span-2">

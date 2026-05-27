@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CopyWorkspace } from "@/components/copy/copy-workspace";
-import { StudioPageShell } from "@/components/layout/studio-page-shell";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
 import { type MarketplaceId } from "@/lib/marketplaces";
 
@@ -55,20 +54,13 @@ export default async function ContentStudioCopyPage({
   const missingProductId = Boolean(params.productId && session?.user?.id && !linkedProduct);
 
   return (
-    <StudioPageShell
-      eyebrow="Content studio"
-      title="Copy"
-      description="Generate marketplace-ready title, bullets, description, and backend keywords."
-      hideGuide
-    >
-      <CopyWorkspace
-        initialCredits={session?.user?.credits ?? 0}
-        linkedProduct={linkedProduct}
-        missingProductId={missingProductId}
-        defaultBrandName={defaultBrandName}
-        paymentSuccess={Boolean(params.success)}
-        hidePageHeader
-      />
-    </StudioPageShell>
+    <CopyWorkspace
+      initialCredits={session?.user?.credits ?? 0}
+      linkedProduct={linkedProduct}
+      missingProductId={missingProductId}
+      defaultBrandName={defaultBrandName}
+      paymentSuccess={Boolean(params.success)}
+      hidePageHeader
+    />
   );
 }

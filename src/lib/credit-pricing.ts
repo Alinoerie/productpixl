@@ -128,6 +128,74 @@ export function quoteCopyRun(params: {
   };
 }
 
+/** Multi-marketplace copy run — base quote plus per-additional-marketplace lift. */
+export function quoteCopyRunMulti(params: {
+  marketplaces: string[];
+  intake: Partial<ProductIntakeData>;
+}): CreditQuote {
+  const unique = [...new Set(params.marketplaces.filter(Boolean))];
+  if (unique.length === 0) {
+    return quoteCopyRun({ marketplace: "AMAZON_US", intake: params.intake });
+  }
+  let total = 0;
+  for (const marketplace of unique) {
+    total += quoteCopyRun({ marketplace, intake: params.intake }).total;
+  }
+  if (unique.length > 1) {
+    total = roundCredits(total * 0.92);
+  }
+  return {
+    total,
+    summary: formatCreditsRequired(total),
+    detailLine:
+      unique.length > 1
+        ? `${unique.length} marketplaces · localized copy stack — estimate updates with intake depth`
+        : quoteCopyRun({ marketplace: unique[0]!, intake: params.intake }).detailLine,
+  };
+}
+
+/** Single section regenerate (title, bullet, description, keywords). */
+export function quoteCopySection(marketplace: string): CreditQuote {
+  const market = marketplaceDepth(marketplace);
+  const total = roundCredits(1 + market * 0.35);
+  return {
+    total,
+    summary: formatCreditsRequired(total),
+    detailLine: "One section refresh · marketplace rules applied",
+  };
+}
+
+export function quoteVideoRun(params: {
+  formatCredits: number;
+  musicEnabled: boolean;
+}): CreditQuote {
+  const music = params.musicEnabled ? 8 : 0;
+  const total = roundCredits(params.formatCredits + music + 12);
+  return {
+    total,
+    summary: formatCreditsRequired(total),
+    detailLine: "Beta video reel · hero loop + feature showcase",
+  };
+}
+
+export function quoteImageModuleBreakdown(params: {
+  includePackaging: boolean;
+  marketplace: string;
+  intake: Partial<ProductIntakeData>;
+}): { label: string; credits: number }[] {
+  const ctx: CreditPricingContext = {
+    marketplace: params.marketplace,
+    intake: params.intake,
+  };
+  const modules = getModulesForRun(params.includePackaging);
+  const perImage = modules.map((mod) => ({
+    label: mod.label ?? mod.id,
+    credits: creditsForModule(mod.id, ctx),
+  }));
+  const orchestration = pipelineOrchestration(ctx, modules.length);
+  return [...perImage, { label: "Pipeline", credits: orchestration }];
+}
+
 export function quoteRegenerateModule(
   moduleId: ListingModuleId,
   marketplace: string,

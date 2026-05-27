@@ -3,6 +3,7 @@ export const STUDIO_ROUTES = {
   home: "/studio",
   images: "/studio/images",
   copy: "/studio/copy",
+  video: "/studio/video",
   brandProfile: "/brand",
   brandsList: "/brands",
   /** @deprecated Same data as projects — use projectsHref() */
@@ -64,5 +65,11 @@ export const CONTENT_STUDIO_TABS = [
     href: STUDIO_ROUTES.copy,
     label: "Copy",
     match: (path: string) => path.startsWith(STUDIO_ROUTES.copy),
+  },
+  {
+    href: STUDIO_ROUTES.video,
+    label: "Video",
+    badge: "Beta",
+    match: (path: string) => path.startsWith(STUDIO_ROUTES.video),
   },
 ] as const;

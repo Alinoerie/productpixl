@@ -85,3 +85,47 @@ ${isBol ? "Bol.com tone: direct, trustworthy, less aggressive US marketing hype.
   const parsed = parseJsonFromModel(raw);
   return listingCopySchema.parse(parsed);
 }
+
+export type CopySectionId = "title" | "bullet" | "description" | "keywords";
+
+export async function generateListingCopySection(params: {
+  section: CopySectionId;
+  bulletIndex?: number;
+  productName: string;
+  brandName: string;
+  category: string;
+  marketplace: string;
+  existing: Partial<ListingCopyOutput>;
+  materials?: string;
+  keyFeatures?: string;
+  targetBuyer?: string;
+  keywords?: string[];
+}): Promise<string | string[]> {
+  const full = await generateListingCopy({
+    productName: params.productName,
+    brandName: params.brandName,
+    category: params.category,
+    marketplace: params.marketplace,
+    materials: params.materials,
+    keyFeatures: params.keyFeatures,
+    targetBuyer: params.targetBuyer,
+    researchSnippets: [],
+    keywords: params.keywords ?? [],
+    competitorTitles: [],
+  });
+
+  switch (params.section) {
+    case "title":
+      return full.title;
+    case "description":
+      return full.description;
+    case "keywords":
+      return full.backendKeywords;
+    case "bullet": {
+      const idx = params.bulletIndex ?? 0;
+      return full.bullets[idx] ?? full.bullets[0] ?? "";
+    }
+    default:
+      return full.title;
+  }
+}
