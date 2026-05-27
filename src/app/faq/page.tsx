@@ -34,7 +34,7 @@ export default async function FaqPage() {
         description="Pay per generation — 10 free credits on signup."
         actions={
           <Button asChild className="m-action rounded-xl">
-            <Link href={session ? "/pricing" : "/login"}>{session ? "View credits" : "Sign in"}</Link>
+            <Link href="/pricing">{session ? "View credits" : "Get free credits"}</Link>
           </Button>
         }
         className="pb-20"
