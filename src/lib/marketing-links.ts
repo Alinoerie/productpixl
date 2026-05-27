@@ -1,11 +1,11 @@
 export const MARKETING_NAV_LINKS = [
-  { href: "/how-it-works", label: "How it works" },
+  { href: "/how-it-works", label: "How it works", primary: true },
   { href: "/guides/ecommerce", label: "Free guide", highlight: "accent" as const },
   { href: "/demo", label: "Book demo" },
   { href: "/gallery", label: "Gallery" },
-  { href: "/grader", label: "Free grader", highlight: "teal" as const },
-  { href: "/compare", label: "Why us" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/grader", label: "Free grader", highlight: "teal" as const, primary: true },
+  { href: "/compare", label: "Why us", primary: true },
+  { href: "/pricing", label: "Pricing", primary: true },
   { href: "/faq", label: "FAQ" },
 ];
 
