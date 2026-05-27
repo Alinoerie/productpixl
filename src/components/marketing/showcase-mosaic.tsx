@@ -23,6 +23,8 @@ export function ShowcaseMosaic({
     registerMarketingGsap();
 
     const tiles = root.querySelectorAll("[data-mosaic-tile]");
+    let floatTween: gsap.core.Tween | null = null;
+
     const ctx = gsap.context(() => {
       gsap.from(tiles, {
         scale: 0.82,
@@ -34,7 +36,7 @@ export function ShowcaseMosaic({
         ease: MKT_EASE.out,
         delay: 0.35,
       });
-      gsap.to(tiles, {
+      floatTween = gsap.to(tiles, {
         y: (i) => (i % 2 === 0 ? -6 : 6),
         duration: 3 + Math.random(),
         repeat: -1,
@@ -42,10 +44,27 @@ export function ShowcaseMosaic({
         ease: "sine.inOut",
         stagger: { each: 0.2, from: "random" },
         delay: 1.2,
+        paused: true,
       });
     }, root);
 
-    return () => ctx.revert();
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          floatTween?.play();
+        } else {
+          floatTween?.pause();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(root);
+
+    return () => {
+      ctx.revert();
+      observer.disconnect();
+    };
   }, []);
 
   return (

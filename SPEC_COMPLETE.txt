@@ -1,0 +1,726 @@
+PRODUCTPIXL — COMPLETE PROJECT SPECIFICATION
+============================================
+Version: Full v1.0
+Date: 2026-05-25
+
+---
+
+## 1. PROJECT NAME & ELEVATOR PITCH
+
+Name: productpixl
+Casing: productpixl (lowercase in URL/brand, "ProductPixl" in marketing)
+
+One-liner: Upload a product photo, get a complete Amazon or Bol.com listing
+and A+ content images — copy and visuals, ready to publish in minutes.
+
+The actual problem, stated plainly: A small seller listing a new product faces
+4–6 hours of work before a single unit sells — keyword research, writing title
+and bullet points, composing the description, designing infographic images, building
+lifestyle A+ modules. They either hire a copywriter (€50–200) and a designer
+(€100–300) per product, accept a weak generic listing that kills conversions,
+or spend their own evenings on it. ProductPixl solves this by making a single
+photo the entire input, and returning a fully-formed, marketplace-compliant
+listing and image assets.
+
+---
+
+## 2. THE THREE STAKEHOLDERS
+
+The end-user isn't just "the seller." Three actors interact with this product:
+
+PRIMARY — The Seller
+The person who uploads the photo and receives the output. Usually a small
+team founder, operations manager, or ecommerce manager. Their pain: time, not
+money. They'd rather spend €1 and 3 minutes than €300 and 4 hours. They have
+creative taste but no design or copywriting skills.
+
+SECONDARY — The Amazon/Bol.com Algorithm
+Not a human — the marketplace itself. It rewards listings with: high keyword
+density in title, all five bullet points filled, relevant backend keywords,
+A+ content that increases dwell time, images that reduce returns. ProductPixl
+must output that satisfies this system, not just look good to a human.
+
+TERTIARY — The Seller's Customer
+The person buying the product. A well-written listing with lifestyle imagery
+reduces return rates and increases conversions. A+ content specifically
+increases purchase confidence. ProductPixl ultimately serves the end buyer by
+making the listing truthful, detailed, and visually rich.
+
+---
+
+## 3. END USER DETAIL
+
+Target: Small-to-medium ecommerce sellers.
+Team size: 1–5 people.
+Marketplaces: Amazon EU (DE/NL/FR/IT/ES/UK) primary, Bol.com secondary.
+Inventory type: Real physical products, not dropshipping.
+Budget: Can afford €0.50–€2 per generation but not €300 per product.
+Tech literacy: Comfortable with SaaS tools, uploads images, fills forms.
+Device: Desktop-first (Amazon seller workflows are desktop-native).
+Languages: English for V1; app UI does not need to be localized.
+Excluded: Enterprise sellers (too complex), dropshippers (no real product photo),
+social sellers (different workflow).
+
+---
+
+## 4. THE EXACT HAPPY PATH — STEP BY STEP
+
+### Pre-signup
+1. Seller Googles "how to list on Amazon faster" or "Amazon listing generator"
+2. Lands on productpixl.com
+3. Sees: "One photo. Complete Amazon listing. €1.50 per generation."
+4. Clicks "Start Free" — goes to signup
+
+### Signup
+5. Enters email → magic link sent → clicks link → account created
+6. Shown 10 free credits with a single prompt: "What do you sell?"
+   (Fashion / Electronics / Home & Living / Beauty / Sports / Other)
+7. Picks category — this primes the AI model before first generation
+8. Shown a 3-step demo: "See how it works" — pre-loaded sample product,
+   one click to see full output (no credits consumed)
+
+### First Paid Generation (using free credits)
+9. Seller uploads photo — JPG/PNG, minimum 1000x1000px, white or transparent
+   background preferred but not required
+10. AI immediately analyzes: detects product type (e.g. "crossbody bag"),
+    dominant colors, material cues, style category, approximate price range
+11. Modal asks: "Which marketplace?"
+    - Amazon EU (DE) / Amazon EU (NL) / Amazon EU (FR) / Amazon EU (IT) /
+      Amazon EU (ES) / Amazon UK / Bol.com / Other
+12. Second modal: "What do you want?"
+    - "Amazon Listing Only" / "A+ Content Images Only" / "Complete Package
+      (Listing + A+)"
+13. Third modal: "Add brand guidelines?" — optional, shows the brand form
+    (see Section 5 below)
+14. Seller confirms, credits deducted:
+    - Listing Only: 1 credit
+    - A+ Only: 2 credits
+    - Complete Package: 3 credits
+15. Generation begins — animated progress bar with live status messages:
+    - "Analyzing your product photo..."
+    - "Researching keywords for your category..."
+    - "Writing your listing copy..."
+    - "Generating lifestyle scene concepts..."
+    - "Building your A+ infographic..."
+16. Completion: 30–90 seconds total
+17. Seller lands on Results page
+
+### Results Page
+18. Tabs: Copy | Images | Compliance
+19. Copy tab shows: editable title, 5 bullet points, product description,
+    backend keywords, suggested Amazon BSR categories
+20. Images tab shows: generated hero image, lifestyle scene images (2–3),
+    A+ infographic module (1 wide + 2 standard)
+21. Compliance tab shows automated check:
+    - Keyword density: ✓ Pass
+    - Bullet length: ✓ Pass
+    - Image dimensions: ✓ Pass
+    - A+ module count: ⚠ Only 3 modules — Amazon recommends 5+
+    - Banned content: ✓ No violations detected
+22. Seller can:
+    - Download individual assets
+    - Download all as ZIP
+    - Click "Regenerate this section" (costs 0.5 credits)
+    - Click "Save to Brands" (if brand guidelines were set)
+    - Click "Publish" → opens Amazon Seller Central / Bol.com Seller Portal
+      in new tab (manual upload, not automated)
+23. Credits deducted on confirmation, not on start
+
+### Post-generation
+24. Email sent: "Your ProductPixl generation is ready — [Product Name]"
+25. On return visit: Dashboard shows all past generations with "Regenerate"
+    and "Duplicate" actions
+26. Seller clicks "Buy Credits" → chooses Starter / Pro / Scale → enters
+    card → credits added instantly
+
+### Subsequent Generations
+27. Seller clicks "New Generation" from dashboard
+28. Repeat steps 9–26
+29. If brand guidelines saved: Step 13 auto-populates from their saved brand,
+    with option to override for this generation only
+
+---
+
+## 5. THE MARKETPLACE COMPLIANCE ENGINE
+
+This is the feature that makes ProductPixl useful across different marketplaces,
+not just Amazon.
+
+### Amazon EU Compliance Checks
+
+| Check                    | Rule                                           | Output            |
+|--------------------------|------------------------------------------------|-------------------|
+| Title length             | Max 200 characters (Amazon EU)                 | Warning if >200   |
+| Bullet point length      | Each bullet ≤ 500 characters                    | Warning if exceeded |
+| Bullet count             | Must have 5 bullets                            | Warning if <5     |
+| Keyword density          | Title has keywords in first 80 chars            | Pass/Warn/Fail   |
+| Image resolution         | Min 1000x1000px, max 10000x10000px            | Pass/Warn/Fail   |
+| Image background         | Main image pure white (#FFFFFF)                | Pass/Warn        |
+| A+ module count          | 3–5 modules recommended                        | Warning if ≠5    |
+| A+ text-to-image ratio   | ≤30% text in images                           | Pass/Warn        |
+| Banned content           | No "best ever", "only", "money-back guarantee"| Flag if detected |
+| Price representation     | No pre-downstrike pricing imagery              | Warning          |
+
+### Bol.com Compliance Checks
+
+| Check                    | Rule                                           |
+|--------------------------|------------------------------------------------|
+| Description format       | Plain text only, no HTML/Markdown              |
+| Description length       | 500–5,000 characters                           |
+| Product title            | ≤200 characters                                |
+| Image specs              | Min 1000x1000px, JPG preferred                |
+| Mandatory attributes     | EAN/barcode, condition, brand — flagged if missing |
+
+### "Other" Marketplace
+- User selects country/category manually
+- Compliance checks disabled (per-platform ruleset would require separate work)
+- Copy and images generated with marketplace-agnostic best practices
+- Disclaimer shown: "Verify compliance with your marketplace's guidelines
+  before publishing"
+
+### How Marketplace Selection Affects Generation
+
+Amazon selected:
+- System prompt enforces Amazon content guidelines
+- Copy structured to Amazon EU specifications (character limits per field)
+- Keywords research primed for Amazon search algorithm
+- A+ images generated to Amazon module dimensions
+
+Bol.com selected:
+- System prompt enforces Bol.com content rules
+- Description generated as plain text (no HTML)
+- Images generated at Bol.com specs
+- EAN field prompted for before generation begins
+
+Other selected:
+- Generic best-practice generation
+- No marketplace-specific optimization
+- Disclaimer shown before download
+
+---
+
+## 6. BRAND GUIDELINES SYSTEM
+
+This is a first-class feature, not an afterthought.
+
+### Where it Lives
+Accessible from top-right account menu at any time, or prompted
+optionally before first generation.
+
+### The Form — Every Field
+
+Brand Name: [text input]
+Brand Tagline: [text — one sentence, max 80 characters]
+Primary Color: [color picker — hex input]
+Secondary Color: [color picker — hex input]
+Accent Color: [color picker — hex input]
+Font Preference: [dropdown — Modern / Classic / Playful / Minimal / Luxury]
+Logo: [file upload — PNG/JPG, max 2MB, appears in A+ module corner]
+Logo Placement: [dropdown — Top Left / Top Right / Bottom Left /
+  Bottom Right / Watermark]
+Preferred Photography Style: [multi-select — Studio / Lifestyle /
+  Minimalist / Rich Detail / Flat Lay]
+Product Photography Background: [dropdown — White / Light Grey /
+  Natural / Dark / Transparent]
+Tone of Voice: [multi-select — Professional / Conversational /
+  Luxury / Friendly / Technical / Playful]
+Key Selling Points (3 max): [textarea — what the brand always emphasizes]
+Commonly Excluded Claims: [textarea — e.g. "Never claim 'world's best'
+  or 'certified organic' without evidence"]
+
+### How Guidelines Are Applied
+
+- All future generations inject these guidelines as system-prompt context
+- A+ images attempt to match the specified color palette and style
+- Copy generation uses the selected tone of voice
+- Logo overlay applied to A+ image outputs automatically
+- Compliance filter can flag if generated copy contradicts
+  "commonly excluded claims"
+
+### Storage Limits by Tier
+
+| Tier    | Brands saved |
+|---------|-------------|
+| Free    | 1           |
+| Starter | 1           |
+| Pro     | 3           |
+| Scale   | Unlimited   |
+
+- Brand guidelines are editable at any time
+- Editing does not affect past generations (past outputs are frozen)
+- Seller can set a "default brand" used automatically for all new generations
+- "Override for this generation" checkbox allows one-off deviation without
+  editing the saved brand
+
+---
+
+## 7. PRICING TIERS — FULL CONTENTS
+
+### Free — €0
+
+- 10 credits on signup (no card required)
+- Can generate: Listing Only or A+ Only (not both simultaneously)
+- 1 credit = Listing Only, 2 credits = A+ Only
+- Brand guidelines: 1 saved brand
+- Export: Individual asset download only (no ZIP)
+- Generation queue: No priority (generations may take longer during peak)
+- Support: Email only
+- Credit validity: Credits never expire; account flagged inactive after 90 days
+- Payment methods: None required
+
+### Starter — €49.99/month
+
+- 150 credits per month
+- Generation options: Listing (1 credit), A+ (2 credits),
+  Complete Package (3 credits)
+- Brand guidelines: 1 saved brand
+- Export: Individual assets + ZIP download
+- Generation queue: Priority over Free tier
+- Generation history: Last 50 generations stored
+- Support: Email + async chat (24h SLA)
+- Credit rollover: None — unused credits expire at month end
+- Payment: Card required
+
+### Pro — €89.99/month
+
+- 500 credits per month
+- Everything in Starter, plus:
+- Brand guidelines: Up to 3 saved brands
+- Generation history: Unlimited
+- Bulk queue: Up to 5 products queued (sequential, not simultaneous)
+- A/B variant generation: Generate 2 versions of copy simultaneously
+  for comparison (costs 1.5x credits)
+- Export: CSV keyword export in addition to individual + ZIP
+- Support: Email + chat (12h SLA) + monthly 30-min onboarding call
+- Credit rollover: Up to 100 credits roll to next month
+- Payment: Card required
+
+### Scale — €149.99/month
+
+- 1500 credits per month
+- Everything in Pro, plus:
+- Brand guidelines: Unlimited saved brands
+- Bulk queue: Up to 25 products queued
+- API access: REST API for integration with existing tools
+  (documentation + API key in account settings)
+- Support: Dedicated Slack channel + email (4h SLA)
+- Custom marketplace templates: Early access to new platform integrations
+- Credit rollover: Up to 500 credits roll to next month
+- Payment: Card or invoice (NET-30 for established accounts)
+
+### Pay-As-You-Go (No Subscription)
+
+- 10 credits for €14.99
+- 50 credits for €69.99
+- 200 credits for €249.99
+- Credits never expire
+- Can be purchased alongside any subscription
+- No tier benefits (queue priority = Free tier)
+
+---
+
+## 8. OUTPUT FORMATS — FULL DETAIL
+
+### Listing Copy Export
+
+Formats: Plain text (.txt) or structured JSON
+
+Fields included:
+- product_name
+- marketplace
+- title (max 200 chars)
+- bullet_1 through bullet_5 (max 500 chars each)
+- description (plain text)
+- backend_keywords (comma-separated)
+- suggested_browse_nodes
+- generation_timestamp
+- compliance_score
+
+File name: `[product_name]_listing.txt` or `[product_name]_listing.json`
+
+### Image Export
+
+Formats: PNG (recommended for Amazon), JPG (for Bol.com)
+
+Resolutions generated per output:
+- Hero/main image: 3000x3000px (Amazon main image spec)
+- Secondary images: 1500x1500px (Amazon image carousel)
+- A+ lifestyle wide: 3000x1500px (16:9)
+- A+ standard: 1500x1500px (1:1)
+- A+ wide infographic: 3000x2000px (3:2)
+
+Image requirements met:
+- sRGB color space (Amazon requirement)
+- No EXIF metadata (Amazon strips this)
+- All images named: `[product_name]_[image_type]_[number].png`
+
+ZIP file name: `[product_name]_productpixl.zip`
+
+### Compliance Report Export
+
+Format: PDF
+Contents: All compliance checks, pass/warn/fail status,
+marketplace-specific guidance, timestamp
+File name: `[product_name]_compliance.pdf`
+
+### Full Generation Package (ZIP)
+
+Contents:
+- `[product_name]_listing.txt`
+- `[product_name]_listing.json`
+- All images (PNG/JPG as selected)
+- `[product_name]_compliance.pdf`
+- `[product_name]_brand.png` (logo, if brand guidelines set)
+
+---
+
+## 9. CREDIT SYSTEM — FULL MECHANICS
+
+### Credit Deduction
+
+- Deduction occurs on generation confirmation, NOT on upload
+- If generation fails mid-way: credits NOT charged; seller can retry
+- If generation partially succeeds (some outputs, some fail): credits
+  charged only for what completed and was delivered
+- Regeneration of a specific section: 0.5 credits
+- A/B variant generation (Pro+): 1.5x base credit cost
+
+### Credit Display
+
+- Dashboard always shows: "You have X credits remaining"
+- When credits < 10: yellow warning banner
+- When credits = 0: block on generation, show upgrade prompt
+- Credit usage history: table showing date, product name, credit cost,
+  generation type
+
+### Free Tier Specifics
+
+- 10 credits: one-time on signup, no monthly refresh
+- If account inactive 90+ days: credits frozen, not lost
+  (reactivation unlocks them)
+- Free users cannot buy individual credit packs — must upgrade to Starter+
+
+---
+
+## 10. ERROR STATES — EVERY CASE
+
+### Image Upload Errors
+- File too small (< 1000x1000px): "Your image is [actual size].
+  Please upload at least 1000x1000px for best results."
+- File too large (> 20MB): "File too large. Maximum size is 20MB."
+- Unsupported format: "Please upload a JPG or PNG image."
+- Upload interrupted: "Upload failed. Please try again."
+
+### Generation Errors
+- API timeout (> 2 minutes): "Generation timed out.
+  Your credits have not been charged. Please try again."
+- AI content filter triggered: "We couldn't complete this generation
+  due to content policy. Please check your image and try again.
+  Contact support if you believe this is an error."
+- Partial failure (some outputs missing): Show what succeeded with
+  warning: "Some outputs failed. 2 of 3 image types generated.
+  Credits charged only for delivered outputs."
+
+### Compliance Errors
+- Bol.com selected but no EAN: Warning, not block:
+  "No EAN detected. Add one in your product data before publishing to Bol.com."
+- Amazon selected but image background not white:
+  Warning: "Your main image background appears to not be pure white.
+  Amazon requires a pure white background for the main product image.
+  This may affect your listing quality score."
+
+### Account / Billing Errors
+- Card declined: "Payment failed. Please check your card details."
+- Subscription upgrade failed: "We couldn't process your upgrade.
+  No charges have been made. Please try again."
+- Credit pack purchase failed: Same message as above.
+
+---
+
+## 11. CONTENT MODERATION
+
+### Image Moderation
+- All uploaded images pass through a content filter before generation starts
+- Prohibited content that triggers block:
+  - Weapons, explosives, military equipment
+  - Counterfeit or replica goods
+  - Adult content (sexual or explicit)
+  - Illegal substances
+  - Dangerous products (regulatory restricted items)
+- If blocked: "We can't process this image. Please upload a different photo."
+- No human review queue — immediate automated rejection
+
+### Copy Moderation
+- Generated copy passes through banned phrase filter
+- Banned phrases detected: "best ever", "money-back guarantee",
+  "certified organic" (unless brand guidelines explicitly claim it),
+  "100% safe", "no side effects"
+- If detected: that phrase is flagged in the compliance tab with a warning
+- Not a block — still deliverable with warning
+
+---
+
+## 12. ONBOARDING & DEMO FLOW
+
+### Post-Signup Sequence
+1. Magic link clicked → account created → redirected to /dashboard
+2. Welcome banner: "You have 10 free credits. Let's get started."
+3. Three-step interactive demo:
+   Step 1: "See how it works" — pre-loaded sample product (a leather bag,
+     stock photo with commercial license)
+   Step 2: Click "Generate Demo" — watch full generation flow in 30 seconds
+   Step 3: "Ready for the real thing?" — CTA to start first generation
+4. Demo does NOT consume credits
+5. After demo: seller is on the generate page with empty state,
+   "Upload your first product photo"
+
+### The Sample Demo Product
+- Must have a commercially licensed stock photo (Shutterstock or similar)
+- Product: Leather crossbody bag (fashion = most common category)
+- Pre-populated marketplace: Amazon DE
+- All generation outputs are pre-generated and cached — not real-time AI
+  (so the demo is instant and always works)
+
+### First Generation Prompt
+After signup and demo, before first upload, a short modal asks:
+- "Which marketplace do you sell on?" (dropdown)
+- "What category best describes your products?" (dropdown)
+This data primes the AI and is stored in the account for future generations.
+
+---
+
+## 13. DASHBOARD — WHAT THE SELLER SEES
+
+### Top Bar
+- Left: ProductPixl logo (links to landing /dashboard)
+- Center: Nav — Generate / Products / Brands / Account
+- Right: Credit balance ("142 credits") + avatar / account menu
+
+### Dashboard Home (/dashboard)
+- Hero stat row: Total generations | Credits remaining | This month's spend
+- Recent generations: Last 5, with product thumbnail, name, date, status
+- "Start New Generation" prominent button
+- Upsell banner (if on Free tier): "Get 150 credits/month from €49.99"
+
+### Products Page (/products)
+- Table view: thumbnail, product name, marketplace, date, status (Complete/
+  Failed/Queued), actions (View, Regenerate, Duplicate)
+- Filters: by marketplace, by date range, by status
+- Bulk actions: Select multiple → delete or export
+- Pagination: 20 per page
+
+### Brands Page (/brands)
+- List of saved brand guidelines
+- "Add New Brand" button
+- Each brand card: name, color swatches, logo thumbnail, "Edit" and
+  "Set as Default" actions
+
+### Account Page (/account)
+- Tabs: Profile / Billing / Notifications / API
+- Profile: Name, email, password (change), delete account
+- Billing: Current plan, usage this month, payment method, invoices,
+  upgrade/cancel
+- Notifications: Email preferences (generation complete, credits low,
+  billing receipts)
+- API (Pro+ only): API key display, regenerate key, rate limits
+
+---
+
+## 14. GENERATION WIZARD — UI STATES
+
+### Step 1: Upload
+- Large drag-and-drop zone with illustration
+- "or click to browse" text link
+- Accepted formats: JPG, PNG
+- After upload: thumbnail preview with "Change photo" link
+- "Continue" button (disabled until photo uploaded)
+
+### Step 2: Product Details
+- Marketplace selector: visual radio buttons (Amazon EU flags / Bol.com logo)
+- Generation type: visual radio buttons (Listing / A+ / Complete)
+- Product name: optional text field (helps AI, shown in results)
+- "Add brand guidelines": checkbox → expands inline brand form
+- "Generate" button → credits calculated and shown:
+  "This will use [N] credits. You have [X] remaining."
+
+### Step 3: Generating (Progress)
+- Full-page or large modal takeover
+- Animated progress bar
+- Live status messages (5–6 steps)
+- Estimated time remaining
+- "Cancel" link (confirms: "Credits will not be charged if cancelled")
+
+### Step 4: Results
+- Tabbed interface: Copy | Images | Compliance
+- Copy tab: Editable fields with "Reset to AI version" link per field
+- Images tab: Grid of image cards, each with Download / Regenerate button
+- Compliance tab: Pass/Warn/Fail list with explanations
+- Bottom bar: "Save to Brands" | "Download All (ZIP)" | "New Generation"
+
+---
+
+## 15. GENERATION HISTORY — STORAGE & RIGHTS
+
+- All generations stored indefinitely on Pro and Scale tiers
+- Free and Starter: last 50 generations stored
+- Seller can delete any individual generation (GDPR right to erasure)
+- Deleting a generation also deletes associated images from storage
+- ProductPixl retains right to use anonymized, aggregated outputs
+  for AI model improvement (opt-out available in Account settings)
+
+---
+
+## 16. TEAM ACCOUNTS — V2 PREVIEW
+
+Not in scope for V1. V1 is single-user per account.
+
+But account model must accommodate V2 without migration:
+- Users table has `account_id` (not just `user_id`) as primary grouping
+- Roles: owner, admin, member (V2)
+- Billing always at account level, not user level
+
+---
+
+## 17. BILLING & INVOICING — V1 SCOPE
+
+- All billing via Stripe
+- Subscriptions: monthly, auto-renew
+- Credit packs: one-time, non-recurring
+- Invoices: generated by Stripe, emailed to billing email
+- VAT: EU VAT handled by Stripe Tax (automatic)
+- Billing email: configurable separately from login email
+- Cancellation: immediate, no refund for current period
+- Plan downgrade: effective at end of current period
+
+---
+
+## 18. INTERNATIONAL — V1 SCOPE
+
+- App UI: English only for V1
+- Generated copy: English only for V1
+- Marketplace outputs: localized to the selected marketplace country
+  (e.g. Amazon DE gets German marketplace format, even though copy is English)
+- Pricing displayed in EUR (€)
+- VAT added for EU buyers via Stripe Tax
+- UK sellers: Amazon UK counts as separate marketplace
+
+---
+
+## 19. GENERATION AI — TECHNICAL APPROACH
+
+### Image Analysis (Step 1)
+- Model: GPT-4o with vision (via OpenAI or Replicate)
+- Input: product photo URL
+- Output: structured JSON with product_type, material, colors[],
+  style_category, estimated_price_range, key_features[]
+
+### Listing Copy Generation (Step 2)
+- Model: GPT-4o (text)
+- Inputs: analysis JSON + marketplace + brand guidelines
+- Outputs: title, bullet_1–5, description, backend_keywords[],
+  suggested_browse_nodes[]
+- Prompt engineering: per-marketplace system prompt with compliance rules
+  injected
+
+### A+ Image Generation (Step 3)
+- Model: Flux or Stable Diffusion (via Replicate)
+- Inputs: product photo + brand colors + style + module type
+- Output: 2–3 lifestyle scenes + 1–2 infographic layouts
+- Each image type is a separate generation call
+- Safety filter on outputs before delivery
+
+### Generation Status Updates
+- Real-time via polling or WebSocket (SSE) from backend
+- Status states: queued, analyzing, generating_copy, generating_images,
+  finalizing, complete, failed
+- Progress percentage calculated from sub-step completion
+
+---
+
+## 20. STACK CONFIRMATION
+
+- Frontend: Next.js 15 (App Router)
+- Styling: Tailwind CSS v3
+- Database: PostgreSQL (via Supabase or Vercel Postgres)
+- ORM: Prisma
+- Auth: NextAuth.js v5 (email magic link + Google OAuth)
+- Payments: Stripe (subscriptions + one-time credit packs)
+- AI: OpenAI GPT-4o (text/vision) + Replicate (image generation)
+- Background jobs: Inngest (for generation queues)
+- Image storage: Cloudinary (for generated assets + user uploads)
+- Email: Resend or Postmark
+- Hosting: Vercel
+
+---
+
+## 21. WHAT IS OUT OF SCOPE FOR V1
+
+Explicitly excluded to prevent scope creep:
+
+1. Automatic publishing to Amazon or Bol.com (manual download/upload only)
+2. Mobile app (responsive web only)
+3. Multi-language app UI or copy output (English only)
+4. Multi-marketplace sync (separate accounts per platform handled manually)
+5. Inventory or order management
+6. Bulk generation of multiple products simultaneously
+   (queue of up to 5 products on Pro+, not simultaneous)
+7. Image editing or manipulation (generation only)
+8. Team accounts / multi-user collaboration
+9. Marketplace advertising campaign creation (Sponsored Products, etc.)
+10. Seller analytics or performance tracking
+11. International tax handling beyond EU VAT (handled by Stripe Tax)
+12. Custom domain for sellers (white-label)
+
+---
+
+## 22. OPEN QUESTIONS — NEEDS ALI'S INPUT
+
+1. CREDIT PER GENERATION COST: Is 1/2/3 credit structure correct?
+   Or does A+ cost more than twice listing (since image gen is expensive)?
+
+2. CREDIT ROLLOVER: Starter has no rollover — intentional?
+   Slight rollover on Pro (100 max) and Scale (500 max) — correct?
+
+3. DEMO PRODUCT: Is there a stock photo Ali wants used for the demo?
+   Or should we use a placeholder with a clear "sample product" label?
+
+4. EAN PROMPT: At what point do we ask for the product EAN/barcode?
+   Before generation (blocks progress) or as a recommendation
+   before publishing?
+
+5. BOL.COM INTEGRATION: Full Bol.com output in V1, or is it
+   "Amazon first, Bol.com later"?
+
+6. LOGO OVERLAY ON A+ IMAGES: Is this a requirement or optional?
+   If optional, does it cost extra credits?
+
+7. API ACCESS: On Scale tier — is this a documented REST API
+   that external tools can call, or internal-only?
+
+8. SIGNUP FLOW: Magic link only, or also password option?
+   (Magic link = better UX, password = some users prefer it)
+
+9. APPOINTMENT BOOKING: For the monthly Pro onboarding call —
+   self-serve calendar link (Calendly), or email-based scheduling?
+
+10. REFERRAL PROGRAM: Any referral mechanic in V1?
+    (e.g. "refer a friend, both get 10 credits")
+
+---
+
+## 23. SUCCESS METRICS — WHAT MAKES PRODUCTPIXL WORK
+
+These should be tracked from Day 1:
+
+- Signup → first generation conversion rate (target: >60%)
+- Average generation completion rate (target: >95%)
+- Generation completion time (target: <90 seconds p95)
+- Free → paid upgrade rate (target: >10% within 30 days)
+- Pay-per-generation → subscription upgrade rate (target: >30%)
+- Retention: % of subscribers still active after 3 months (target: >70%)
+- Support ticket volume per 100 generations (target: <2)
+- Average credits purchased per pay-as-you-go user (target: >50)
+
+---
+
+END OF SPEC

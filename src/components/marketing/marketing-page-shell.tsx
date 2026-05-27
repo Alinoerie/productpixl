@@ -10,7 +10,7 @@ export function MarketingPageShell({
   className?: string;
 }) {
   return (
-    <div className={`min-h-screen bg-hero-glow ${className}`}>
+    <div className={`min-h-screen bg-radial-warm ${className}`}>
       <SiteHeader />
       <MarketingMotionProvider>
         <main id="main">{children}</main>

@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { MarketingPageShell } from "@/components/marketing/marketing-page-shell";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
-import { EXPLORE_LINKS, HOME_STATS, USP_SUBHEAD, USP_TAGLINE, WORKFLOW_STEPS } from "@/lib/marketing-content";
-import { USP_ONE_LINER } from "@/lib/marketing-usp";
-import { UspPillarsSection } from "@/components/marketing/usp-sections";
-import { LandingTestimonials } from "@/components/marketing/landing-testimonials";
+import { HOME_STATS, USP_SUBHEAD, WORKFLOW_STEPS } from "@/lib/marketing-content";
+import { USP_ONE_LINER, USP_PILLARS } from "@/lib/marketing-usp";
 
 export const metadata: Metadata = {
   title: "ProductPixl — AI listing studio for Amazon sellers",
@@ -20,63 +15,106 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const session = await auth();
   const primaryCta = session ? STUDIO_ROUTES.home : "/login";
-  const primaryLabel = session ? "Open your studio" : "Get started free";
+  const primaryLabel = session ? "Open your studio" : "Start free — 10 credits";
 
   return (
     <MarketingPageShell>
-      <section className="relative overflow-hidden px-4 pb-16 pt-16 md:pb-20 md:pt-24">
-        <div className="bg-grid absolute inset-0 opacity-40" />
+      {/* ─── SECTION 1: HERO ─────────────────────────────────────────── */}
+      <section className="relative overflow-hidden px-4 pt-20 pb-24 md:pt-28 md:pb-36">
+        {/* Radial amber glow backdrop */}
+        <div className="bg-radial-warm absolute inset-0 pointer-events-none" />
+        {/* Dot grid */}
+        <div className="bg-dots absolute inset-0 opacity-50 pointer-events-none" />
+
         <div className="relative mx-auto max-w-6xl">
-          <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16">
-            <div className="text-center lg:text-left">
-              <Badge variant="outline" className="mb-6 border-[var(--border-strong)] bg-[var(--card)] px-3 py-1">
-                {USP_TAGLINE}
-              </Badge>
-              <h1 className="font-serif text-4xl leading-[1.08] tracking-tight text-balance md:text-6xl">
-                Stop waiting 3 weeks
-                <br />
-                <span className="text-[var(--accent)]">for listing photos that cost €2,000.</span>
+          <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
+            {/* ── Left: copy ── */}
+            <div>
+              {/* Eyebrow badge */}
+              <div className="badge-accent mb-7 inline-flex animate-fade-up">
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="shrink-0">
+                  <circle cx="4" cy="4" r="4" fill="currentColor" />
+                </svg>
+                AI Listing Studio · For Amazon Sellers
+              </div>
+
+              {/* Headline */}
+              <h1
+                className="font-display text-5xl font-bold tracking-tight leading-[1.08] text-balance md:text-6xl lg:text-[3.5rem] animate-fade-up stagger-1"
+                style={{ fontFamily: "var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif" }}
+              >
+                Stop waiting 3 weeks for listing photos that cost{" "}
+                <span className="text-[var(--accent)] amber-text-glow">€2,000.</span>
               </h1>
-              <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[var(--muted-fg)] lg:mx-0">
+
+              {/* Subhead */}
+              <p className="mt-6 text-lg leading-relaxed text-[var(--muted-fg)] max-w-xl animate-fade-up stagger-2">
                 {USP_SUBHEAD}
               </p>
-              <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
-                <Button asChild size="lg" className="w-full rounded-xl px-8 sm:w-auto">
-                  <Link href={primaryCta}>
-                    {primaryLabel}
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="w-full rounded-xl sm:w-auto">
-                  <Link href="/grader">Try free listing grader</Link>
-                </Button>
+
+              {/* CTAs */}
+              <div className="mt-10 flex flex-col sm:flex-row gap-3 animate-fade-up stagger-3">
+                <Link href={primaryCta} className="btn-primary text-center">
+                  {primaryLabel}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                    <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Link>
+                <Link href="/how-it-works" className="btn-ghost text-center">
+                  See how it works
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                    <path d="M8 3v10M3 8l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Link>
               </div>
-              <p className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-[var(--muted-fg)] lg:justify-start">
-                <span>10 free credits</span>
-                <span className="text-[var(--border)]">·</span>
-                <span>Google or email sign-in</span>
+
+              {/* Price anchor pill */}
+              <div className="mt-5 animate-fade-up stagger-3">
+                <span className="badge-accent">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
+                    <path d="M6 1v10M3 4h5a1 1 0 010 2H3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  From €2/generation
+                </span>
+              </div>
+
+              {/* Stats anchor row */}
+              <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[var(--muted-fg)] animate-fade-up stagger-4">
+                <span className="flex items-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-[var(--accent)]">
+                    <path d="M7 1.5L8.5 5.5H13L9.5 8L10.5 12L7 9.5L3.5 12L4.5 8L1 5.5H5.5L7 1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                  </svg>
+                  10 free credits
+                </span>
                 <span className="text-[var(--border)]">·</span>
                 <span>No subscription</span>
                 <span className="text-[var(--border)]">·</span>
-                <span className="text-[var(--accent)]">Product fidelity guaranteed</span>
-              </p>
-            </div>
-            <div className="mx-auto w-full max-w-md lg:max-w-none">
-              <div className="relative">
-                <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-[var(--accent-soft)] to-[var(--teal-soft)] opacity-70 blur-2xl" />
-                <ShowcaseMosaic priority className="relative rotate-1 lg:rotate-2" />
+                <span>Google or email sign-in</span>
               </div>
             </div>
-          </div>
 
-          <div className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-4 md:grid-cols-4">
+            {/* ── Right: ShowcaseMosaic ── */}
+            <div className="relative mx-auto w-full max-w-md lg:max-w-none animate-scale-in">
+              <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-[var(--accent-soft)] via-transparent to-transparent opacity-60 blur-3xl pointer-events-none" />
+              <ShowcaseMosaic priority />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION 2: STATS BAR ───────────────────────────────────── */}
+      <section className="border-y border-[var(--border)] bg-[var(--card)] px-4 py-10">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {HOME_STATS.map((s) => (
-              <div
-                key={s.label}
-                className="rounded-xl border border-[var(--border)] bg-[var(--card)]/80 p-4 text-center shadow-[var(--shadow-sm)]"
-              >
-                <p className="font-serif text-2xl text-[var(--ink)]">{s.value}</p>
-                <p className="mt-1 text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
+              <div key={s.label} className="text-center">
+                <p
+                  className="font-display text-3xl font-bold text-[var(--foreground)]"
+                  style={{ fontFamily: "var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif" }}
+                >
+                  {s.value}
+                </p>
+                <p className="mt-1 text-xs font-medium uppercase tracking-wider text-[var(--muted-fg)]">
                   {s.label}
                 </p>
               </div>
@@ -85,76 +123,249 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <UspPillarsSection />
-
-      <section className="border-y border-[var(--border)] bg-[var(--card)] px-4 py-16">
+      {/* ─── SECTION 3: VALUE PILLARS (BENTO GRID) ───────────────────── */}
+      <section className="px-4 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Your path</p>
-            <h2 className="mt-3 font-serif text-3xl">Three steps, then you publish</h2>
+          {/* Section header */}
+          <div className="mb-14 max-w-xl">
+            <p className="badge-accent mb-4 inline-flex">
+              Why ProductPixl
+            </p>
+            <h2
+              className="font-display text-4xl font-bold tracking-tight leading-tight"
+              style={{ fontFamily: "var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif" }}
+            >
+              Everything you need to launch, nothing you don&apos;t
+            </h2>
           </div>
-          <ol className="mt-10 grid gap-4 md:grid-cols-3">
+
+          {/* Bento grid — 3×2 */}
+          <div className="grid gap-4 md:grid-cols-3">
+            {/* Card 0: spans 2 cols — "Fast" card */}
+            <div className="card-surface p-7 md:col-span-2 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-[var(--accent-soft)] to-transparent rounded-bl-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="flex items-start gap-5">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-soft)] border border-[rgba(245,158,11,0.15)]">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-[var(--accent)]">
+                    <path d="M10 2v4M10 14v4M2 10h4M14 10h4M4.93 4.93l2.83 2.83M12.24 12.24l2.83 2.83M4.93 15.07l2.83-2.83M12.24 7.76l2.83-2.83" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[var(--foreground)] text-lg">3 steps, then you publish</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--muted-fg)]">
+                    Upload a photo. AI researches your category and builds listing-specific prompts. Review, then generate — publish to Amazon or Bol.com directly.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 1: Affordable */}
+            <div className="card-surface p-7 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[var(--accent-soft)] to-transparent rounded-bl-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="flex h-full flex-col">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent-soft)] border border-[rgba(245,158,11,0.15)] mb-5">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-[var(--accent)]">
+                    <path d="M10 2v16M3 6h13a1 1 0 010 2H3a1 1 0 010-2zM3 14h13a1 1 0 010 2H3a1 1 0 010-2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-[var(--foreground)] text-lg">€2/generation</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--muted-fg)] flex-1">
+                  Pay per run, not per month. Idle months cost zero. Credit packs from €2.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 2: Amazon-native */}
+            <div className="card-surface p-7 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[var(--accent-soft)] to-transparent rounded-bl-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="flex h-full flex-col">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent-soft)] border border-[rgba(245,158,11,0.15)] mb-5">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-[var(--accent)]">
+                    <path d="M3 10a7 7 0 1014 0A7 7 0 003 10zm7-3a1 1 0 110-2 1 1 0 010 2zm-1 3h2v5h-2v-5z" fill="currentColor" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-[var(--foreground)] text-lg">Amazon-native</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--muted-fg)] flex-1">
+                  A+ modules, listing copy, and image specs built for Amazon&apos;s requirements and RUFUS-ready structure.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3: Bol.com ready */}
+            <div className="card-surface p-7 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[var(--accent-soft)] to-transparent rounded-bl-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="flex h-full flex-col">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent-soft)] border border-[rgba(245,158,11,0.15)] mb-5">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-[var(--accent)]">
+                    <path d="M3 4h14M3 10h14M3 16h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-[var(--foreground)] text-lg">Bol.com ready</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--muted-fg)] flex-1">
+                  EU tone, export packs, and marketplace formatting built specifically for Bol.com sellers.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 4: No subscription */}
+            <div className="card-surface p-7 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[var(--accent-soft)] to-transparent rounded-bl-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="flex h-full flex-col">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent-soft)] border border-[rgba(245,158,11,0.15)] mb-5">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-[var(--accent)]">
+                    <path d="M10 2L2 6l8 4 8-4-8-4zM2 10l8 4 8-4M2 14l8 4 8-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-[var(--foreground)] text-lg">No subscription</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--muted-fg)] flex-1">
+                  Credits never expire. Use them when you need them. No monthly lock-in.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 5: QA guaranteed */}
+            <div className="card-surface p-7 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[var(--accent-soft)] to-transparent rounded-bl-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="flex h-full flex-col">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent-soft)] border border-[rgba(245,158,11,0.15)] mb-5">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-[var(--accent)]">
+                    <path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm3 5l-4 4-2-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-[var(--foreground)] text-lg">QA guaranteed</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--muted-fg)] flex-1">
+                  Review prompts before generation. Shape, label text, and colors preserved in every image.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION 4: HOW IT WORKS ─────────────────────────────────── */}
+      <section className="border-y border-[var(--border)] bg-[var(--card)] px-4 py-20 md:py-28">
+        <div className="mx-auto max-w-6xl">
+          {/* Header */}
+          <div className="mb-14 max-w-xl">
+            <p className="badge-accent mb-4 inline-flex">How it works</p>
+            <h2
+              className="font-display text-4xl font-bold tracking-tight leading-tight"
+              style={{ fontFamily: "var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif" }}
+            >
+              From one photo to a full listing in 3 steps
+            </h2>
+          </div>
+
+          {/* Steps */}
+          <div className="grid gap-6 md:grid-cols-3">
             {WORKFLOW_STEPS.slice(0, 3).map((step, i) => (
-              <li
-                key={step.title}
-                className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6"
-              >
-                <span className="font-serif text-3xl text-[var(--muted)]">{i + 1}</span>
-                <h3 className="mt-3 font-semibold">{step.title}</h3>
-                <p className="mt-2 text-sm text-[var(--muted-fg)]">{step.body}</p>
-              </li>
-            ))}
-          </ol>
-          <div className="mt-8">
-            <Button asChild variant="outline">
-              <Link href="/how-it-works">
-                See the full workflow
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+              <div key={step.title} className="card-surface p-8 relative">
+                {/* Step number */}
+                <div
+                  className="font-display text-6xl font-bold leading-none text-[var(--accent)] opacity-25 mb-6"
+                  style={{ fontFamily: "var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif" }}
+                >
+                  {i + 1}
+                </div>
 
-      <section className="px-4 py-16">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="font-serif text-3xl">Explore ProductPixl</h2>
-          <p className="mt-2 max-w-xl text-[var(--muted-fg)]">
-            Details live on their own pages — no endless scroll on the home page.
-          </p>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {EXPLORE_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="group rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]"
-              >
-                <p className="font-semibold group-hover:text-[var(--accent)]">{link.title}</p>
-                <p className="mt-2 text-sm text-[var(--muted-fg)]">{link.desc}</p>
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[var(--accent)]">
-                  Learn more
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </Link>
+                <h3 className="text-lg font-semibold text-[var(--foreground)]">{step.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-[var(--muted-fg)]">{step.body}</p>
+
+                {/* Connector arrow (desktop) */}
+                {i < 2 && (
+                  <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2 text-[var(--border)]">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
-        </div>
-      </section>
 
-      <LandingTestimonials />
-
-      <section className="px-4 pb-20">
-        <div className="mx-auto max-w-3xl rounded-3xl border border-[var(--border)] bg-[var(--card)] p-10 text-center shadow-[var(--shadow-lg)] md:p-12">
-          <h2 className="font-serif text-3xl">Ready to build your first listing?</h2>
-          <p className="mx-auto mt-4 max-w-md text-[var(--muted-fg)]">
-            Sign in with Google or email magic link. New accounts get 10 free credits instantly.
-          </p>
-          <Button asChild size="lg" className="mt-8 rounded-xl px-10">
-            <Link href={primaryCta}>
-              {primaryLabel}
-              <ArrowRight className="h-4 w-4" />
+          {/* CTA */}
+          <div className="mt-12">
+            <Link href="/how-it-works" className="btn-outline inline-flex items-center gap-2">
+              See the full workflow
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </Link>
-          </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION 5: WAITLIST / SOCIAL PROOF ─────────────────────── */}
+      <section className="px-4 py-20 md:py-28">
+        <div className="mx-auto max-w-2xl">
+          <div className="card-surface p-10 md:p-14 text-center relative overflow-hidden">
+            {/* Ambient glow */}
+            <div className="absolute inset-0 bg-radial-warm opacity-40 pointer-events-none" />
+
+            <div className="relative">
+              <p className="badge-accent mb-6 inline-flex mx-auto">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
+                  <circle cx="6" cy="6" r="6" fill="currentColor" />
+                </svg>
+                Early access
+              </p>
+              <h2
+                className="font-display text-3xl md:text-4xl font-bold tracking-tight leading-tight"
+                style={{ fontFamily: "var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif" }}
+              >
+                Be the first to know
+              </h2>
+              <p className="mt-4 text-[var(--muted-fg)]">
+                Join 200+ Amazon sellers on the waitlist. Get early features, pricing access, and a head start before launch.
+              </p>
+
+              {/* Email form */}
+              <form
+                className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+                onSubmit={(e) => e.preventDefault()}
+              >
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  required
+                  className="flex-1 rounded-lg border border-[var(--border-strong)] bg-[var(--muted)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-fg)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                />
+                <button type="submit" className="btn-primary whitespace-nowrap">
+                  Join waitlist
+                </button>
+              </form>
+
+              <p className="mt-4 text-xs text-[var(--muted-fg)]">
+                No spam. Unsubscribe anytime.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION 6: PRICING TEASER + CTA ────────────────────────── */}
+      <section className="border-t border-[var(--border)] px-4 py-16">
+        <div className="mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-8">
+          <div>
+            <p
+              className="font-display text-3xl md:text-4xl font-bold tracking-tight"
+              style={{ fontFamily: "var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif" }}
+            >
+              <span className="text-[var(--accent)]">€2/generation.</span>{" "}
+              <span className="text-[var(--muted-fg)]">No subscription. No commitments.</span>
+            </p>
+            <p className="mt-2 text-sm text-[var(--muted-fg)]">
+              Pay per run. Credits never expire.
+            </p>
+          </div>
+          <div className="flex gap-3 shrink-0">
+            <Link href="/pricing" className="btn-outline">
+              View pricing
+            </Link>
+            <Link href={primaryCta} className="btn-primary">
+              Start free — 10 credits
+            </Link>
+          </div>
         </div>
       </section>
     </MarketingPageShell>

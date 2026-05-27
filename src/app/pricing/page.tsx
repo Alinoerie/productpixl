@@ -1,266 +1,316 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import type { Metadata } from "next";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { PublicMarketingFrame } from "@/components/marketing/public-marketing-frame";
-import { MarketingHero } from "@/components/marketing/motion/marketing-hero";
-import { MarketingInkBand, MarketingSection } from "@/components/marketing/motion/marketing-section";
-import { AppShell } from "@/components/layout/app-shell";
-import { StudioProviders } from "@/components/layout/studio-providers";
 import { Button } from "@/components/ui/button";
-import { PricingBalance } from "@/components/pricing/pricing-balance";
-import { PricingCatalog } from "@/components/pricing/pricing-catalog";
-import { PricingPlanCards } from "@/components/pricing/pricing-plan-cards";
-import { PricingPlanComparison } from "@/components/pricing/pricing-plan-comparison";
-import { PricingFaq } from "@/components/pricing/pricing-faq";
-import { PricingComparison } from "@/components/pricing/pricing-comparison";
-import { CreditsLockedNotice } from "@/components/pricing/credits-locked-notice";
-import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
-import { BillingStatusBanner } from "@/components/pricing/billing-status-banner";
-import { HowCreditsWork } from "@/components/pricing/how-credits-work";
-import { isCheckoutLive } from "@/lib/checkout";
-import { PRICING_VAT_NOTE } from "@/lib/pricing-plans";
-import { USP_ONE_LINER, USP_SUBHEAD, USP_TAGLINE } from "@/lib/marketing-usp";
 
 export const metadata: Metadata = {
   title: "Pricing — ProductPixl",
-  description: `${USP_ONE_LINER} Free signup, Starter & Catalog packs in EUR.`,
-  openGraph: {
-    title: "Pricing — ProductPixl",
-    description: "Free tier, Starter & Catalog packs, and monthly plans preview — all in credits.",
-    url: "/pricing",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Pricing — ProductPixl",
-    description: "Simple plans for every catalog size. Credits for image and copy studio runs.",
-  },
+  description: "Simple, transparent pricing. No subscription. Pay only for what you generate.",
 };
 
-function PricingContent({
-  signedIn,
-  credits,
-  checkoutEnabled,
-  canceled,
-  success,
-  locked,
-  hideHero = false,
-}: {
-  signedIn: boolean;
-  credits: number;
-  checkoutEnabled: boolean;
-  canceled?: string;
-  success?: string;
-  locked?: boolean;
-  hideHero?: boolean;
-}) {
+export default function PricingPage() {
   return (
-    <div className="space-y-16">
-      {!hideHero ? (
-        signedIn ? (
-          <header className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">{USP_TAGLINE}</p>
-            <h1 className="mt-4 font-serif text-4xl leading-tight md:text-5xl">Simple plans for every catalog size</h1>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--muted-fg)]">
-              {USP_SUBHEAD.split(". ").slice(0, 2).join(". ")}. Credits — not a monthly listing cap — with packs when you
-              need more.
-            </p>
-            <p className="mt-3 text-xs text-[var(--muted-fg)]">{PRICING_VAT_NOTE}</p>
-          </header>
-        ) : null
-      ) : null}
-
-      {locked && signedIn ? <CreditsLockedNotice /> : null}
-
-      <div data-m-scroll>
-        <BillingStatusBanner checkoutEnabled={checkoutEnabled} />
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      {/* SECTION 1: Warning Banner */}
+      <div className="border-b border-[var(--border)] bg-amber-900/20">
+        <div className="mx-auto max-w-6xl px-4 py-3">
+          <p className="flex items-center justify-center gap-2 text-center text-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-[var(--accent)]">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span className="font-medium text-amber-400">Generation works today — credit purchases coming soon</span>
+          </p>
+        </div>
       </div>
 
-      {!signedIn ? (
-        <div
-          data-m-scroll
-          className="rounded-2xl border border-[var(--accent)]/25 bg-[var(--accent-soft)]/30 px-4 py-4 text-sm md:flex md:items-center md:justify-between md:gap-4"
-        >
-          <p>
-            <strong>10 free credits</strong> on signup — no credit card. Sign in to see your balance and buy packs.
+      <main className="mx-auto max-w-6xl px-4 py-16 md:py-24">
+        {/* SECTION 2: Pricing Hero */}
+        <header className="text-center">
+          <h1 className="font-display text-4xl tracking-tight md:text-5xl lg:text-6xl">
+            Simple, transparent pricing
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-lg text-[var(--muted-fg)]">
+            No subscription. Pay only for what you generate.
           </p>
-          <Button asChild className="mt-3 shrink-0 rounded-xl md:mt-0">
-            <Link href="/login?callbackUrl=/pricing">Start free</Link>
-          </Button>
-        </div>
-      ) : (
-        <PricingBalance initialCredits={credits} />
-      )}
+          <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-[var(--accent)]/30 bg-[var(--accent)]/10 px-6 py-3">
+            <span className="text-3xl font-bold text-[var(--accent)]">€2</span>
+            <span className="text-[var(--muted-fg)]">per generation</span>
+          </div>
+        </header>
 
-      {/* Fidelity trust strip */}
-      <div
-        data-m-scroll
-        className="flex flex-wrap items-center justify-center gap-4 rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-xs text-[var(--muted-fg)]"
-      >
-        <span className="flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--accent)]">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          Product fidelity guaranteed
-        </span>
-        <span className="text-[var(--border)]">·</span>
-        <span>Your product shape, label & colors preserved — never warped or replaced</span>
-        <span className="text-[var(--border)]">·</span>
-        <span className="flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--accent)]">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          No hidden fees · cancel anytime
-        </span>
-      </div>
+        {/* SECTION 3: Credit Pack Cards */}
+        <section className="mt-16">
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Card 1 — Starter */}
+            <div className="card-surface group relative overflow-hidden rounded-2xl border border-[var(--border)] p-6 transition-all duration-300 hover:border-[var(--accent)]/30">
+              <div className="flex flex-col gap-6">
+                <div>
+                  <h3 className="text-xl font-semibold">Starter</h3>
+                  <div className="mt-4 flex items-baseline gap-2">
+                    <span className="text-4xl font-bold">€29</span>
+                    <span className="text-[var(--muted-fg)]">for 10 credits</span>
+                  </div>
+                  <p className="mt-2 text-sm text-[var(--muted-fg)]">~€2.90 per credit</p>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--muted-fg)]">10 credit pack</p>
+                </div>
+                <div className="mt-auto space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm placeholder:text-[var(--muted-fg)] focus:border-[var(--accent)]/50 focus:outline-none"
+                    />
+                  </div>
+                  <Button className="btn-primary w-full rounded-xl">
+                    Notify me when checkout opens
+                  </Button>
+                </div>
+              </div>
+            </div>
 
-      {success ? (
-        <Suspense fallback={null}>
-          <PaymentSuccessBanner />
-        </Suspense>
-      ) : null}
-      {canceled ? (
-        <div
-          className="rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]"
-          role="alert"
-        >
-          Checkout canceled — no charges were made.{" "}
-          <Link href="/pricing" className="font-medium text-[var(--accent)] underline-offset-2 hover:underline">
-            Try again
-          </Link>
-        </div>
-      ) : null}
+            {/* Card 2 — Catalog (Featured) */}
+            <div className="card-elevated group relative overflow-hidden rounded-2xl border-2 border-[var(--accent)] p-6 shadow-[0_0_40px_-12px_var(--accent)]/25">
+              <div className="absolute top-4 right-4">
+                <span className="badge-accent rounded-full px-3 py-1 text-xs font-semibold">Most popular</span>
+              </div>
+              <div className="flex flex-col gap-6">
+                <div>
+                  <h3 className="text-xl font-semibold">Catalog</h3>
+                  <div className="mt-4 flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-[var(--accent)]">€79</span>
+                    <span className="text-[var(--muted-fg)]">for 30 credits</span>
+                  </div>
+                  <p className="mt-2 text-sm text-[var(--muted-fg)]">~€2.63 per credit</p>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--muted-fg)]">30 credit pack</p>
+                  <p className="text-sm text-[var(--muted-fg)]">Best value for serious sellers</p>
+                </div>
+                <div className="mt-auto space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm placeholder:text-[var(--muted-fg)] focus:border-[var(--accent)]/50 focus:outline-none"
+                    />
+                  </div>
+                  <Button className="btn-primary amber-glow w-full rounded-xl">
+                    Notify me when checkout opens
+                  </Button>
+                </div>
+              </div>
+            </div>
 
-      <MarketingSection scroll={false}>
-        <div data-m-scroll>
-          <HowCreditsWork />
-        </div>
-      </MarketingSection>
+            {/* Card 3 — Growth */}
+            <div className="card-surface group relative overflow-hidden rounded-2xl border border-[var(--border)] p-6 transition-all duration-300 hover:border-[var(--accent)]/30">
+              <div className="flex flex-col gap-6">
+                <div>
+                  <h3 className="text-xl font-semibold">Growth</h3>
+                  <div className="mt-4">
+                    <span className="text-2xl font-bold">Custom pricing</span>
+                  </div>
+                  <p className="mt-2 text-sm text-[var(--muted-fg)]">For teams and high-volume sellers</p>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--muted-fg)]">Volume discounts</p>
+                  <p className="text-sm text-[var(--muted-fg)]">Dedicated support</p>
+                  <p className="text-sm text-[var(--muted-fg)]">Custom integrations</p>
+                </div>
+                <div className="mt-auto space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      placeholder="Work email"
+                      className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm placeholder:text-[var(--muted-fg)] focus:border-[var(--accent)]/50 focus:outline-none"
+                    />
+                  </div>
+                  <Button variant="outline" className="btn-outline w-full rounded-xl">
+                    Contact sales
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <PricingPlanCards signedIn={signedIn} checkoutEnabled={checkoutEnabled} />
-
-      <MarketingSection scroll={false}>
-        <div data-m-scroll>
-          <PricingPlanComparison />
-        </div>
-      </MarketingSection>
-
-      <MarketingSection scroll={false}>
-        <div data-m-scroll>
-          <PricingCatalog initialCredits={signedIn ? credits : 0} checkoutEnabled={checkoutEnabled} signedIn={signedIn} />
-        </div>
-      </MarketingSection>
-
-      <MarketingSection scroll={false}>
-        <div data-m-scroll>
-          <PricingFaq />
-        </div>
-      </MarketingSection>
-
-      <MarketingSection scroll={false}>
-        <div data-m-scroll>
-          <PricingComparison />
-        </div>
-      </MarketingSection>
-
-      {signedIn ? (
-        <section className="rounded-2xl bg-[var(--ink)] px-6 py-10 text-center text-white md:px-12 md:py-14">
-          <h2 className="font-serif text-2xl md:text-3xl">Launch before you list</h2>
-          <p className="mx-auto mt-3 max-w-lg text-white/70">
-            Start with 10 free credits or book a demo — one photo to gallery, copy, and marketplace export.
+        {/* SECTION 4: Free Credits Callout */}
+        <section className="mt-20 rounded-3xl bg-radial-warm p-12 text-center md:p-16">
+          <h2 className="font-display text-3xl md:text-4xl">Start free — 10 credits</h2>
+          <p className="mx-auto mt-4 max-w-lg text-lg text-[var(--muted-fg)]">
+            No credit card required. Sign up with Google or email.
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="rounded-xl">
-              <Link href="/studio">Open studio</Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="rounded-xl border-white/30 bg-transparent text-white hover:bg-white/10"
-            >
-              <Link href="/demo">Book a demo</Link>
+          <div className="mt-8">
+            <Button asChild size="lg" className="btn-primary rounded-xl text-lg">
+              <Link href="/login?callbackUrl=/studio">Get started free</Link>
             </Button>
           </div>
         </section>
-      ) : (
-        <MarketingInkBand
-          title="Launch before you list"
-          description="Start with 10 free credits or book a demo — one photo to gallery, copy, and marketplace export."
-          actions={
-            <>
-              <Button asChild size="lg" className="m-action rounded-xl">
-                <Link href="/login?callbackUrl=/studio">Start free</Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="m-action rounded-xl border-white/30 bg-transparent text-white hover:bg-white/10"
-              >
-                <Link href="/demo">Book a demo</Link>
-              </Button>
-            </>
-          }
-        />
-      )}
+
+        {/* SECTION 5: Feature Comparison Table */}
+        <section className="mt-20">
+          <h2 className="text-center font-display text-2xl md:text-3xl">Compare plans</h2>
+          <div className="mt-8 overflow-hidden rounded-2xl border border-[var(--border)]">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[var(--border)] bg-[var(--card)]">
+                  <th className="px-6 py-4 text-left font-semibold">Feature</th>
+                  <th className="px-6 py-4 text-center font-semibold">Free</th>
+                  <th className="px-6 py-4 text-center font-semibold">Starter</th>
+                  <th className="px-6 py-4 text-center font-semibold text-[var(--accent)]">Catalog</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                <tr className="hover:bg-[var(--card)]/50">
+                  <td className="px-6 py-4 text-sm">Credits</td>
+                  <td className="px-6 py-4 text-center text-sm">10</td>
+                  <td className="px-6 py-4 text-center text-sm">10</td>
+                  <td className="px-6 py-4 text-center text-sm">30</td>
+                </tr>
+                <tr className="hover:bg-[var(--card)]/50">
+                  <td className="px-6 py-4 text-sm">Price per generation</td>
+                  <td className="px-6 py-4 text-center text-sm">~€2.90</td>
+                  <td className="px-6 py-4 text-center text-sm">~€2.90</td>
+                  <td className="px-6 py-4 text-center text-sm text-[var(--accent)]">~€2.63</td>
+                </tr>
+                <tr className="hover:bg-[var(--card)]/50">
+                  <td className="px-6 py-4 text-sm">Amazon integration</td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--accent)]">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--accent)]">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--accent)]">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr className="hover:bg-[var(--card)]/50">
+                  <td className="px-6 py-4 text-sm">Bol.com integration</td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--accent)]">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--accent)]">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--accent)]">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr className="hover:bg-[var(--card)]/50">
+                  <td className="px-6 py-4 text-sm">A+ content generation</td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--muted-fg)]">
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--accent)]">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--accent)]">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr className="hover:bg-[var(--card)]/50">
+                  <td className="px-6 py-4 text-sm">Priority support</td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--muted-fg)]">
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--muted-fg)]">
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto text-[var(--accent)]">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* SECTION 6: FAQ */}
+        <section className="mt-20">
+          <h2 className="text-center font-display text-2xl md:text-3xl">Frequently asked questions</h2>
+          <div className="mx-auto mt-8 max-w-3xl space-y-4">
+            <details className="group rounded-xl border border-[var(--border)]">
+              <summary className="flex cursor-pointer items-center justify-between px-6 py-4 font-medium">
+                How do credits work?
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-180">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </summary>
+              <div className="px-6 pb-4 text-sm text-[var(--muted-fg)]">
+                Each generation — whether it&apos;s a product image or A+ content — costs 1 credit. Credits are consumed when you generate and can be used across all integrations.
+              </div>
+            </details>
+
+            <details className="group rounded-xl border border-[var(--border)]">
+              <summary className="flex cursor-pointer items-center justify-between px-6 py-4 font-medium">
+                When will credit purchases be available?
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-180">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </summary>
+              <div className="px-6 pb-4 text-sm text-[var(--muted-fg)]">
+                Credit purchases are coming soon. Enter your email above to be notified when checkout opens.
+              </div>
+            </details>
+
+            <details className="group rounded-xl border border-[var(--border)]">
+              <summary className="flex cursor-pointer items-center justify-between px-6 py-4 font-medium">
+                Can I use ProductPixl for free?
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-180">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </summary>
+              <div className="px-6 pb-4 text-sm text-[var(--muted-fg)]">
+                Yes! Every new account starts with 10 free credits. No credit card required. Simply sign up with Google or email to get started.
+              </div>
+            </details>
+
+            <details className="group rounded-xl border border-[var(--border)]">
+              <summary className="flex cursor-pointer items-center justify-between px-6 py-4 font-medium">
+                Does it work with Bol.com?
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-180">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </summary>
+              <div className="px-6 pb-4 text-sm text-[var(--muted-fg)]">
+                Yes, ProductPixl integrates directly with Bol.com. You can export generated images and content straight to your Bol.com listings.
+              </div>
+            </details>
+          </div>
+        </section>
+
+        {/* Footer CTA */}
+        <section className="mt-20 text-center">
+          <p className="text-[var(--muted-fg)]">Questions? Email us at <a href="mailto:hello@productpixl.com" className="text-[var(--accent)] hover:underline">hello@productpixl.com</a></p>
+        </section>
+      </main>
     </div>
-  );
-}
-
-export default async function PricingPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ canceled?: string; success?: string; locked?: string }>;
-}) {
-  const params = await searchParams;
-  const checkoutEnabled = isCheckoutLive();
-  const session = await auth();
-  const signedIn = Boolean(session?.user?.id);
-  const credits =
-    session?.user?.id != null
-      ? ((await prisma.user.findUnique({ where: { id: session.user.id }, select: { credits: true } }))?.credits ?? 0)
-      : 0;
-
-  if (signedIn) {
-    return (
-      <StudioProviders>
-        <AppShell credits={credits} showPaywallBanner={false}>
-          <PricingContent
-            signedIn
-            credits={credits}
-            checkoutEnabled={checkoutEnabled}
-            canceled={params.canceled}
-            success={params.success}
-            locked={params.locked === "1"}
-          />
-        </AppShell>
-      </StudioProviders>
-    );
-  }
-
-  return (
-    <PublicMarketingFrame>
-      <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
-        <MarketingHero
-          eyebrow={USP_TAGLINE}
-          title="Simple plans for every catalog size"
-          description={`${USP_SUBHEAD.split(". ").slice(0, 2).join(". ")}. Credits — not a monthly listing cap — with packs when you need more.`}
-          align="center"
-        >
-          <p className="mt-3 text-xs text-[var(--muted-fg)]">{PRICING_VAT_NOTE}</p>
-        </MarketingHero>
-        <PricingContent
-          signedIn={false}
-          credits={0}
-          checkoutEnabled={checkoutEnabled}
-          canceled={params.canceled}
-          success={params.success}
-          hideHero
-        />
-      </div>
-    </PublicMarketingFrame>
   );
 }
