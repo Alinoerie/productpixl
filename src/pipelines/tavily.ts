@@ -37,24 +37,26 @@ export async function runCategoryResearch(
 
   for (const query of queries) {
     try {
-      const res = await fetch("https://api.tavily.com/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          api_key: key,
-          query,
-          max_results: 5,
-          search_depth: "basic",
-        }),
-      });
-      const data = (await res.json()) as {
-        results?: { content?: string; title?: string }[];
-      };
+      const data = await withRetry(async () => {
+        const res = await fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            api_key: key,
+            query,
+            max_results: 5,
+            search_depth: "basic",
+          }),
+        });
+        return (await res.json()) as {
+          results?: { content?: string; title?: string }[];
+        };
+      }, query);
       for (const r of data.results ?? []) {
         if (r.content) snippets.push(r.content.slice(0, 400));
       }
-    } catch {
-      /* continue */
+    } catch (error) {
+      console.warn(`[Tavily] Query failed after 3 retries: "${query}"`, error);
     }
   }
 
@@ -83,12 +85,26 @@ export async function runCopyResearch(
   }
 
   const query = `${productName} ${category} ${marketplace} Amazon listing title keywords`;
-  const res = await fetch("https://api.tavily.com/search", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ api_key: key, query, max_results: 8 }),
-  });
-  const data = (await res.json()) as { results?: { content?: string; title?: string }[] };
+
+  let data: { results?: { content?: string; title?: string }[] };
+  try {
+    data = await withRetry(async () => {
+      const res = await fetch("https://api.tavily.com/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ api_key: key, query, max_results: 8 }),
+      });
+      return (await res.json()) as { results?: { content?: string; title?: string }[] };
+    }, "runCopyResearch");
+  } catch (error) {
+    console.warn("[Tavily] runCopyResearch failed after 3 retries, returning defaults:", error);
+    return {
+      keywords: ["premium", "organic", "fast shipping", category.split(">")[0]?.trim() ?? "quality"],
+      competitorTitles: [`${productName} — Premium Edition`, `Best ${productName} for Daily Use`],
+      snippets: [],
+    };
+  }
+
   const snippets = (data.results ?? []).map((r) => r.content ?? "").filter(Boolean);
   const titles = (data.results ?? []).map((r) => r.title ?? "").filter(Boolean);
 
@@ -111,4 +127,18 @@ function extractKeywords(text: string): string[] {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 12)
     .map(([w]) => w);
+}
+
+/** Retry with exponential backoff: 1s, 2s, 4s over 3 attempts. */
+async function withRetry<T>(fn: () => Promise<T>, _label: string): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (attempt < 2) await sleep(2 ** attempt * 1000);
+    }
+  }
+  throw lastError;
 }

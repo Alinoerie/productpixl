@@ -36,36 +36,40 @@ export const playbookPipeline = inngest.createFunction(
     let completed = 0;
     for (const productId of productIds) {
       await step.run(`product-${productId}`, async () => {
-        const product = await prisma.product.findFirst({
-          where: { id: productId, userId },
-        });
-        if (!product?.inputImageUrl) return;
-
-        const intake = intakeFromProduct(product);
-        intake.brandName = brandProfile.displayName || intake.brandName;
-
-        if (moduleSet.pipelineType === "APLUS") {
-          await runAplusPipelineCore({
-            productId,
-            selectedModules: moduleSet.aplusModules,
-            brandRegistered: moduleSet.brandRegistered ?? product.brandRegistered,
-            intake,
-            playbookContext,
+        try {
+          const product = await prisma.product.findFirst({
+            where: { id: productId, userId },
           });
-        } else {
-          await runImagePipelineCore({
-            productId,
-            selectedModules: moduleSet.listingModules,
-            intake,
-            playbookContext,
+          if (!product?.inputImageUrl) return;
+
+          const intake = intakeFromProduct(product);
+          intake.brandName = brandProfile.displayName || intake.brandName;
+
+          if (moduleSet.pipelineType === "APLUS") {
+            await runAplusPipelineCore({
+              productId,
+              selectedModules: moduleSet.aplusModules,
+              brandRegistered: moduleSet.brandRegistered ?? product.brandRegistered,
+              intake,
+              playbookContext,
+            });
+          } else {
+            await runImagePipelineCore({
+              productId,
+              selectedModules: moduleSet.listingModules,
+              intake,
+              playbookContext,
+            });
+          }
+
+          completed += 1;
+          await prisma.playbookRun.update({
+            where: { id: runId },
+            data: { completedCount: completed },
           });
+        } catch (err) {
+          console.error(`[playbook-pipeline] Product ${productId} failed:`, err);
         }
-
-        completed += 1;
-        await prisma.playbookRun.update({
-          where: { id: runId },
-          data: { completedCount: completed },
-        });
       });
     }
 

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { SHOWCASE_CASE_STUDIES, type ShowcaseCaseStudy } from "@/lib/showcase";
 import { prefersReducedMotion } from "@/hooks/use-studio-gsap";
 import { MKT_DURATION, MKT_EASE } from "@/lib/marketing-motion";
+import { GalleryBeforeAfter } from "@/components/gallery/gallery-before-after";
 
 function CaseStudyPanel({ study, panelId }: { study: ShowcaseCaseStudy; panelId: string }) {
   const highlightModules = study.source
@@ -75,32 +76,15 @@ function CaseStudyPanel({ study, panelId }: { study: ShowcaseCaseStudy; panelId:
                 key={module.moduleId}
                 className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-sm)]"
               >
-                <div className="grid grid-cols-2">
-                  <div className="relative aspect-square border-r border-[var(--border)] bg-[var(--card)]">
-                    <Image
-                      src={study.source!.image}
-                      alt={study.source!.alt}
-                      fill
-                      sizes="200px"
-                      className="object-contain p-3"
-                    />
-                    <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">
-                      Before
-                    </span>
-                  </div>
-                  <div className="relative aspect-square">
-                    <Image
-                      src={module.image}
-                      alt={module.alt}
-                      fill
-                      sizes="200px"
-                      className="object-cover"
-                    />
-                    <span className="absolute left-3 top-3 rounded-full bg-[var(--accent)] px-2 py-0.5 text-[10px] font-semibold uppercase text-white">
-                      After · {module.moduleId}
-                    </span>
-                  </div>
-                </div>
+                <GalleryBeforeAfter
+                  beforeSrc={study.source!.image}
+                  afterSrc={module.image}
+                  beforeAlt={study.source!.alt}
+                  afterAlt={module.alt}
+                  beforeLabel="Upload"
+                  afterLabel={`${module.moduleId} · ${module.label}`}
+                  className="aspect-square"
+                />
                 <div className="flex items-center gap-2 border-t border-[var(--border)] px-4 py-3">
                   <ArrowRight className="h-4 w-4 text-[var(--accent)]" />
                   <div>

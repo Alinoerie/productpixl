@@ -76,6 +76,7 @@ export function ProductImageGallery({
 
   const downloadLightboxImage = useCallback(async () => {
     if (!lightbox?.imageUrl) return;
+    const format = "jpg"; // default format for single image download
     try {
       const res = await fetch(lightbox.imageUrl);
       if (!res.ok) throw new Error("Fetch failed");
@@ -83,7 +84,7 @@ export function ProductImageGallery({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${productName.replace(/\s+/g, "-").toLowerCase()}-${lightbox.moduleId}.jpg`;
+      a.download = `${productName.replace(/\s+/g, "-").toLowerCase()}-${lightbox.moduleId}.${format}`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {

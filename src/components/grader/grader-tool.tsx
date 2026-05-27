@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { Check, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,52 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
   const [fromProject, setFromProject] = useState(false);
   const [draftProductId, setDraftProductId] = useState<string | null>(null);
   const scoreSummaryRef = useRef<HTMLDivElement>(null);
+  const [asin, setAsin] = useState("");
+  const [asinLookupLoading, setAsinLookupLoading] = useState(false);
+  const [asinError, setAsinError] = useState("");
+
+  const performAsinLookup = useCallback(async () => {
+    const trimmed = asin.trim().toUpperCase();
+    if (!trimmed) return;
+    setAsinLookupLoading(true);
+    setAsinError("");
+    setResult(null);
+    setError("");
+    try {
+      const { ok, data } = await fetchJson<{
+        title?: string;
+        bullets?: string[];
+        description?: string;
+        imageUrl?: string;
+        error?: string;
+      }>("/api/asin/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ asin: trimmed }),
+      });
+      if (!ok || data.error) {
+        setAsinError(data.error || "Could not fetch ASIN — enter details manually");
+        return;
+      }
+      if (data.title) setTitle(data.title);
+      if (data.bullets && data.bullets.length > 0) {
+        setBullets([
+          data.bullets[0] ?? "",
+          data.bullets[1] ?? "",
+          data.bullets[2] ?? "",
+          data.bullets[3] ?? "",
+          data.bullets[4] ?? "",
+        ]);
+      }
+      if (data.description) setDescription(data.description);
+      setAsinError("");
+      toast("ASIN found — listing pre-populated. Edit any field before grading.");
+    } catch {
+      setAsinError("Could not fetch ASIN — enter details manually");
+    } finally {
+      setAsinLookupLoading(false);
+    }
+  }, [asin, toast]);
 
   const loadSample = () => {
     setTitle(SAMPLE.title);
@@ -196,6 +242,53 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
               Load sample listing
             </Button>
           </div>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label htmlFor="grader-asin" className="sr-only">
+                Amazon ASIN
+              </Label>
+              <Input
+                id="grader-asin"
+                value={asin}
+                onChange={(e) => {
+                  setAsin(e.target.value.toUpperCase());
+                  setAsinError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !asinLookupLoading) {
+                    e.preventDefault();
+                    void performAsinLookup();
+                  }
+                }}
+                placeholder="ASIN (e.g. B08N5WRWNW)"
+                maxLength={10}
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="default"
+              onClick={performAsinLookup}
+              disabled={asinLookupLoading || asin.trim().length === 0}
+              className="mt-[2px] shrink-0"
+              aria-label="Look up ASIN"
+            >
+              {asinLookupLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              <span className="ml-1.5 hidden sm:inline">Lookup</span>
+            </Button>
+          </div>
+          {asinError ? (
+            <p className="rounded-lg border border-[var(--error-border)] bg-[var(--error-bg)] px-3 py-2 text-sm text-[var(--error)]">
+              {asinError}
+            </p>
+          ) : null}
+          <hr className="border-[var(--border)]" />
           <div>
             <div className="flex items-center justify-between">
               <Label htmlFor="grader-title">Product title</Label>

@@ -44,6 +44,7 @@ import { UnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
 import { PIPELINE_ERROR, SUPPORT_EMAIL, toSellerPipelineError } from "@/lib/pipeline-errors";
 import { PipelineErrorMessage } from "@/components/ui/pipeline-error-message";
 import { downloadGalleryZip } from "@/lib/download-export-pack";
+import { TourTooltip, type TourStep } from "@/components/ui/tour-tooltip";
 import {
   DEFAULT_LISTING_MODULE_IDS,
   LISTING_MODULE_LIBRARY,
@@ -89,6 +90,7 @@ export function GenerateWizard({
   templateSlug,
   paymentSuccess = false,
   hidePageHeader = false,
+  firstRun = false,
 }: {
   initialCredits: number;
   linkedProduct?: LinkedProduct | null;
@@ -97,6 +99,7 @@ export function GenerateWizard({
   templateSlug?: string;
   paymentSuccess?: boolean;
   hidePageHeader?: boolean;
+  firstRun?: boolean;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -128,8 +131,29 @@ export function GenerateWizard({
   const [savedAnalysis, setSavedAnalysis] = useState<ProductAnalysis | null>(null);
   const [analysisStubMode, setAnalysisStubMode] = useState(false);
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
-  const [backgroundLocked, setBackgroundLocked] = useState(false);
+  const [bgLocked, setBgLocked] = useState(false);
   const [lockedBackground, setLockedBackground] = useState("");
+
+  // POLISH-73: onboarding tour state
+  const [tourDismissed, setTourDismissed] = useState(false);
+
+  const TOUR_STEPS: TourStep[] = [
+    {
+      title: "Upload your product photo",
+      text: "Drop or upload a JPG, PNG or WEBP photo. The AI preserves your product shape, label, and colors.",
+      target: "generate-upload",
+    },
+    {
+      title: "Review AI-generated prompts",
+      text: "After upload, review and edit the prompt plan before generating. Your brand kit shapes the language.",
+      target: "prompt-plan-section",
+    },
+    {
+      title: "Generate your gallery",
+      text: "Start generation and watch images appear in real time. Download individually or as a zip.",
+      target: "credit-estimate-bar",
+    },
+  ];
 
   // Clear savedAnalysis when image changes — new image invalidates prior AI analysis
   useEffect(() => {
@@ -352,7 +376,8 @@ export function GenerateWizard({
             analysis: savedAnalysis ?? undefined,
             templateSlug,
             promptOverrides: Object.fromEntries(promptPlan.map((p) => [p.moduleId, p.prompt])),
-            bgLock: backgroundLocked && lockedBackground ? lockedBackground : undefined,
+            bgLocked,
+            bgLock: bgLocked && lockedBackground ? lockedBackground : undefined,
           }),
         }
       );
@@ -471,6 +496,24 @@ export function GenerateWizard({
     stepperRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [step]);
 
+  // POLISH-63: keyboard shortcuts — Cmd/Ctrl+Enter to generate/submit, Escape to close error
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Enter → submit/generate
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (step === 0 && imageUrl && !analyzing && !uploading) void analyze();
+        else if (step === 2 && promptPlan.length && !planningPrompts) void startGeneration();
+      }
+      // Escape → clear error
+      if (e.key === "Escape" && error) {
+        setError("");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [step, imageUrl, analyzing, uploading, promptPlan.length, planningPrompts, error]);
+
   const done = pipelineStatus?.phase === "COMPLETE";
   const pipelineRunning =
     step === 3 &&
@@ -567,6 +610,15 @@ export function GenerateWizard({
         <Suspense fallback={null}>
           <PaymentSuccessBanner onCreditsUpdated={setCredits} />
         </Suspense>
+      ) : null}
+
+      {/* POLISH-76: success banner after onboarding */}
+      {firstRun && !tourDismissed ? (
+        <div className="rounded-2xl border border-[var(--success-border)] bg-[var(--success-bg)]/40 px-4 py-3 text-sm animate-fade-up">
+          <p>
+            <strong>Brand kit saved</strong> — your colors and tone are now applied to all generations.
+          </p>
+        </div>
       ) : null}
 
       {!hidePageHeader ? (
@@ -891,9 +943,9 @@ export function GenerateWizard({
                   id="bg-lock-toggle"
                   type="checkbox"
                   className="mt-0.5"
-                  checked={backgroundLocked}
+                  checked={bgLocked}
                   onChange={(e) => {
-                    setBackgroundLocked(e.target.checked);
+                    setBgLocked(e.target.checked);
                     if (!e.target.checked) setLockedBackground("");
                   }}
                 />
@@ -901,11 +953,12 @@ export function GenerateWizard({
                   <label htmlFor="bg-lock-toggle" className="text-sm font-medium cursor-pointer">
                     <Lock className="inline h-3.5 w-3.5 mr-1.5 mb-0.5 text-[var(--accent)]" />
                     Lock background style across all modules
+                    {bgLocked && <span className="ml-2 text-xs font-normal text-[var(--accent)]">🔒 Background locked</span>}
                   </label>
                   <p className="mt-1 text-xs text-[var(--muted-fg)]">
                     Reuse the background from your uploaded photo for all gallery modules. Useful when you have a specific lifestyle context you want to preserve across variations.
                   </p>
-                  {backgroundLocked ? (
+                  {bgLocked ? (
                     <div className="mt-3 space-y-1.5">
                       <p className="text-xs font-medium text-[var(--muted-fg)]">Describe the background to lock:</p>
                       <Textarea
@@ -933,6 +986,10 @@ export function GenerateWizard({
                 <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
                 Edit prompt text before any image2image call is sent
               </li>
+              <li className="flex gap-2">
+                <Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+                Product fidelity — shape, label, and colors preserved in every image
+              </li>
             </ul>
             {error && error !== "INSUFFICIENT_CREDITS" ? (
               <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
@@ -955,7 +1012,7 @@ export function GenerateWizard({
                 </Button>
               </div>
             ) : null}
-            <div className="space-y-3">
+            <div data-tour="prompt-plan-section" className="space-y-3">
               {planningPrompts && promptPlan.length === 0 ? (
                 <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/30 p-4 text-sm text-[var(--muted-fg)]">
                   <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
@@ -1023,7 +1080,7 @@ export function GenerateWizard({
                 </Button>
               ) : null}
             </div>
-            <div className={cn(mobileStickyFooter, "-mx-6 flex flex-col gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none")}>
+            <div data-tour="credit-estimate-bar" className={cn(mobileStickyFooter, "-mx-6 flex flex-col gap-3 border-t border-[var(--border)] bg-[var(--card)]/95 p-4 backdrop-blur-sm md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none")}>
               <Button variant="outline" onClick={() => setStep(1)} className="self-start">
                 Back
               </Button>
@@ -1236,6 +1293,13 @@ export function GenerateWizard({
             ? "Your gallery is still generating. You can leave safely — check the project page for results."
             : "You have progress in this run. Leaving now will discard unsaved steps."
         }
+      />
+
+      {/* POLISH-73: first-time user onboarding tour */}
+      <TourTooltip
+        steps={TOUR_STEPS}
+        onComplete={() => setTourDismissed(true)}
+        storageKey="studio_images_tour_seen"
       />
     </div>
   );

@@ -15,6 +15,7 @@ import {
   Sparkles,
   Tag,
   Wand2,
+  Plug,
 } from "lucide-react";
 import type { BrandSummary } from "@/lib/brands";
 import { BrandSwitcher } from "@/components/layout/brand-switcher";
@@ -54,7 +55,14 @@ const createNav: NavItem[] = [
 
 const batchNav: NavItem[] = [
   { href: "/batch/listing-builder", label: "Listing builder", icon: Layers },
+  { href: "/batch/copy", label: "Copy builder", icon: FileText },
   { href: "/batch/clone", label: "Clone catalog", icon: Copy },
+];
+
+const integrationsNav: NavItem[] = [
+  { href: "/integrations/amazon", label: "Amazon", icon: Plug },
+  { href: "/integrations/shopify", label: "Shopify", icon: Plug },
+  { href: "/integrations/zapier", label: "Zapier & Make", icon: Plug },
 ];
 
 const brandNav: NavItem[] = [
@@ -201,6 +209,13 @@ export function SidebarNavContent({
             <NavSection
               title="Playbooks"
               items={playbookNav}
+              pathname={pathname}
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+            />
+            <NavSection
+              title="Integrations"
+              items={integrationsNav}
               pathname={pathname}
               collapsed={collapsed}
               onNavigate={onNavigate}

@@ -10,6 +10,7 @@ import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { EXPLORE_LINKS, HOME_STATS, USP_SUBHEAD, USP_TAGLINE, WORKFLOW_STEPS } from "@/lib/marketing-content";
 import { USP_ONE_LINER } from "@/lib/marketing-usp";
 import { UspPillarsSection } from "@/components/marketing/usp-sections";
+import { LandingTestimonials } from "@/components/marketing/landing-testimonials";
 
 export const metadata: Metadata = {
   title: "ProductPixl — AI listing studio for Amazon sellers",
@@ -50,8 +51,14 @@ export default async function HomePage() {
                   <Link href="/grader">Try free listing grader</Link>
                 </Button>
               </div>
-              <p className="mt-5 text-sm text-[var(--muted-fg)]">
-                10 free credits · Google or email sign-in · No subscription
+              <p className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-[var(--muted-fg)] lg:justify-start">
+                <span>10 free credits</span>
+                <span className="text-[var(--border)]">·</span>
+                <span>Google or email sign-in</span>
+                <span className="text-[var(--border)]">·</span>
+                <span>No subscription</span>
+                <span className="text-[var(--border)]">·</span>
+                <span className="text-[var(--accent)]">Product fidelity guaranteed</span>
               </p>
             </div>
             <div className="mx-auto w-full max-w-md lg:max-w-none">
@@ -133,6 +140,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <LandingTestimonials />
 
       <section className="px-4 pb-20">
         <div className="mx-auto max-w-3xl rounded-3xl border border-[var(--border)] bg-[var(--card)] p-10 text-center shadow-[var(--shadow-lg)] md:p-12">

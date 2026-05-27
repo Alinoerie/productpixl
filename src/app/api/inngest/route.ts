@@ -6,8 +6,10 @@ import { copyPipeline } from "@/inngest/functions/copy-pipeline";
 import { videoPipeline } from "@/inngest/functions/video-pipeline";
 import { playbookPipeline } from "@/inngest/functions/playbook-pipeline";
 import { batchPipeline } from "@/inngest/functions/batch-pipeline";
+import { scheduledBatchProcessor } from "@/inngest/functions/scheduled-batch-processor";
+import { weeklyDigestCron } from "@/inngest/functions/weekly-digest";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [imagePipeline, aplusPipeline, copyPipeline, videoPipeline, playbookPipeline, batchPipeline],
+  functions: [imagePipeline, aplusPipeline, copyPipeline, videoPipeline, playbookPipeline, batchPipeline, scheduledBatchProcessor, weeklyDigestCron],
 });

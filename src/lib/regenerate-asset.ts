@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { analyzeProductImage, scoreImageQuality } from "@/lib/ai";
+import { analyzeProductImage, scoreImageQuality, generateAltText } from "@/lib/ai";
 import { uploadBufferToCloudinary } from "@/lib/cloudinary";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
 import { intakeFromProduct } from "@/lib/credit-pricing";
@@ -79,6 +79,9 @@ export async function regenerateAsset(params: {
     qaScore = await scoreImageQuality(imageUrl, mod.id, product.inputImageUrl);
   }
 
+  // Generate alt-text for the regenerated image
+  const altText = await generateAltText(imageUrl, intake.name, mod.id);
+
   const asset = await prisma.asset.upsert({
     where: { id: `${params.productId}-${mod.id}` },
     create: {
@@ -90,12 +93,14 @@ export async function regenerateAsset(params: {
       status: qaScore >= 7 ? "COMPLETE" : "FAILED",
       qaScore,
       retryCount: 1,
+      altText,
     },
     update: {
       imageUrl,
       status: qaScore >= 7 ? "COMPLETE" : "FAILED",
       qaScore,
       retryCount: { increment: 1 },
+      altText,
       errorMessage: qaScore >= 7 ? null : PIPELINE_ERROR.assetQaFailed,
     },
   });

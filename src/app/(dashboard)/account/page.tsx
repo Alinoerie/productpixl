@@ -10,6 +10,8 @@ import { PaymentSuccessBanner } from "@/components/account/payment-success-banne
 import { CreditUsageGuide } from "@/components/account/credit-usage-guide";
 import { EmailConfigBanner } from "@/components/account/email-config-banner";
 import { SignOutButton } from "@/components/account/sign-out-button";
+import { NotificationPrefsCard } from "@/components/account/notification-prefs-card";
+import { ExportDataSection } from "@/components/account/export-data-section";
 import { formatOrderStatus } from "@/lib/status-labels";
 import { StudioPageShell } from "@/components/layout/studio-page-shell";
 import { getAccountJourney } from "@/lib/user-journey";
@@ -37,6 +39,17 @@ export default async function AccountPage({
 
   const credits = user?.credits ?? 0;
   const journey = getAccountJourney(credits);
+  const notificationPrefs = (user?.notificationPrefs as {
+    emailOnGenerationComplete: boolean;
+    emailOnLowCredits: boolean;
+    marketingUpdates: boolean;
+    weeklyDigest: boolean;
+  }) ?? {
+    emailOnGenerationComplete: true,
+    emailOnLowCredits: true,
+    marketingUpdates: false,
+    weeklyDigest: false,
+  };
 
   return (
     <StudioPageShell
@@ -75,6 +88,20 @@ export default async function AccountPage({
                 {credits < 2 ? "Top up before your next run" : "generation credits remaining"}
               </p>
             </div>
+            <div className="flex items-center gap-4 text-xs text-[var(--muted-fg)]">
+              <span className="flex items-center gap-1">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                256-bit SSL
+              </span>
+              <span className="flex items-center gap-1">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Powered by Stripe
+              </span>
+              <span className="flex items-center gap-1">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Secure checkout
+              </span>
+            </div>
             <Button asChild>
               <Link href="/pricing">Buy credits</Link>
             </Button>
@@ -103,6 +130,11 @@ export default async function AccountPage({
 
       <CreditUsageGuide />
 
+      <div className="grid gap-4 md:grid-cols-2">
+        <NotificationPrefsCard initialPrefs={notificationPrefs} />
+        <ExportDataSection />
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Recent orders</CardTitle>
@@ -124,9 +156,6 @@ export default async function AccountPage({
                     <CreditCard className="h-4 w-4" />
                     View credit packs
                   </Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href={STUDIO_ROUTES.images}>Use free credits</Link>
                 </Button>
               </div>
             </div>

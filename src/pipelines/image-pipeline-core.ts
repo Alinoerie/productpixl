@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { analyzeProductImage, scoreImageQuality, type ProductAnalysis } from "@/lib/ai";
+import { analyzeProductImage, scoreImageQuality, generateAltText, type ProductAnalysis } from "@/lib/ai";
 import type { ProductIntakeData } from "@/lib/product-intake";
 import { uploadBufferToCloudinary } from "@/lib/cloudinary";
 import { runCategoryResearch } from "@/pipelines/tavily";
@@ -101,8 +101,8 @@ async function generateModuleAsset(params: {
       buffer = await postProcessListingImage(buffer, mod.id);
       imageUrl = await uploadBufferToCloudinary(buffer, `productpixl/${userId}/${productId}`);
       qaScore = await scoreImageQuality(imageUrl, mod.id, inputImageUrl);
-    } catch {
-      /* keep prior attempt scores */
+    } catch (err) {
+      console.warn("[qa] Composite fallback failed:", err);
     }
   }
 
@@ -119,8 +119,10 @@ export type ImagePipelineInput = {
   intake: ProductIntakeData;
   playbookContext?: string;
   templateContext?: string;
-  /** Lock the background style — passed as a description string when backgroundLocked is true */
+  /** Lock the background style — passed as a description string when bgLocked is true */
   bgLock?: string;
+  /** When true, inject background consistency instruction into the prompt */
+  bgLocked?: boolean;
 };
 
 /** Run the full image pipeline (used by Inngest steps and local dev inline runner). */
@@ -136,6 +138,7 @@ export async function runImagePipelineCore(input: ImagePipelineInput): Promise<{
   const playbookContext = input.playbookContext;
   const templateContext = input.templateContext;
   const bgLock = input.bgLock;
+  const bgLocked = input.bgLocked;
 
   const product = await prisma.product.findUniqueOrThrow({
     where: { id: productId },
@@ -209,6 +212,7 @@ export async function runImagePipelineCore(input: ImagePipelineInput): Promise<{
           playbookContext,
           templateContext,
           bgLock,
+          bgLocked,
         });
 
       const { imageUrl, qaScore } = await generateModuleAsset({
@@ -219,6 +223,9 @@ export async function runImagePipelineCore(input: ImagePipelineInput): Promise<{
         prompt,
         referenceImageUrls: extraRefs,
       });
+
+      // Generate alt-text for the generated image
+      const altText = await generateAltText(imageUrl, intake.name, mod.id);
 
       pipelineStatus = await loadPipelineStatus(productId);
       pipelineStatus.steps[i].status = qaScore >= 7 ? "COMPLETE" : "FAILED";
@@ -236,11 +243,13 @@ export async function runImagePipelineCore(input: ImagePipelineInput): Promise<{
           imageUrl,
           status: qaScore >= 7 ? "COMPLETE" : "FAILED",
           qaScore,
+          altText,
         },
         update: {
           imageUrl,
           status: qaScore >= 7 ? "COMPLETE" : "FAILED",
           qaScore,
+          altText,
           targetWidth: 1500,
           targetHeight: 1500,
           errorMessage: qaScore >= 7 ? null : PIPELINE_ERROR.assetQaFailed,

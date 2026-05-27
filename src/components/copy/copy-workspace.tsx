@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Save, Camera, RefreshCw, Copy, Plus, Trash2, FileText, Sparkles } from "lucide-react";
+import { Loader2, Save, Camera, RefreshCw, Copy, Plus, Trash2, FileText, Sparkles, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -110,7 +110,16 @@ export function CopyWorkspace({
   const awaitingCompletion = useRef(false);
   const graderImportScrolled = useRef(false);
   const existingCopyScrolled = useRef(false);
+  const marketplaceChangedByUser = useRef(false);
   const hasExistingProjectCopy = Boolean(linkedProduct?.listingCopy?.title);
+  // POLISH-61: suppress grader import banner for 30 days via localStorage
+  const graderImportDismissed = useRef(
+    typeof window !== "undefined"
+      ? localStorage.getItem("graderImportDismissed")
+        ? Date.now() < Number(localStorage.getItem("graderImportDismissed"))
+        : false
+      : false
+  );
   const [showCompletionNudge, setShowCompletionNudge] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"regenerate" | "discard" | null>(null);
   const [linkedProductId, setLinkedProductId] = useState<string | null>(linkedProduct?.id ?? null);
@@ -150,6 +159,9 @@ export function CopyWorkspace({
     brandName: defaultBrandName,
   });
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
+  const [asin, setAsin] = useState("");
+  const [asinLookupLoading, setAsinLookupLoading] = useState(false);
+  const [asinError, setAsinError] = useState("");
 
   const copyQuote = useMemo(
     () =>
@@ -166,6 +178,53 @@ export function CopyWorkspace({
   );
 
   const sectionQuote = useMemo(() => quoteCopySection(marketplace), [marketplace]);
+
+  const performAsinLookup = useCallback(async () => {
+    const trimmed = asin.trim().toUpperCase();
+    if (!trimmed) return;
+    setAsinLookupLoading(true);
+    setAsinError("");
+    try {
+      const { ok, data } = await fetchJson<{
+        title?: string;
+        bullets?: string[];
+        description?: string;
+        imageUrl?: string;
+        error?: string;
+      }>("/api/asin/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ asin: trimmed }),
+      });
+      if (!ok || data.error) {
+        setAsinError(data.error || "Could not fetch ASIN — enter details manually");
+        return;
+      }
+      const newCopy = {
+        title: data.title ?? "",
+        bullets: data.bullets ?? [],
+        description: data.description ?? "",
+        backendKeywords: "",
+        status: "COMPLETE" as const,
+      };
+      setCopy(newCopy);
+      setSavedBaseline({
+        title: newCopy.title,
+        bullets: newCopy.bullets,
+        description: newCopy.description,
+        backendKeywords: "",
+      });
+      if (data.description) {
+        setForm((prev) => ({ ...prev, name: data.title?.slice(0, 80) ?? prev.name }));
+      }
+      setAsinError("");
+      toast("ASIN found — listing pre-populated. Save to a project or generate images.");
+    } catch {
+      setAsinError("Could not fetch ASIN — enter details manually");
+    } finally {
+      setAsinLookupLoading(false);
+    }
+  }, [asin, toast]);
 
   const reset = () => {
     if (previewUrlRef.current) {
@@ -449,7 +508,7 @@ export function CopyWorkspace({
   const titleOverLimit = (copy?.title?.length ?? 0) > AMAZON_TITLE_MAX;
   const lacksCredits = credits < copyQuote.total;
   const canRetry = Boolean(error && error !== "INSUFFICIENT_CREDITS" && form.name.trim() && !loading);
-  const showGraderImportBanner = Boolean(fromGrader && copy?.title && !productId);
+  const showGraderImportBanner = Boolean(fromGrader && copy?.title && !productId && !graderImportDismissed.current);
   const showProjectNextSteps = Boolean(
     productId &&
       copy?.title &&
@@ -508,6 +567,8 @@ export function CopyWorkspace({
       if (!res.ok) throw new Error(data.error || "Save failed");
       setProductId(data.productId);
       setFromGrader(false);
+      // POLISH-61: suppress grader banner for 30 days
+      localStorage.setItem("graderImportDismissed", String(Date.now() + 30 * 24 * 60 * 60 * 1000));
       setSavedBaseline({
         title: copy.title,
         bullets: (copy.bullets as string[]) ?? [],
@@ -595,6 +656,53 @@ export function CopyWorkspace({
         detailLine={copyQuote.detailLine}
         description="RUFUS-ready title, bullets, description, and backend keywords."
       />
+
+      {!copy?.title && (
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+          <p className="mb-3 text-sm font-medium text-[var(--muted-fg)]">Look up by ASIN</p>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Input
+                value={asin}
+                onChange={(e) => {
+                  setAsin(e.target.value.toUpperCase());
+                  setAsinError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !asinLookupLoading) {
+                    e.preventDefault();
+                    void performAsinLookup();
+                  }
+                }}
+                placeholder="Amazon ASIN (e.g. B08N5WRWNW)"
+                maxLength={10}
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="default"
+              onClick={performAsinLookup}
+              disabled={asinLookupLoading || asin.trim().length === 0}
+              className="shrink-0"
+            >
+              {asinLookupLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              <span className="ml-1.5 hidden sm:inline">Lookup</span>
+            </Button>
+          </div>
+          {asinError ? (
+            <p className="mt-2 rounded-lg border border-[var(--error-border)] bg-[var(--error-bg)] px-3 py-2 text-sm text-[var(--error)]">
+              {asinError}
+            </p>
+          ) : null}
+        </div>
+      )}
 
       {paymentSuccess ? (
         <Suspense fallback={null}>
@@ -775,14 +883,18 @@ export function CopyWorkspace({
               onChange={setForm}
               marketplace={marketplace}
               onMarketplaceChange={(id) => {
+                marketplaceChangedByUser.current = true;
                 setMarketplace(id);
                 setMarketplaces([id]);
+                toast("Marketplace changed to Amazon EU — copy will adjust tone and keywords");
               }}
               multiMarketplace={Boolean(copy?.title)}
               marketplaces={marketplaces}
               onMarketplacesChange={(ids) => {
+                marketplaceChangedByUser.current = true;
                 setMarketplaces(ids);
                 setMarketplace(ids[0] ?? "AMAZON_US");
+                toast("Marketplace changed to Amazon EU — copy will adjust tone and keywords");
               }}
               referenceImageUrls={referenceImageUrls}
               onReferenceImagesChange={setReferenceImageUrls}

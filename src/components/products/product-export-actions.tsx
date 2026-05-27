@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Check, Circle, Copy, Download, ImageIcon, Loader2, FileText } from "lucide-react";
 import { useToast } from "@/components/ui/toast-provider";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
-import { downloadExportPack as buildExportPack, downloadGalleryZip } from "@/lib/download-export-pack";
+import { downloadExportPack as buildExportPack, downloadGalleryZip, type ImageExportFormat } from "@/lib/download-export-pack";
 import {
   formatListingCsv,
   formatListingPlain,
@@ -43,6 +43,7 @@ export function ProductExportActions({
   const [downloading, setDownloading] = useState(false);
   const [packDownloading, setPackDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<string | null>(null);
+  const [imageFormat, setImageFormat] = useState<ImageExportFormat>("jpg");
   const completedImages = assets.filter((a): a is { moduleId: string; imageUrl: string } => Boolean(a.imageUrl));
   const hasCopy = Boolean(listingCopy?.title);
   const hasImages = completedImages.length > 0;
@@ -168,7 +169,7 @@ export function ProductExportActions({
     setDownloading(true);
     setDownloadProgress(null);
     try {
-      const saved = await downloadGalleryZip(completedImages, slug, (saved, total) => {
+      const saved = await downloadGalleryZip(completedImages, slug, imageFormat, (saved, total) => {
         setDownloadProgress(`${saved}/${total}`);
       });
       toast(`Downloaded ${slug}-gallery.zip (${saved} image${saved === 1 ? "" : "s"})`);
@@ -198,6 +199,7 @@ export function ProductExportActions({
           marketplaceId,
           assets: completedImages,
           listingCopy: payload,
+          imageFormat,
         },
         (phase) => setDownloadProgress(phase)
       );
@@ -303,25 +305,47 @@ export function ProductExportActions({
 
         <div className="flex flex-wrap gap-2">
           {hasImages ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={downloading || packDownloading}
-              onClick={downloadImages}
-            >
-              {downloading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {downloadProgress ? `Packing ${downloadProgress}…` : "Packing ZIP…"}
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4" />
-                  Download gallery.zip ({completedImages.length})
-                </>
-              )}
-            </Button>
+            <>
+              <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--card)] p-1">
+                {(["jpg", "png", "webp"] as const).map((fmt) => (
+                  <button
+                    key={fmt}
+                    type="button"
+                    onClick={() => setImageFormat(fmt)}
+                    aria-pressed={imageFormat === fmt}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      imageFormat === fmt
+                        ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                        : "text-[var(--muted-fg)] hover:text-[var(--foreground)]"
+                    }`}
+                    title={
+                      fmt === "png" ? "PNG (transparent)" : fmt === "jpg" ? "JPG (compressed)" : "WebP (modern)"
+                    }
+                  >
+                    {fmt.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={downloading || packDownloading}
+                onClick={downloadImages}
+              >
+                {downloading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {downloadProgress ? `Packing ${downloadProgress}…` : "Packing ZIP…"}
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Download gallery.zip ({completedImages.length})
+                  </>
+                )}
+              </Button>
+            </>
           ) : null}
           {hasCopy ? (
             <>

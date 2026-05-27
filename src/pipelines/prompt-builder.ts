@@ -49,9 +49,11 @@ export function buildListingPrompt(
     templateContext?: string;
     /** Lock the background style across all generated images */
     bgLock?: string;
+    /** When true, inject background consistency instruction into the prompt */
+    bgLocked?: boolean;
   }
 ): string {
-  const { bgLock } = options ?? {};
+  const { bgLock, bgLocked } = options ?? {};
   const marketplace = getMarketplace(options?.marketplace ?? "AMAZON_US");
   const antiPatterns = research.antiPatterns.length
     ? research.antiPatterns
@@ -76,7 +78,7 @@ The product in the reference image is a ${intake.brandName || analysis.brandName
 — Physical dimensions: ${intake.dimensions || analysis.dimensions || "as shown in reference"}
 — Scale anchor: ${scaleAnchor}
 ${analysis.keyObservations?.trim() ? `— Vision fidelity notes: ${analysis.keyObservations.trim()}` : ""}
-${bgLock ? `— Background lock: "${bgLock}" — keep this exact background across every generated image in the set.` : ""}
+${(bgLock || bgLocked) ? `— Background lock: "${bgLock || "your uploaded photo background"}" — keep this exact background across every generated image in the set.` : ""}
 The attached reference image(s) show the exact product — preserve it pixel-for-pixel except where scene instructions allow background or context changes only.
 Do NOT change, regenerate, blur, distort, recolor, restyle, or alter product elements.
 The product must remain IDENTICAL to reference fidelity.`;
@@ -164,7 +166,7 @@ Camera & lens: Sony A7R V · FE 90mm Macro @ f/5.6 for detail fidelity.
 Lighting: realistic commercial setup with natural highlight falloff and controlled shadows.
 Mood: ${intake.vibe || analysis.mood}. Marketplace fit: ${marketplace.label}.
 Aspect ratio: 1:1 square. Target output: 1500×1500px, listing-ready.
-${bgLock ? `BACKGROUND CONSISTENCY: maintain this exact background style across all images: "${bgLock}". Do NOT vary the background — it must be identical in every generated image for visual consistency in the listing gallery.` : ""}`;
+${(bgLock || bgLocked) ? `BACKGROUND CONSISTENCY: maintain this exact background style across all images: "${bgLock || "your uploaded photo background"}". Do NOT vary the background — it must be identical in every generated image for visual consistency in the listing gallery.` : ""}`;
 
   const negative = `
 [NEGATIVE PROMPT BLOCK]

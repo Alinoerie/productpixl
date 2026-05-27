@@ -7,7 +7,7 @@ import { type MarketplaceId } from "@/lib/marketplaces";
 export default async function ContentStudioImagesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ productId?: string; success?: string; template?: string }>;
+  searchParams: Promise<{ productId?: string; success?: string; template?: string; firstRun?: string }>;
 }) {
   const session = await auth();
   const params = await searchParams;
@@ -55,6 +55,7 @@ export default async function ContentStudioImagesPage({
       defaultBrandName={defaultBrandName}
       templateSlug={templateSlug}
       paymentSuccess={params.success === "true"}
+      firstRun={params.firstRun === "1"}
       hidePageHeader
     />
   );

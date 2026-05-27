@@ -16,6 +16,7 @@ model User {
   credits          Int       @default(10)
   planTier         String    @default("free")
   stripeCustomerId String?
+  notificationPrefs Json     @default("{\"emailOnGenerationComplete\":true,\"emailOnLowCredits\":true,\"marketingUpdates\":false}")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -234,6 +235,7 @@ model Asset {
   qaScore      Int?
   retryCount   Int      @default(0)
   errorMessage String?
+  altText      String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -273,4 +275,21 @@ model Order {
   createdAt       DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ScheduledBatchJob {
+  id           String   @id @default(cuid())
+  userId       String
+  batchType    String   // "copy", "listing-builder", "clone"
+  status       String   @default("SCHEDULED") // SCHEDULED, RUNNING, COMPLETED, FAILED, CANCELLED
+  runAt        DateTime
+  completedAt  DateTime?
+  config      Json     // Stores the CSV text, columnMap, marketplace, etc.
+  result      Json?
+  errorMessage String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([status, runAt])
 }

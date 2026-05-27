@@ -431,10 +431,19 @@ export function DemoBookingWizard() {
           ) : null}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Button asChild className="rounded-xl">
-              <Link href="/login">Start free in studio</Link>
+              <Link href="/studio">Start free</Link>
             </Button>
-            <Button asChild variant="outline" className="rounded-xl">
-              <Link href="/guides/ecommerce">Get the free guide pack</Link>
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => {
+                if (calendlyUrl) {
+                  window.open(calendlyUrl, "_blank", "noopener,noreferrer");
+                }
+              }}
+            >
+              <Link href={calendlyUrl || "#"}>Book a demo</Link>
             </Button>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import { inngest, COPY_PIPELINE_EVENT } from "@/inngest/client";
 import type { ProductIntakeData } from "@/lib/product-intake";
 import { quoteCopyRun, quoteCopyRunMulti } from "@/lib/credit-pricing";
@@ -16,6 +17,13 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!rateLimit(`generate:${session.user.id}`, 10, 60_000)) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait before trying again." },
+      { status: 429, headers: { "Retry-After": "60" } }
+    );
   }
 
   const body = await req.json();

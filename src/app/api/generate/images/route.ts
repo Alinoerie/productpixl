@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import { inngest, IMAGE_PIPELINE_EVENT } from "@/inngest/client";
 import type { ProductIntakeData } from "@/lib/product-intake";
 import type { ProductAnalysis } from "@/lib/ai";
@@ -19,6 +20,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!rateLimit(`generate:${session.user.id}`, 10, 60_000)) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait before trying again." },
+      { status: 429, headers: { "Retry-After": "60" } }
+    );
+  }
+
   const body = await req.json();
   const {
     existingProductId,
@@ -30,6 +38,7 @@ export async function POST(req: NextRequest) {
     promptOverrides = {},
     analysis,
     templateSlug,
+    bgLocked,
     bgLock,
   } = body as {
     existingProductId?: string;
@@ -41,6 +50,7 @@ export async function POST(req: NextRequest) {
     analysis?: ProductAnalysis;
     productData: ProductIntakeData;
     templateSlug?: string;
+    bgLocked?: boolean;
     bgLock?: string;
   };
 
@@ -140,6 +150,7 @@ export async function POST(req: NextRequest) {
       analysis,
       intake: productData,
       templateContext,
+      bgLocked,
       bgLock,
     };
 

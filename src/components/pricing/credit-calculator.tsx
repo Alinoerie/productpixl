@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { typicalImageRunCredits } from "@/lib/credit-pricing";
 import { formatCreditBalance, showCalculatorBalance } from "@/lib/pricing-display";
 
@@ -15,6 +17,7 @@ export function CreditCalculator({
   onSkusChange,
   onRunsPerSkuChange,
   currentCredits = 0,
+  onDeficitChange,
 }: {
   compact?: boolean;
   skus?: number;
@@ -22,10 +25,18 @@ export function CreditCalculator({
   onSkusChange?: (value: number) => void;
   onRunsPerSkuChange?: (value: number) => void;
   currentCredits?: number;
+  onDeficitChange?: (deficit: number) => void;
 }) {
   const skus = controlledSkus ?? 12;
   const runsPerSku = controlledRuns ?? 2;
   const creditsPerRun = typicalImageRunCredits();
+  const [isSignedIn, setIsSignedIn] = useState(false);
+
+  useEffect(() => {
+    // Detect signed-in state by checking if currentCredits was explicitly provided
+    // (as opposed to the default 0 for anonymous users)
+    setIsSignedIn(currentCredits > 0 || showCalculatorBalance(currentCredits));
+  }, [currentCredits]);
 
   const totalCredits = useMemo(
     () => skus * runsPerSku * creditsPerRun,
@@ -35,6 +46,11 @@ export function CreditCalculator({
   const deficit = Math.max(0, totalCredits - currentCredits);
   const agency = skus * AGENCY_PER_SKU;
   const showBalance = showCalculatorBalance(currentCredits);
+
+  // Notify parent when deficit changes (for analytics or other side effects)
+  useEffect(() => {
+    onDeficitChange?.(deficit);
+  }, [deficit, onDeficitChange]);
 
   return (
     <div className={compact ? "mt-6 grid gap-6 lg:grid-cols-2" : "mt-10 grid gap-8 lg:grid-cols-2"}>
@@ -90,6 +106,15 @@ export function CreditCalculator({
           <p className="mt-1 text-sm text-[var(--muted-fg)]">
             credits · only charged when you generate
           </p>
+          {isSignedIn && deficit > 0 ? (
+            <div className="mt-4">
+              <Button asChild size="sm" className="w-full rounded-xl">
+                <Link href="/pricing">
+                  Buy credits
+                </Link>
+              </Button>
+            </div>
+          ) : null}
         </div>
         {!compact && (
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 opacity-90">

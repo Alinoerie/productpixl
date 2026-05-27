@@ -29,7 +29,8 @@ export async function createCheckoutSession(
     returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
       ? returnTo.split("?")[0]
       : STUDIO_ROUTES.images;
-  const successUrl = `${baseUrl}${safeReturn}?success=true`;
+  const successUrl = `${baseUrl}${safeReturn}?success=true&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${baseUrl}/pricing?canceled=true&session_id={CHECKOUT_SESSION_ID}`;
 
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = priceId
     ? [{ price: priceId, quantity: 1 }]
@@ -57,6 +58,6 @@ export async function createCheckoutSession(
       credits: String(pkg.credits),
     },
     success_url: successUrl,
-    cancel_url: `${baseUrl}/pricing?canceled=true`,
+    cancel_url: cancelUrl,
   });
 }

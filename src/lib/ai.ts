@@ -168,3 +168,24 @@ Return ONLY one integer.`
   const score = parseInt(raw.trim(), 10);
   return Number.isFinite(score) ? Math.min(10, Math.max(1, score)) : 7;
 }
+
+const ALT_TEXT_PROMPT = `Generate a marketplace-compliant alt-text description for this product image.
+The alt-text should be concise (under 250 characters), descriptive, and include relevant keywords for SEO.
+Focus on: product type, key visual features, setting/context, and intended use.
+Format: Plain text sentence, no quotes or special formatting.
+Example: "Professional product photography of a ceramic mug with minimalist geometric pattern on a clean white background for Amazon listing"`;
+
+export async function generateAltText(
+  imageUrl: string,
+  productName: string,
+  moduleId: string
+): Promise<string> {
+  if (isStubMode()) {
+    await sleep(600);
+    return `Professional product photography of ${productName} for Amazon listing module ${moduleId}`;
+  }
+
+  const prompt = `${ALT_TEXT_PROMPT}\n\nProduct name: ${productName}\nModule: ${moduleId}`;
+  const raw = await runGeminiVision(prompt, imageUrl, 150);
+  return raw.trim().slice(0, 250);
+}

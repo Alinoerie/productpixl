@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { ChevronRight, ClipboardCheck, ImageIcon } from "lucide-react";
+import { ChevronRight, ClipboardCheck } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
@@ -258,7 +258,14 @@ export default async function ProjectsPage({
           <CardContent className="grid gap-10 py-12 md:grid-cols-[minmax(0,1fr)_minmax(0,280px)] md:items-center md:px-10">
             <div className="text-center md:text-left">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--accent-soft)] md:mx-0">
-                <ImageIcon className="h-8 w-8 text-[var(--accent)]" strokeWidth={1.25} />
+                {/* POLISH-74: empty state illustration */}
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect x="4" y="8" width="24" height="17" rx="2" stroke="var(--accent)" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M4 12h24" stroke="var(--accent)" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <rect x="8" y="15" width="7" height="5" rx="1" fill="var(--accent)" fillOpacity="0.3" stroke="var(--accent)" strokeWidth="1"/>
+                  <rect x="17" y="15" width="7" height="5" rx="1" fill="var(--accent)" fillOpacity="0.15" stroke="var(--accent)" strokeWidth="1"/>
+                  <circle cx="16" cy="5" r="2.5" stroke="var(--accent)" strokeWidth="1.25"/>
+                </svg>
               </div>
               <h3 className="mt-6 font-serif text-xl">No projects yet</h3>
               <p className="mt-2 max-w-sm text-sm text-[var(--muted-fg)] md:max-w-md">

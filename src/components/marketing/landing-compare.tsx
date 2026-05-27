@@ -34,15 +34,21 @@ const TOOLS: {
   },
   {
     name: "WizStudio",
-    price: "$250–1,125/mo",
-    priceNote: "Per-download model · enterprise SKUs",
-    tiers: ["yes", "yes", "no", "no", "no", "yes", "no", "yes", "no", "no"],
+    price: "Custom pricing",
+    priceNote: "Enterprise-focused · custom demos",
+    tiers: ["yes", "yes", "no", "no", "no", "partial", "no", "partial", "no", "no"],
   },
   {
     name: "Pixii",
     price: "$200+/mo",
-    priceNote: "Subscription · requires live ASIN",
-    tiers: ["no", "yes", "no", "yes", "no", "no", "no", "partial", "no", "no"],
+    priceNote: "Fashion-focused · requires live ASIN",
+    tiers: ["no", "yes", "no", "yes", "no", "no", "no", "yes", "no", "no"],
+  },
+  {
+    name: "Photoroom",
+    price: "From $9.99/mo",
+    priceNote: "Background removal · no marketplace copy",
+    tiers: ["yes", "yes", "no", "no", "no", "no", "no", "no", "no", "no"],
   },
   {
     name: "Pebblely",
@@ -52,8 +58,8 @@ const TOOLS: {
   },
   {
     name: "Botika",
-    price: "From $23/mo",
-    priceNote: "Subscription · AI model training",
+    price: "$22/mo",
+    priceNote: "$1/photo · $5/video · fashion-focused",
     tiers: ["yes", "yes", "no", "no", "yes", "no", "no", "no", "no", "no"],
   },
   {
@@ -81,7 +87,7 @@ export function LandingCompare() {
             How we compare
           </p>
           <h2 className="mt-3 font-serif text-3xl md:text-4xl">
-            ProductPixl vs WizStudio, Pixii, and generic AI
+            ProductPixl vs WizStudio, Pixii, Photoroom, and generic AI
           </h2>
           <p className="mt-4 text-white/70">
             Most tools do one thing — images or copy or catalog sync. ProductPixl does all three from a single product photo, before the listing even exists.

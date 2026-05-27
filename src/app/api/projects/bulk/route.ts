@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
           : null,
         assets: p.assets
           .filter((a) => a.imageUrl)
-          .map((a) => ({ moduleId: a.moduleId, imageUrl: a.imageUrl })),
+          .map((a) => ({ moduleId: a.moduleId, imageUrl: a.imageUrl, altText: a.altText })),
       };
     });
     return NextResponse.json({ exports });

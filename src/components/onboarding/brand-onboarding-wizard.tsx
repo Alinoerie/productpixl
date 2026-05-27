@@ -215,7 +215,7 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
     if (ok) {
       toast("Brand kit ready — open Content studio");
       localStorage.removeItem("onboarding-step");
-      router.push(`${STUDIO_ROUTES.home}?firstRun=1`);
+      router.push(`${STUDIO_ROUTES.images}?firstRun=1`);
       router.refresh();
     }
   };
@@ -301,7 +301,7 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
                 </label>
               </div>
             </div>
-            <div className="flex justify-end">
+            <div className="flex flex-col items-end gap-2">
               <Button
                 disabled={!profile.displayName?.trim() || saving}
                 onClick={() => void continueStep(1)}
@@ -314,6 +314,9 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
                   "Continue to visual system"
                 )}
               </Button>
+              {!profile.displayName?.trim() && !saving ? (
+                <p className="text-xs text-[var(--muted-fg)]">Add a brand name to continue</p>
+              ) : null}
             </div>
           </CardContent>
         </Card>

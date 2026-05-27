@@ -1,6 +1,6 @@
 import { CreditCalculator } from "@/components/pricing/credit-calculator";
 
-export function LandingCalculator() {
+export function LandingCalculator({ currentCredits = 0 }: { currentCredits?: number }) {
   return (
     <section id="calculator" className="border-y border-[var(--border)] bg-[var(--muted)]/30 px-4 py-20">
       <div className="mx-auto max-w-6xl">
@@ -14,7 +14,7 @@ export function LandingCalculator() {
             revenue.
           </p>
         </div>
-        <CreditCalculator />
+        <CreditCalculator currentCredits={currentCredits} />
       </div>
     </section>
   );

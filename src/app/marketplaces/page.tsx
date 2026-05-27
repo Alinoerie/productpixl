@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { getUserCredits } from "@/lib/require-credits";
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { MarketingPageShell } from "@/components/marketing/marketing-page-shell";
 import { LandingBol } from "@/components/marketing/landing-bol";
@@ -14,6 +15,8 @@ export const metadata: Metadata = {
 
 export default async function MarketplacesPage() {
   const session = await auth();
+  const userId = session?.user?.id;
+  const credits = userId ? await getUserCredits(userId) : 0;
 
   return (
     <MarketingPageShell>
@@ -32,7 +35,7 @@ export default async function MarketplacesPage() {
         </div>
       </section>
       <LandingBol />
-      <LandingCalculator />
+      <LandingCalculator currentCredits={credits} />
       <section className="border-t border-[var(--border)] px-4 py-16">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6">
           <div>

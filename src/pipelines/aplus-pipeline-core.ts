@@ -111,8 +111,8 @@ async function generateModuleAsset(params: {
       buffer = await postProcessAplusImage(buffer, postSpec);
       imageUrl = await uploadBufferToCloudinary(buffer, `productpixl/${userId}/${productId}/aplus`);
       qaScore = await scoreImageQuality(imageUrl, mod.id, inputImageUrl);
-    } catch {
-      /* keep prior attempt scores */
+    } catch (err) {
+      console.warn("[qa] Composite fallback failed:", err);
     }
   }
 
