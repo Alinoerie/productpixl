@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Product name and category are required" }, { status: 400 });
   }
 
-  const validMarketplaceIds = new Set(MARKETPLACES.map((m) => m.id));
+  const validMarketplaceIds = new Set<string>(MARKETPLACES.map((m) => m.id));
   const targetMarketplaces = [...new Set((marketplaces?.length ? marketplaces : [marketplace]).filter(Boolean))];
   const invalidMp = targetMarketplaces.find((mp) => !validMarketplaceIds.has(mp));
   if (invalidMp) {
