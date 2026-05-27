@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { generateBrandStory } from "@/lib/ai";
 import { getBrandProfileForUser, isBrandOnboardingComplete } from "@/lib/brand-profile";
 import { insufficientCreditsResponse, requireCredits } from "@/lib/require-credits";
+import { prisma } from "@/lib/prisma";
 
 export const maxDuration = 60;
 
@@ -42,11 +43,24 @@ export async function POST(req: NextRequest) {
     }
 
     const onboardingDone = await isBrandOnboardingComplete(session.user.id);
-    if (onboardingDone && !(await requireCredits(session.user.id))) {
-      return insufficientCreditsResponse();
+    if (onboardingDone) {
+      const user = await requireCredits(session.user.id);
+      if (!user) return insufficientCreditsResponse();
     }
 
     const brandStory = await generateBrandStory(profile);
+
+    if (onboardingDone) {
+      try {
+        await prisma.user.update({
+          where: { id: session.user.id },
+          data: { credits: { decrement: 1 } },
+        });
+      } catch (err) {
+        console.error("[brand-profile/generate-story] credit decrement failed", err);
+      }
+    }
+
     return NextResponse.json({ brandStory });
   } catch (err) {
     console.error("[api/brand-profile/generate-story]", err);

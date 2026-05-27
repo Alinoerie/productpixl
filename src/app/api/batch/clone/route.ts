@@ -191,12 +191,14 @@ export async function POST(req: NextRequest) {
   }
 
   if (items.length > 0) {
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { credits: { decrement: quote.total } },
-    });
-
     try {
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: session.user.id },
+          data: { credits: { decrement: quote.total } },
+        }),
+      ]);
+
       await inngest.send({
         name: BATCH_PIPELINE_EVENT,
         data: {
@@ -207,12 +209,8 @@ export async function POST(req: NextRequest) {
         },
       });
     } catch (err) {
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: { credits: { increment: quote.total } },
-      });
       console.error("[batch/clone]", err);
-      return NextResponse.json({ error: "Could not queue clone batch. Credits were refunded." }, { status: 503 });
+      return NextResponse.json({ error: "Could not queue clone batch. Please try again." }, { status: 503 });
     }
   }
 

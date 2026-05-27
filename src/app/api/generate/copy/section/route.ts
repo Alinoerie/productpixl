@@ -43,33 +43,32 @@ export async function POST(req: NextRequest) {
     return insufficientCreditsResponse(quote.total, available);
   }
 
-  try {
-    const result = await generateListingCopySection({
-      section,
-      bulletIndex,
-      productName: productData.name,
-      brandName: productData.brandName,
-      category: productData.category,
-      marketplace,
-      existing: existingCopy ?? {},
-      materials: productData.materials,
-      keyFeatures: productData.keyFeatures,
-      targetBuyer: productData.targetBuyer,
-    });
+  const result = await generateListingCopySection({
+    section,
+    bulletIndex,
+    productName: productData.name,
+    brandName: productData.brandName,
+    category: productData.category,
+    marketplace,
+    existing: existingCopy ?? {},
+    materials: productData.materials,
+    keyFeatures: productData.keyFeatures,
+    targetBuyer: productData.targetBuyer,
+  });
 
+  try {
     await prisma.user.update({
       where: { id: session.user.id },
       data: { credits: { decrement: quote.total } },
     });
-
-    return NextResponse.json({
-      success: true,
-      section,
-      result,
-      creditsCharged: quote.total,
-    });
   } catch (err) {
-    console.error("[generate/copy/section]", err);
-    return NextResponse.json({ error: "Section regeneration failed" }, { status: 500 });
+    console.error("[generate/copy/section] credit decrement failed", err);
   }
+
+  return NextResponse.json({
+    success: true,
+    section,
+    result,
+    creditsCharged: quote.total,
+  });
 }

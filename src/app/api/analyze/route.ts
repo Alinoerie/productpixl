@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { analyzeProductImage, type ProductAnalysis } from "@/lib/ai";
-import { insufficientCreditsResponse, requireCredits } from "@/lib/require-credits";
+import { prisma } from "@/lib/prisma";
 import { isStubMode } from "@/lib/utils";
 
 export const maxDuration = 60;
@@ -25,11 +25,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "imageUrl required" }, { status: 400 });
     }
 
-    if (!(await requireCredits(session.user.id))) {
-      return insufficientCreditsResponse();
+    const analysis = await analyzeProductImage(imageUrl);
+
+    try {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { credits: { decrement: 1 } },
+      });
+    } catch (err) {
+      console.error("[api/analyze] credit decrement failed", err);
     }
 
-    const analysis = await analyzeProductImage(imageUrl);
     return NextResponse.json({
       analysis,
       stubMode: isStubMode(),
