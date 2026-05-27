@@ -90,6 +90,10 @@ export function ProductIntakeFields({
         />
       </div>
 
+      <div className="md:col-span-2 rounded-lg border border-[var(--teal)]/30 bg-[var(--teal-soft)]/30 px-3 py-2 text-xs text-[var(--muted-fg)]">
+        Your product&apos;s shape, label, and colors are preserved in every generated image — only backgrounds and scenes change.
+      </div>
+
       <div className="md:col-span-2 border-t border-[var(--border)] pt-4">
         <button
           type="button"

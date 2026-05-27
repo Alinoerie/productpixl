@@ -12,7 +12,7 @@ import { USP_ONE_LINER } from "@/lib/marketing-usp";
 import { UspPillarsSection } from "@/components/marketing/usp-sections";
 
 export const metadata: Metadata = {
-  title: "ProductPixl — Launch before you list",
+  title: "ProductPixl — AI listing studio for Amazon sellers",
   description: USP_ONE_LINER,
 };
 
@@ -32,9 +32,9 @@ export default async function HomePage() {
                 {USP_TAGLINE}
               </Badge>
               <h1 className="font-serif text-4xl leading-[1.08] tracking-tight text-balance md:text-6xl">
-                One product photo.
+                Stop waiting 3 weeks
                 <br />
-                <span className="text-[var(--accent)]">A complete listing studio.</span>
+                <span className="text-[var(--accent)]">for listing photos that cost €2,000.</span>
               </h1>
               <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[var(--muted-fg)] lg:mx-0">
                 {USP_SUBHEAD}

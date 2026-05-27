@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Lock, Plus, Trash2 } from "lucide-react";
 import { StudioPageShell } from "@/components/layout/studio-page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { STUDIO_ROUTES } from "@/lib/studio-routes";
 
 type SourceProduct = { id: string; name: string; marketplace: string; hasCopy: boolean; hasImages: boolean };
 
-type Variation = { name: string; marketplace: string; colors: string };
+type Variation = { name: string; marketplace: string; colors: string; vibe?: string };
 
 const RUN_KINDS = [
   { value: "both", label: "Regenerate images + copy" },
@@ -27,6 +27,8 @@ export function CloneCatalogWorkspace({ products }: { products: SourceProduct[] 
   ]);
   const [runKind, setRunKind] = useState<(typeof RUN_KINDS)[number]["value"]>("copy");
   const [cloneListingCopy, setCloneListingCopy] = useState(true);
+  const [backgroundLocked, setBackgroundLocked] = useState(false);
+  const [lockedBackground, setLockedBackground] = useState("");
   const [quote, setQuote] = useState<{ total: number; summary: string; detailLine: string } | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "running" | "done" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -49,7 +51,9 @@ export function CloneCatalogWorkspace({ products }: { products: SourceProduct[] 
       sourceProductId,
       runKind,
       cloneListingCopy,
-      variations: variations.filter((v) => v.name.trim()),
+      variations: variations
+        .filter((v) => v.name.trim())
+        .map((v) => ({ ...v, vibe: backgroundLocked && lockedBackground ? lockedBackground : v.vibe })),
     };
     const res = await fetch("/api/batch/clone", {
       method: "POST",
@@ -80,7 +84,9 @@ export function CloneCatalogWorkspace({ products }: { products: SourceProduct[] 
         sourceProductId,
         runKind,
         cloneListingCopy,
-        variations: variations.filter((v) => v.name.trim()),
+        variations: variations
+          .filter((v) => v.name.trim())
+          .map((v) => ({ ...v, vibe: backgroundLocked && lockedBackground ? lockedBackground : v.vibe })),
       }),
     });
     const data = (await res.json()) as {
@@ -172,6 +178,12 @@ export function CloneCatalogWorkspace({ products }: { products: SourceProduct[] 
                 </div>
                 {variations.map((row, index) => (
                   <div key={index} className="grid gap-2 rounded-xl border border-[var(--border)] p-3 sm:grid-cols-[1fr_140px_120px_auto]">
+                    {backgroundLocked && lockedBackground ? (
+                      <div className="sm:col-span-4 flex items-center gap-1.5 rounded-lg bg-[var(--muted)]/50 px-2 py-1 text-xs text-[var(--muted-fg)]">
+                        <Lock className="h-3 w-3" />
+                        Background locked: {lockedBackground}
+                      </div>
+                    ) : null}
                     <Input
                       placeholder="Variation name"
                       value={row.name}
@@ -248,6 +260,25 @@ export function CloneCatalogWorkspace({ products }: { products: SourceProduct[] 
                 />
                 Copy existing listing text to clones
               </label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={backgroundLocked}
+                    onChange={(e) => setBackgroundLocked(e.target.checked)}
+                  />
+                  <Lock className="h-3.5 w-3.5 text-[var(--muted-fg)]" />
+                  Lock background style across all variations
+                </label>
+                {backgroundLocked ? (
+                  <Input
+                    placeholder="e.g. clean white studio, warm wooden kitchen shelf…"
+                    value={lockedBackground}
+                    onChange={(e) => setLockedBackground(e.target.value)}
+                    className="text-sm"
+                  />
+                ) : null}
+              </div>
               {quote ? (
                 <div className="rounded-xl border border-[var(--accent)]/20 bg-[var(--accent-soft)]/30 p-4 text-sm">
                   <p className="font-semibold">{quote.summary}</p>

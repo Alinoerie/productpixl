@@ -6,12 +6,12 @@
  * we start from your product shot.
  */
 
-export const USP_TAGLINE = "Launch before you list." as const;
+export const USP_TAGLINE = "AI listing studio for Amazon sellers" as const;
 
-export const USP_HEADLINE = "One product photo. A complete listing studio." as const;
+export const USP_HEADLINE = "Stop waiting 3 weeks for listing photos that cost €2,000." as const;
 
 export const USP_SUBHEAD =
-  "Upload a single shot — no ASIN, no photoshoot, no $200/mo lock-in. ProductPixl researches your category, generates marketplace gallery images and conversion copy, and shows the credit cost before you run." as const;
+  "Upload one product photo. Get 12 gallery images, A+ modules, and marketplace copy in under 3 minutes — 20× cheaper than a photo shoot, with no monthly subscription." as const;
 
 /** One sentence for meta, OG, and footers */
 export const USP_ONE_LINER =
@@ -60,7 +60,14 @@ export const USP_PILLARS: UspPillar[] = [
     title: "Amazon + Europe native",
     body: "Bol.com tone, EU export packs, and RUFUS-ready copy structure — not a US-only afterthought.",
     leverage:
-      "Own “Bol.com from one photo” in SEO and marketplaces page. Grader hooks semantic search (RUFUS/COSMO) for trust.",
+      "Own 'Bol.com from one photo' in SEO and marketplaces page. Grader hooks semantic search (RUFUS/COSMO) for trust.",
+  },
+  {
+    id: "product-fidelity",
+    title: "Your product, pixel-perfect",
+    body: "Shape, label text, and colors are preserved in every generated scene. We never warp or hallucinate a different product.",
+    leverage:
+      "Lead trust message at upload step and in compare table. Counter WizStudio and midjourney fear of AI replacing the product with a different one.",
   },
 ];
 
@@ -97,6 +104,7 @@ export const USP_VS_MARKET = {
       "Credits with upfront quote — no subscription required",
       "Prompt review + category research before generate",
       "Amazon, Bol.com, and EU marketplace exports",
+      "Product fidelity — shape, label, and colors preserved in every image",
     ],
   },
 } as const;
@@ -112,10 +120,10 @@ export const USP_PROOF_CHIPS = [
 
 /** Stats row — aligned to USP */
 export const USP_STATS = [
-  { value: "1 photo", label: "Not an ASIN or CSV" },
-  { value: "Gallery + copy", label: "One studio" },
-  { value: "Per run", label: "Credits quoted upfront" },
-  { value: "€0 start", label: "10 free credits" },
+  { value: "< 3 min", label: "Not a 3-week shoot" },
+  { value: "20×", label: "Cheaper than a studio day" },
+  { value: "12 images", label: "From 1 product photo" },
+  { value: "€0 to start", label: "10 free credits, no subscription" },
 ] as const;
 
 export const USP_LEVERAGE_PLAYS = [

@@ -45,4 +45,5 @@ export type CloneVariation = {
   colors?: string;
   materials?: string;
   keyFeatures?: string;
+  vibe?: string;
 };

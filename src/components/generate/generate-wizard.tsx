@@ -654,6 +654,9 @@ export function GenerateWizard({
               emptyHint="JPG, PNG or WEBP · max 20MB · No ASIN needed"
               inputId="generate-upload"
             />
+            <p className="text-center text-xs text-[var(--muted-fg)]">
+              Shape, label, and colors preserved — only backgrounds and scenes change.
+            </p>
             {error && error !== "INSUFFICIENT_CREDITS" ? (
               <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
                 <PipelineErrorMessage

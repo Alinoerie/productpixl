@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
         keyFeatures: variation.keyFeatures ?? source.keyFeatures,
         targetBuyer: source.targetBuyer,
         competitors: source.competitors,
-        vibe: source.vibe,
+        vibe: variation.vibe ?? source.vibe,
         useCase: source.useCase,
         differentiators: source.differentiators,
         dimensions: source.dimensions,
@@ -170,6 +170,7 @@ export async function POST(req: NextRequest) {
           colors: variation.colors ?? baseIntake.colors,
           materials: variation.materials ?? baseIntake.materials,
           keyFeatures: variation.keyFeatures ?? baseIntake.keyFeatures,
+          vibe: variation.vibe ?? baseIntake.vibe,
         },
         chargedCredits: perRowCredits,
       });
@@ -182,6 +183,7 @@ export async function POST(req: NextRequest) {
           ...baseIntake,
           name: variation.name.trim(),
           colors: variation.colors ?? baseIntake.colors,
+          vibe: variation.vibe ?? baseIntake.vibe,
         },
         chargedCredits: perRowCredits,
       });
