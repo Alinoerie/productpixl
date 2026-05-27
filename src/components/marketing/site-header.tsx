@@ -20,10 +20,16 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 bg-[var(--background)]/90 backdrop-blur-xl shadow-[0_1px_0_0_var(--border)]">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+        {/* Mobile hamburger — top-left */}
+        <MobileMenu session={!!session} />
+
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <ProductPixlWordmark size={44} />
         </Link>
+
+        {/* Spacer to balance hamburger on left */}
+        <div className="w-10 md:hidden" />
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
@@ -60,9 +66,6 @@ export async function SiteHeader() {
               </Link>
             </>
           )}
-
-          {/* Mobile hamburger */}
-          <MobileMenu session={!!session} />
         </div>
       </div>
     </header>

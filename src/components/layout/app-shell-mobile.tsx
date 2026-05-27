@@ -31,7 +31,7 @@ export function AppShellMobileChrome({
         projectCount={projectCount}
         studioLocked={studioLocked}
       />
-      <AppShellBottomNav studioLocked={studioLocked} onOpenMenu={openMobile} />
+      <AppShellBottomNav onOpenMenu={openMobile} />
     </>
   );
 }

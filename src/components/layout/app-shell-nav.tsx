@@ -52,48 +52,24 @@ export function AppShellNav({ studioLocked = false }: { studioLocked?: boolean }
 }
 
 export function AppShellBottomNav({
-  studioLocked = false,
   onOpenMenu,
 }: {
   studioLocked?: boolean;
   onOpenMenu: () => void;
 }) {
-  const pathname = usePathname();
-
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-[var(--border)] bg-[var(--card)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
       aria-label="Studio mobile"
-      style={{ ["--mobile-nav-offset" as string]: "calc(4.5rem + env(safe-area-inset-bottom))" }}
     >
-      {navItems.map((item) => {
-        const active = isNavActive(pathname, item.href, "matchHome" in item ? item.matchHome : false);
-        const locked = studioLocked && "lockable" in item && item.lockable;
-        const href = locked ? "/pricing?locked=1" : item.href;
-        return (
-          <Link
-            key={item.href}
-            href={href}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium",
-              active ? "text-[var(--accent)]" : "text-[var(--muted-fg)]",
-              locked && "opacity-60"
-            )}
-          >
-            <item.icon className="h-5 w-5" strokeWidth={1.5} />
-            {item.label}
-          </Link>
-        );
-      })}
       <button
         type="button"
         onClick={onOpenMenu}
-        className="flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium text-[var(--muted-fg)]"
-        aria-label="Open full menu"
+        className="flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-1 py-1 text-[10px] font-medium text-[var(--muted-fg)] hover:text-[var(--foreground)]"
+        aria-label="Open menu"
       >
         <Menu className="h-5 w-5" strokeWidth={1.5} />
-        More
+        Menu
       </button>
     </nav>
   );

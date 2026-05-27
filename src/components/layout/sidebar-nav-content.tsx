@@ -16,6 +16,7 @@ import {
   Tag,
   Wand2,
   Plug,
+  Home,
 } from "lucide-react";
 import type { BrandSummary } from "@/lib/brands";
 import { BrandSwitcher } from "@/components/layout/brand-switcher";
@@ -25,6 +26,13 @@ import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; icon: typeof Sparkles; lockable?: boolean; hint?: string };
+
+const studioNav: NavItem[] = [
+  { href: STUDIO_ROUTES.home, label: "Studio", icon: Home },
+  { href: STUDIO_ROUTES.projects, label: "Projects", icon: FolderOpen },
+  { href: STUDIO_ROUTES.images, label: "Images", icon: Camera, lockable: true },
+  { href: STUDIO_ROUTES.copy, label: "Copy", icon: FileText, lockable: true },
+];
 
 const createNav: NavItem[] = [
   {
@@ -201,6 +209,8 @@ export function SidebarNavContent({
       ) : null}
 
       <nav className="flex-1 space-y-6 overflow-y-auto p-3" aria-label="Studio navigation">
+        {/* Studio nav — main navigation */}
+        <NavSection title="Studio" items={studioNav} pathname={pathname} collapsed={false} onNavigate={onNavigate} studioLocked={studioLocked} />
         {/* Create nav lives in the bottom bar on mobile — not duplicated here */}
         <NavSection title="Brand" items={brandNav} pathname={pathname} collapsed={false} onNavigate={onNavigate} />
         {showAdvancedNav ? (
