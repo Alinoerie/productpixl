@@ -13,6 +13,7 @@ export function MobileNavDrawer({
   activeBrandId,
   initialCredits,
   projectCount,
+  studioLocked,
 }: {
   open: boolean;
   onClose: () => void;
@@ -20,6 +21,7 @@ export function MobileNavDrawer({
   activeBrandId: string;
   initialCredits: number;
   projectCount: number;
+  studioLocked?: boolean;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -53,6 +55,7 @@ export function MobileNavDrawer({
           initialCredits={initialCredits}
           projectCount={projectCount}
           onNavigate={onClose}
+          studioLocked={studioLocked}
         />
       </aside>
     </div>

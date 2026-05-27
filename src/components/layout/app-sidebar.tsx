@@ -20,7 +20,6 @@ export function AppSidebar({
   projectCount?: number;
 }) {
   const { collapsed } = useSidebar();
-  void studioLocked;
 
   return (
     <aside
@@ -35,6 +34,7 @@ export function AppSidebar({
         initialCredits={initialCredits}
         projectCount={projectCount}
         collapsed={collapsed}
+        studioLocked={studioLocked}
       />
     </aside>
   );

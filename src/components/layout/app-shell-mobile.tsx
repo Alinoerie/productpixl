@@ -29,6 +29,7 @@ export function AppShellMobileChrome({
         activeBrandId={activeBrandId}
         initialCredits={initialCredits}
         projectCount={projectCount}
+        studioLocked={studioLocked}
       />
       <AppShellBottomNav studioLocked={studioLocked} onOpenMenu={openMobile} />
     </>

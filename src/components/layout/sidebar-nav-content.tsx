@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
+  Camera,
   Copy,
+  FileText,
   FolderOpen,
   Layers,
   LayoutGrid,
@@ -21,7 +23,7 @@ import { ProductPixlLogo, ProductPixlWordmark } from "@/components/brand/product
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { cn } from "@/lib/utils";
 
-type NavItem = { href: string; label: string; icon: typeof Sparkles; locked?: boolean; hint?: string };
+type NavItem = { href: string; label: string; icon: typeof Sparkles; lockable?: boolean; hint?: string };
 
 const createNav: NavItem[] = [
   {
@@ -35,6 +37,18 @@ const createNav: NavItem[] = [
     label: "A+ content",
     icon: LayoutGrid,
     hint: "Enhanced brand content modules",
+  },
+  {
+    href: STUDIO_ROUTES.images,
+    label: "Images",
+    icon: Camera,
+    lockable: true,
+  },
+  {
+    href: STUDIO_ROUTES.copy,
+    label: "Copy",
+    icon: Copy,
+    lockable: true,
   },
 ];
 
@@ -90,12 +104,14 @@ function NavSection({
   pathname,
   collapsed,
   onNavigate,
+  studioLocked,
 }: {
   title: string;
   items: NavItem[];
   pathname: string;
   collapsed: boolean;
   onNavigate?: () => void;
+  studioLocked?: boolean;
 }) {
   return (
     <div className="space-y-1">
@@ -106,7 +122,8 @@ function NavSection({
       ) : null}
       {items.map((item) => {
         const active = isActive(pathname, item.href);
-        const href = item.locked ? "/pricing?locked=1" : item.href;
+        const locked = studioLocked && item.lockable;
+        const href = locked ? "/pricing?locked=1" : item.href;
         return (
           <Link
             key={item.href}
@@ -120,7 +137,7 @@ function NavSection({
               active
                 ? "bg-[var(--accent-soft)] text-[var(--accent)]"
                 : "text-[var(--muted-fg)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]",
-              item.locked && "opacity-60"
+              locked && "opacity-60"
             )}
           >
             <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
@@ -140,6 +157,7 @@ export function SidebarNavContent({
   collapsed = false,
   showHeader = true,
   onNavigate,
+  studioLocked,
 }: {
   brands: BrandSummary[];
   activeBrandId: string;
@@ -148,6 +166,7 @@ export function SidebarNavContent({
   collapsed?: boolean;
   showHeader?: boolean;
   onNavigate?: () => void;
+  studioLocked?: boolean;
 }) {
   const pathname = usePathname();
   const showAdvancedNav = projectCount > 0;
@@ -174,7 +193,7 @@ export function SidebarNavContent({
       ) : null}
 
       <nav className="flex-1 space-y-6 overflow-y-auto p-3" aria-label="Studio navigation">
-        <NavSection title="Create" items={createNav} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />
+        <NavSection title="Create" items={createNav} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} studioLocked={studioLocked} />
         <NavSection title="Brand" items={brandNav} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />
         {showAdvancedNav ? (
           <>
