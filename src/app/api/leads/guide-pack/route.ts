@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { buildGuidePackEmail, isGuidePackEmailConfigured } from "@/lib/email/guide-pack";
+import { getEmailFrom, getResendApiKey } from "@/lib/email/resend-config";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -32,10 +33,12 @@ export async function POST(req: Request) {
   if (isGuidePackEmailConfigured()) {
     try {
       const origin = new URL(req.url).origin;
+      const apiKey = getResendApiKey();
+      if (!apiKey) throw new Error("Resend API key missing");
       const { Resend } = await import("resend");
-      const resend = new Resend(process.env.AUTH_RESEND_API_KEY!);
+      const resend = new Resend(apiKey);
       const { error } = await resend.emails.send({
-        from: process.env.EMAIL_FROM!,
+        from: getEmailFrom(),
         to: email,
         subject: "Your ProductPixl ecommerce guide pack is ready",
         html: buildGuidePackEmail({

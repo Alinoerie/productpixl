@@ -1,6 +1,7 @@
 import Google from "next-auth/providers/google";
 import Email from "next-auth/providers/email";
 import { buildMagicLinkEmail, isEmailAuthConfigured } from "@/lib/email/magic-link";
+import { getEmailFrom, getResendApiKey } from "@/lib/email/resend-config";
 
 const googleProvider = Google({
   clientId: process.env.AUTH_GOOGLE_ID ?? process.env.GOOGLE_CLIENT_ID ?? "",
@@ -9,22 +10,23 @@ const googleProvider = Google({
 });
 
 const emailProvider = Email({
-  from: process.env.EMAIL_FROM ?? "ProductPixl <onboarding@resend.dev>",
+  from: getEmailFrom(),
   maxAge: 24 * 60 * 60,
   // Required by Auth.js even when using Resend via sendVerificationRequest
   server: {
     host: "smtp.resend.com",
     port: 465,
-    auth: { user: "resend", pass: process.env.AUTH_RESEND_API_KEY ?? "unused" },
+    auth: { user: "resend", pass: getResendApiKey() ?? "unused" },
   },
   sendVerificationRequest: async ({ identifier, url }) => {
-    if (!isEmailAuthConfigured()) {
-      throw new Error("Email sign-in is not configured. Set AUTH_RESEND_API_KEY and EMAIL_FROM.");
+    const apiKey = getResendApiKey();
+    if (!isEmailAuthConfigured() || !apiKey) {
+      throw new Error("Email sign-in is not configured. Set AUTH_RESEND_API_KEY or RESEND_API_KEY.");
     }
     const { Resend } = await import("resend");
-    const resend = new Resend(process.env.AUTH_RESEND_API_KEY!);
+    const resend = new Resend(apiKey);
     const { error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM!,
+      from: getEmailFrom(),
       to: identifier,
       subject: "Your ProductPixl sign-in link",
       html: buildMagicLinkEmail(url),

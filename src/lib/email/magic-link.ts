@@ -1,3 +1,5 @@
+export { isEmailAuthConfigured } from "@/lib/email/resend-config";
+
 export function buildMagicLinkEmail(url: string) {
   return `
 <!DOCTYPE html>
@@ -13,8 +15,4 @@ export function buildMagicLinkEmail(url: string) {
     <p style="margin: 0; font-size: 13px; color: #6b7280;">If you did not request this email, you can ignore it.</p>
   </body>
 </html>`;
-}
-
-export function isEmailAuthConfigured() {
-  return Boolean(process.env.AUTH_RESEND_API_KEY?.trim() && process.env.EMAIL_FROM?.trim());
 }

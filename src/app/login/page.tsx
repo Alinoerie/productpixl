@@ -136,12 +136,7 @@ export default async function LoginPage({
               </div>
               <EmailSignInForm action={signInWithEmail} />
             </>
-          ) : (
-            <p className="mt-6 text-xs text-[var(--muted-fg)]">
-              Email sign-in is disabled until <code className="text-[11px]">AUTH_RESEND_API_KEY</code> and{" "}
-              <code className="text-[11px]">EMAIL_FROM</code> are configured.
-            </p>
-          )}
+          ) : null}
 
           <p className="mt-6 text-center text-xs text-[var(--muted-fg)]">
             New accounts receive 10 free generation credits. By signing in you agree to our{" "}

@@ -27,6 +27,8 @@ export function buildGuidePackEmail(params: { guideUrl: string; studioUrl: strin
 </html>`;
 }
 
+import { isResendConfigured } from "@/lib/email/resend-config";
+
 export function isGuidePackEmailConfigured() {
-  return Boolean(process.env.AUTH_RESEND_API_KEY?.trim() && process.env.EMAIL_FROM?.trim());
+  return isResendConfigured();
 }

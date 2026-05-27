@@ -54,6 +54,8 @@ export function buildDemoBookingAdminEmail(params: {
 </html>`;
 }
 
+import { isResendConfigured } from "@/lib/email/resend-config";
+
 export function isDemoEmailConfigured() {
-  return Boolean(process.env.AUTH_RESEND_API_KEY?.trim() && process.env.EMAIL_FROM?.trim());
+  return isResendConfigured();
 }

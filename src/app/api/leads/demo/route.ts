@@ -5,6 +5,7 @@ import {
   buildDemoBookingConfirmationEmail,
   isDemoEmailConfigured,
 } from "@/lib/email/demo-booking";
+import { getEmailFrom, getResendApiKey } from "@/lib/email/resend-config";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TIME_RE = /^\d{2}:\d{2}$/;
@@ -82,9 +83,11 @@ export async function POST(req: Request) {
 
   if (isDemoEmailConfigured()) {
     try {
+      const apiKey = getResendApiKey();
+      if (!apiKey) throw new Error("Resend API key missing");
       const { Resend } = await import("resend");
-      const resend = new Resend(process.env.AUTH_RESEND_API_KEY!);
-      const from = process.env.EMAIL_FROM!;
+      const resend = new Resend(apiKey);
+      const from = getEmailFrom();
 
       await resend.emails.send({
         from,
