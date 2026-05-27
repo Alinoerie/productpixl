@@ -7,7 +7,6 @@ import type { ListingModuleId } from "@/pipelines/modules";
 import { parseCsvText } from "@/lib/batch/csv";
 import { quoteBatchRun } from "@/lib/credit-pricing";
 import { getActiveBrandId } from "@/lib/brands";
-import { intakeFromProduct } from "@/lib/credit-pricing";
 
 type CopyCsvColumnMap = {
   name: string;
@@ -40,14 +39,27 @@ export const scheduledBatchProcessor = inngest.createFunction(
 
     // Find all scheduled jobs that are due
     const dueJobs = await step.run("find-due-jobs", async () => {
-      return prisma.scheduledBatchJob.findMany({
-        where: {
-          status: "SCHEDULED",
-          runAt: { lte: now },
-        },
-        take: 5, // Process up to 5 at a time
-        orderBy: { runAt: "asc" },
-      });
+      try {
+        return await prisma.scheduledBatchJob.findMany({
+          where: {
+            status: "SCHEDULED",
+            runAt: { lte: now },
+          },
+          take: 5, // Process up to 5 at a time
+          orderBy: { runAt: "asc" },
+        });
+      } catch (err: unknown) {
+        // P2021 = table does not exist yet (schema push pending or cold start)
+        // Return empty array so the function exits gracefully instead of retrying forever
+        if (
+          err instanceof Error &&
+          (err as { code?: string }).code === "P2021"
+        ) {
+          console.warn("[scheduled-batch-processor] ScheduledBatchJob table not ready yet, skipping");
+          return [];
+        }
+        throw err; // Re-throw unexpected errors
+      }
     });
 
     if (dueJobs.length === 0) {
