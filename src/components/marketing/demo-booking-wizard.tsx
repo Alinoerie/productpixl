@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import gsap from "gsap";
 import { ArrowLeft, Calendar, Check, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,8 @@ import {
   getDemoExpertInitials,
   getUpcomingDemoDays,
 } from "@/lib/demo-booking-content";
+import { prefersReducedMotion } from "@/hooks/use-studio-gsap";
+import { MKT_DURATION, MKT_EASE } from "@/lib/marketing-motion";
 
 type Step = 1 | 2 | 3;
 
@@ -75,6 +78,20 @@ export function DemoBookingWizard() {
 
   const days = useMemo(() => getUpcomingDemoDays(5), []);
   const calendlyUrl = getCalendlyUrl();
+  const stepRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = stepRef.current;
+    if (!el || prefersReducedMotion()) return;
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        el,
+        { opacity: 0, x: step === 1 ? 0 : 24, y: 16, filter: "blur(6px)" },
+        { opacity: 1, x: 0, y: 0, filter: "blur(0px)", duration: MKT_DURATION.card, ease: MKT_EASE.out }
+      );
+    }, el);
+    return () => ctx.revert();
+  }, [step]);
 
   const selectedDayMeta = days.find((d) => d.iso === selectedDay);
 
@@ -160,8 +177,9 @@ export function DemoBookingWizard() {
     <div className="mx-auto max-w-xl rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-lg)] md:p-8">
       <ExpertCard />
 
+      <div ref={stepRef} key={step} className="mt-8">
       {step === 1 ? (
-        <div className="mt-8">
+        <>
           <StepIndicator step={1} />
           <h1 className="mt-3 font-serif text-2xl md:text-3xl">Book your ProductPixl demo</h1>
           <p className="mt-3 text-sm leading-relaxed text-[var(--muted-fg)] md:text-base">
@@ -245,11 +263,11 @@ export function DemoBookingWizard() {
           <Button type="button" size="lg" className="mt-8 w-full rounded-xl" onClick={goToDetails}>
             Book a demo
           </Button>
-        </div>
+        </>
       ) : null}
 
       {step === 2 ? (
-        <form className="mt-8" onSubmit={(e) => void submitBooking(e)}>
+        <form onSubmit={(e) => void submitBooking(e)}>
           <button
             type="button"
             className="mb-4 inline-flex items-center gap-1 text-sm text-[var(--muted-fg)] hover:text-[var(--foreground)]"
@@ -375,7 +393,7 @@ export function DemoBookingWizard() {
       ) : null}
 
       {step === 3 ? (
-        <div className="mt-8 text-center">
+        <div className="text-center">
           <StepIndicator step={3} />
           <div className="mx-auto mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--success-bg)]">
             <Check className="h-7 w-7 text-[var(--success)]" strokeWidth={2.5} />
@@ -406,6 +424,7 @@ export function DemoBookingWizard() {
           </div>
         </div>
       ) : null}
+      </div>
     </div>
   );
 }

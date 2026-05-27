@@ -65,7 +65,7 @@ export function UspPillarsSection({ showLeverage = false }: { showLeverage?: boo
 
 export function UspContrastSection() {
   return (
-    <section aria-labelledby="usp-contrast-heading" className="px-4 py-16 md:py-20">
+    <section aria-labelledby="usp-contrast-heading" data-m-scroll className="px-4 py-16 md:py-20">
       <div className="mx-auto max-w-6xl">
         <h2 id="usp-contrast-heading" className="font-serif text-3xl md:text-4xl">
           Where we win in the market
@@ -75,9 +75,9 @@ export function UspContrastSection() {
           from one photo to a publish-ready listing.
         </p>
 
-        <div className="mt-10 grid gap-4 lg:grid-cols-2">
+        <div data-m-stagger className="mt-10 grid gap-4 lg:grid-cols-2">
           {[USP_VS_MARKET.catalogSyncTools, USP_VS_MARKET.asinTools, USP_VS_MARKET.genericAi].map((col) => (
-            <div key={col.label} className="rounded-2xl border border-[var(--border)] bg-[var(--muted)]/30 p-5">
+            <div key={col.label} data-m-item className="rounded-2xl border border-[var(--border)] bg-[var(--muted)]/30 p-5">
               <p className="text-sm font-medium text-[var(--muted-fg)]">{col.label}</p>
               <ul className="mt-3 space-y-2 text-sm text-[var(--muted-fg)]">
                 {col.weaknesses.map((w) => (
@@ -89,7 +89,7 @@ export function UspContrastSection() {
               </ul>
             </div>
           ))}
-          <div className="rounded-2xl border border-[var(--accent)]/30 bg-[var(--accent-soft)]/25 p-5 lg:col-span-2">
+          <div data-m-item className="rounded-2xl border border-[var(--accent)]/30 bg-[var(--accent-soft)]/25 p-5 lg:col-span-2">
             <p className="text-sm font-medium text-[var(--accent)]">{USP_VS_MARKET.productPixl.label}</p>
             <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
               {USP_VS_MARKET.productPixl.strengths.map((s) => (
@@ -108,7 +108,7 @@ export function UspContrastSection() {
 
 export function UspLeverageSection() {
   return (
-    <section aria-labelledby="usp-leverage-heading" className="border-t border-[var(--border)] bg-[var(--ink)] px-4 py-16 text-white md:py-20">
+    <section aria-labelledby="usp-leverage-heading" data-m-scroll className="border-t border-[var(--border)] bg-[var(--ink)] px-4 py-16 text-white md:py-20">
       <div className="mx-auto max-w-6xl">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent-soft)]">Go-to-market</p>
         <h2 id="usp-leverage-heading" className="mt-3 font-serif text-3xl md:text-4xl">
@@ -119,9 +119,9 @@ export function UspLeverageSection() {
           <strong className="text-white">{USP_TAGLINE}</strong> — then prove it with prompt review, export packs,
           and credit transparency.
         </p>
-        <div className="mt-10 grid gap-4 md:grid-cols-2">
+        <div data-m-stagger className="mt-10 grid gap-4 md:grid-cols-2">
           {USP_LEVERAGE_PLAYS.map((play) => (
-            <div key={play.title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div key={play.title} data-m-item className="rounded-2xl border border-white/10 bg-white/5 p-5">
               <h3 className="font-semibold">{play.title}</h3>
               <p className="mt-2 text-sm text-white/75">{play.body}</p>
             </div>

@@ -82,10 +82,10 @@ export function EcommerceGuidePackSection({ showFullCatalog = false }: { showFul
   const [unlocked, setUnlocked] = useState(false);
 
   return (
-    <section className="border-y border-[var(--border)] bg-[var(--background)] px-4 py-16 md:py-24">
+    <section data-m-scroll className="border-y border-[var(--border)] bg-[var(--background)] px-4 py-16 md:py-24">
       <div className="mx-auto max-w-6xl">
-        <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
-          <div>
+        <div data-m-stagger className="grid gap-12 lg:grid-cols-2 lg:items-start">
+          <div data-m-item>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Free guide pack</p>
             <h2 className="mt-3 font-serif text-3xl leading-tight md:text-4xl">
               Unlock the complete guide to ecommerce optimization
@@ -98,9 +98,9 @@ export function EcommerceGuidePackSection({ showFullCatalog = false }: { showFul
 
             <div className="mt-8">
               <p className="text-sm font-semibold">What you will get</p>
-              <ul className="mt-4 space-y-4">
+              <ul data-m-stagger className="mt-4 space-y-4">
                 {ECOMMERCE_GUIDE_BENEFITS.map((item) => (
-                  <li key={item.title} className="flex gap-3">
+                  <li key={item.title} data-m-item className="flex gap-3">
                     <Check className="mt-0.5 h-5 w-5 shrink-0 text-[var(--teal)]" strokeWidth={2.5} />
                     <div>
                       <p className="font-medium">{item.title}</p>
@@ -116,8 +116,10 @@ export function EcommerceGuidePackSection({ showFullCatalog = false }: { showFul
             </div>
           </div>
 
-          <div className="space-y-6">
-            <GuidePackVisual />
+          <div data-m-item className="space-y-6">
+            <div data-m-float>
+              <GuidePackVisual />
+            </div>
 
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-sm)]">
               <p className="flex items-center gap-2 text-sm font-semibold">
@@ -125,9 +127,10 @@ export function EcommerceGuidePackSection({ showFullCatalog = false }: { showFul
                 You unlock 10 playbooks
               </p>
               <p className="mt-1 text-xs text-[var(--muted-fg)]">Five highlights from the pack:</p>
-              <ol className="mt-4 space-y-2">
+              <ol data-m-stagger className="mt-4 space-y-2">
                 {ECOMMERCE_GUIDE_HIGHLIGHTS.map((playbook, i) => (
-                  <PlaybookRow
+                  <li key={playbook.id} data-m-item>
+                    <PlaybookRow
                     key={playbook.id}
                     index={i + 1}
                     title={playbook.title}
@@ -135,6 +138,7 @@ export function EcommerceGuidePackSection({ showFullCatalog = false }: { showFul
                     summary={unlocked || showFullCatalog ? playbook.summary : undefined}
                     dimmed={!unlocked && !showFullCatalog}
                   />
+                  </li>
                 ))}
               </ol>
             </div>
@@ -142,7 +146,7 @@ export function EcommerceGuidePackSection({ showFullCatalog = false }: { showFul
         </div>
 
         {unlocked || showFullCatalog ? (
-          <div className="mt-16 border-t border-[var(--border)] pt-12">
+          <div data-m-scroll className="mt-16 border-t border-[var(--border)] pt-12">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Full pack</p>
@@ -156,15 +160,17 @@ export function EcommerceGuidePackSection({ showFullCatalog = false }: { showFul
                 <Link href="/login">Start free in ProductPixl</Link>
               </Button>
             </div>
-            <ul className="mt-8 grid gap-3 md:grid-cols-2">
+            <ul data-m-stagger className="mt-8 grid gap-3 md:grid-cols-2">
               {ECOMMERCE_GUIDE_PLAYBOOKS.map((playbook, i) => (
-                <PlaybookRow
+                <li key={playbook.id} data-m-item>
+                  <PlaybookRow
                   key={playbook.id}
                   index={i + 1}
                   title={playbook.title}
                   originalPriceEur={playbook.originalPriceEur}
                   summary={playbook.summary}
                 />
+                </li>
               ))}
             </ul>
             {ECOMMERCE_GUIDE_REST.length > 0 ? (

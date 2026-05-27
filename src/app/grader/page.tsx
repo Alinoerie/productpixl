@@ -2,14 +2,15 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
-import { SiteHeader } from "@/components/marketing/site-header";
-import { SiteFooter } from "@/components/marketing/site-footer";
+import { PublicMarketingFrame } from "@/components/marketing/public-marketing-frame";
 import { GraderTool } from "@/components/grader/grader-tool";
 import { ShowcaseSampleStrip } from "@/components/marketing/showcase-sample-strip";
 import { AppShell } from "@/components/layout/app-shell";
 import { StudioProviders } from "@/components/layout/studio-providers";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
+import { MarketingHero } from "@/components/marketing/motion/marketing-hero";
+import { MarketingSection } from "@/components/marketing/motion/marketing-section";
 
 export const metadata: Metadata = {
   title: "Free Amazon Listing Grader — ProductPixl",
@@ -28,24 +29,39 @@ export const metadata: Metadata = {
 
 function GraderMarketingFooter({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: string }) {
   return (
-    <div className="mt-16 rounded-2xl bg-[var(--ink)] p-8 text-center text-white md:p-12">
-      <h2 className="font-serif text-2xl">Copy is only half the listing</h2>
-      <p className="mx-auto mt-3 max-w-lg text-white/70">
-        ProductPixl generates gallery images + copy from one photo. No ASIN required.
-      </p>
-      <ShowcaseSampleStrip />
-      <div className="mt-6 flex flex-wrap justify-center gap-3">
-        <Button asChild size="lg">
-          <Link href={ctaHref}>{ctaLabel}</Link>
-        </Button>
-        <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
-          <Link href="/guides/ecommerce">Free guide pack →</Link>
-        </Button>
-        <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
-          <Link href="/demo">Book a demo →</Link>
-        </Button>
+    <MarketingSection className="px-4 pb-16 pt-4">
+      <div
+        data-m-scroll
+        className="mx-auto max-w-6xl rounded-2xl bg-[var(--ink)] p-8 text-center text-white md:p-12"
+      >
+        <h2 className="font-serif text-2xl">Copy is only half the listing</h2>
+        <p className="mx-auto mt-3 max-w-lg text-white/70">
+          ProductPixl generates gallery images + copy from one photo. No ASIN required.
+        </p>
+        <ShowcaseSampleStrip />
+        <div className="m-action mt-6 flex flex-wrap justify-center gap-3">
+          <Button asChild size="lg">
+            <Link href={ctaHref}>{ctaLabel}</Link>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="border-white/30 bg-transparent text-white hover:bg-white/10"
+          >
+            <Link href="/guides/ecommerce">Free guide pack →</Link>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="border-white/30 bg-transparent text-white hover:bg-white/10"
+          >
+            <Link href="/demo">Book a demo →</Link>
+          </Button>
+        </div>
       </div>
-    </div>
+    </MarketingSection>
   );
 }
 
@@ -73,25 +89,23 @@ export default async function GraderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-hero-glow">
-      <SiteHeader />
-      <main id="main" className="mx-auto max-w-6xl px-4 py-12 md:py-16">
-        <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--teal)]">
-            Free tool
-          </p>
-          <h1 className="mt-3 font-serif text-4xl md:text-5xl">Amazon Listing Grader</h1>
-          <p className="mt-4 text-lg text-[var(--muted-fg)]">
-            Pixii charges $207/mo for listing design. We give you a free A–F score on your copy —
-            with RUFUS/COSMO tips to improve conversion before you spend on ads.
-          </p>
-        </div>
-        <div className="mt-12">
-          <GraderTool signedIn={false} />
-        </div>
+    <PublicMarketingFrame>
+      <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+        <MarketingHero
+          eyebrow="Free tool"
+          title="Amazon Listing Grader"
+          description="Pixii charges $207/mo for listing design. We give you a free A–F score on your copy — with RUFUS/COSMO tips to improve conversion before you spend on ads."
+          align="left"
+        />
+
+        <MarketingSection scroll={false} className="mt-12">
+          <div data-m-scroll>
+            <GraderTool signedIn={false} />
+          </div>
+        </MarketingSection>
+
         <GraderMarketingFooter ctaHref={ctaHref} ctaLabel={ctaLabel} />
-      </main>
-      <SiteFooter />
-    </div>
+      </div>
+    </PublicMarketingFrame>
   );
 }

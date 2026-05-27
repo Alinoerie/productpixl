@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import gsap from "gsap";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SHOWCASE_CASE_STUDIES, type ShowcaseCaseStudy } from "@/lib/showcase";
+import { prefersReducedMotion } from "@/hooks/use-studio-gsap";
+import { MKT_DURATION, MKT_EASE } from "@/lib/marketing-motion";
 
 function CaseStudyPanel({ study, panelId }: { study: ShowcaseCaseStudy; panelId: string }) {
   const highlightModules = study.source
@@ -143,6 +146,30 @@ function CaseStudyPanel({ study, panelId }: { study: ShowcaseCaseStudy; panelId:
 export function LandingGallery() {
   const [activeId, setActiveId] = useState(SHOWCASE_CASE_STUDIES[0].id);
   const active = SHOWCASE_CASE_STUDIES.find((s) => s.id === activeId) ?? SHOWCASE_CASE_STUDIES[0];
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel || prefersReducedMotion()) return;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        panel,
+        { opacity: 0, y: 32, scale: 0.98, filter: "blur(8px)" },
+        { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: MKT_DURATION.card, ease: MKT_EASE.out }
+      );
+      gsap.from(panel.querySelectorAll("img"), {
+        scale: 1.08,
+        opacity: 0.6,
+        duration: 0.9,
+        stagger: 0.04,
+        ease: MKT_EASE.out,
+        delay: 0.1,
+      });
+    }, panel);
+
+    return () => ctx.revert();
+  }, [activeId]);
 
   const onTabKeyDown = (e: React.KeyboardEvent, index: number) => {
     const last = SHOWCASE_CASE_STUDIES.length - 1;
@@ -156,7 +183,7 @@ export function LandingGallery() {
   };
 
   return (
-    <section id="gallery" className="border-y border-[var(--border)] bg-[var(--card)] px-4 py-20">
+    <section id="gallery" data-m-scroll className="border-y border-[var(--border)] bg-[var(--card)] px-4 py-20">
       <div className="mx-auto max-w-6xl">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--teal)]">
@@ -197,7 +224,7 @@ export function LandingGallery() {
           })}
         </div>
 
-        <div className="mt-10 transition-opacity duration-300">
+        <div ref={panelRef} className="mt-10">
           <CaseStudyPanel study={active} panelId={`panel-${active.id}`} />
         </div>
       </div>

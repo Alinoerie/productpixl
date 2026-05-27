@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { prefersReducedMotion } from "@/hooks/use-studio-gsap";
+import { registerMarketingGsap } from "@/hooks/use-marketing-gsap";
+import { MKT_DURATION, MKT_EASE } from "@/lib/marketing-motion";
 
 const FAQ = [
   {
@@ -31,15 +35,43 @@ const FAQ = [
   },
 ];
 
-export function LandingFaq() {
+export function LandingFaq({ showHeader = true }: { showHeader?: boolean }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = listRef.current;
+    if (!root || prefersReducedMotion()) return;
+    registerMarketingGsap();
+
+    const items = root.querySelectorAll("[data-faq-item]");
+    const ctx = gsap.context(() => {
+      gsap.from(items, {
+        x: -24,
+        opacity: 0,
+        duration: MKT_DURATION.card,
+        stagger: 0.07,
+        ease: MKT_EASE.out,
+        scrollTrigger: {
+          trigger: root,
+          start: "top 85%",
+        },
+      });
+    }, root);
+
+    return () => ctx.revert();
+  }, []);
 
   return (
-    <section id="faq" className="px-4 py-20">
+    <section id="faq" className="px-4 py-12 md:py-20">
       <div className="mx-auto max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">FAQ</p>
-        <h2 className="mt-3 font-serif text-3xl md:text-4xl">Common questions</h2>
-        <div className="mt-10 space-y-3">
+        {showHeader ? (
+          <>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">FAQ</p>
+            <h2 className="mt-3 font-serif text-3xl md:text-4xl">Common questions</h2>
+          </>
+        ) : null}
+        <div ref={listRef} className={cn("space-y-3", showHeader ? "mt-10" : "mt-0")}>
           {FAQ.map((item, index) => {
             const open = openIndex === index;
             const panelId = `faq-panel-${index}`;
@@ -47,9 +79,10 @@ export function LandingFaq() {
             return (
               <div
                 key={item.q}
+                data-faq-item
                 className={cn(
-                  "rounded-2xl border border-[var(--border)] bg-[var(--card)]",
-                  open && "shadow-[var(--shadow-sm)]"
+                  "rounded-2xl border border-[var(--border)] bg-[var(--card)] transition-shadow duration-300",
+                  open && "shadow-[var(--shadow-md)] border-[var(--accent)]/20"
                 )}
               >
                 <button
@@ -63,22 +96,27 @@ export function LandingFaq() {
                   {item.q}
                   <ChevronDown
                     className={cn(
-                      "h-4 w-4 shrink-0 text-[var(--muted-fg)] transition-transform",
-                      open && "rotate-180"
+                      "h-4 w-4 shrink-0 text-[var(--muted-fg)] transition-transform duration-300",
+                      open && "rotate-180 text-[var(--accent)]"
                     )}
                     aria-hidden
                   />
                 </button>
-                {open ? (
-                  <p
-                    id={panelId}
-                    role="region"
-                    aria-labelledby={buttonId}
-                    className="border-t border-[var(--border)] px-6 py-4 text-sm leading-relaxed text-[var(--muted-fg)]"
-                  >
-                    {item.a}
-                  </p>
-                ) : null}
+                <div
+                  id={panelId}
+                  role="region"
+                  aria-labelledby={buttonId}
+                  className={cn(
+                    "grid transition-[grid-template-rows] duration-300 ease-out",
+                    open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                  )}
+                >
+                  <div className="overflow-hidden">
+                    <p className="border-t border-[var(--border)] px-6 py-4 text-sm leading-relaxed text-[var(--muted-fg)]">
+                      {item.a}
+                    </p>
+                  </div>
+                </div>
               </div>
             );
           })}

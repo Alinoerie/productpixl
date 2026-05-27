@@ -65,16 +65,17 @@ export function PricingPlanCards({
   checkoutEnabled: boolean;
 }) {
   return (
-    <section aria-labelledby="plans-heading" className="space-y-6">
+    <section aria-labelledby="plans-heading" data-m-scroll className="space-y-6">
       <div className="text-center md:text-left">
         <h2 id="plans-heading" className="sr-only">
           Plans
         </h2>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div data-m-stagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {PRICING_PLAN_COLUMNS.map((plan) => (
           <Card
             key={plan.id}
+            data-m-item
             className={cn(
               "relative flex flex-col",
               plan.popular && "border-[var(--accent)] shadow-[var(--shadow-md)] ring-2 ring-[var(--accent)]/25",

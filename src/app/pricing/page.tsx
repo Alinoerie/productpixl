@@ -3,8 +3,9 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { SiteHeader } from "@/components/marketing/site-header";
-import { SiteFooter } from "@/components/marketing/site-footer";
+import { PublicMarketingFrame } from "@/components/marketing/public-marketing-frame";
+import { MarketingHero } from "@/components/marketing/motion/marketing-hero";
+import { MarketingInkBand, MarketingSection } from "@/components/marketing/motion/marketing-section";
 import { AppShell } from "@/components/layout/app-shell";
 import { StudioProviders } from "@/components/layout/studio-providers";
 import { Button } from "@/components/ui/button";
@@ -37,20 +38,6 @@ export const metadata: Metadata = {
   },
 };
 
-function PricingHero() {
-  return (
-    <header className="mx-auto max-w-3xl text-center">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">{USP_TAGLINE}</p>
-      <h1 className="mt-4 font-serif text-4xl leading-tight md:text-5xl">Simple plans for every catalog size</h1>
-      <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--muted-fg)]">
-        {USP_SUBHEAD.split(". ").slice(0, 2).join(". ")}. Credits — not a monthly listing cap — with packs when you
-        need more.
-      </p>
-      <p className="mt-3 text-xs text-[var(--muted-fg)]">{PRICING_VAT_NOTE}</p>
-    </header>
-  );
-}
-
 function PricingContent({
   signedIn,
   credits,
@@ -58,6 +45,7 @@ function PricingContent({
   canceled,
   success,
   locked,
+  hideHero = false,
 }: {
   signedIn: boolean;
   credits: number;
@@ -65,17 +53,35 @@ function PricingContent({
   canceled?: string;
   success?: string;
   locked?: boolean;
+  hideHero?: boolean;
 }) {
   return (
     <div className="space-y-16">
-      <PricingHero />
+      {!hideHero ? (
+        signedIn ? (
+          <header className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">{USP_TAGLINE}</p>
+            <h1 className="mt-4 font-serif text-4xl leading-tight md:text-5xl">Simple plans for every catalog size</h1>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--muted-fg)]">
+              {USP_SUBHEAD.split(". ").slice(0, 2).join(". ")}. Credits — not a monthly listing cap — with packs when you
+              need more.
+            </p>
+            <p className="mt-3 text-xs text-[var(--muted-fg)]">{PRICING_VAT_NOTE}</p>
+          </header>
+        ) : null
+      ) : null}
 
       {locked && signedIn ? <CreditsLockedNotice /> : null}
 
-      <BillingStatusBanner checkoutEnabled={checkoutEnabled} />
+      <div data-m-scroll>
+        <BillingStatusBanner checkoutEnabled={checkoutEnabled} />
+      </div>
 
       {!signedIn ? (
-        <div className="rounded-2xl border border-[var(--accent)]/25 bg-[var(--accent-soft)]/30 px-4 py-4 text-sm md:flex md:items-center md:justify-between md:gap-4">
+        <div
+          data-m-scroll
+          className="rounded-2xl border border-[var(--accent)]/25 bg-[var(--accent-soft)]/30 px-4 py-4 text-sm md:flex md:items-center md:justify-between md:gap-4"
+        >
           <p>
             <strong>10 free credits</strong> on signup — no credit card. Sign in to see your balance and buy packs.
           </p>
@@ -104,39 +110,79 @@ function PricingContent({
         </div>
       ) : null}
 
-      <HowCreditsWork />
+      <MarketingSection scroll={false}>
+        <div data-m-scroll>
+          <HowCreditsWork />
+        </div>
+      </MarketingSection>
 
       <PricingPlanCards signedIn={signedIn} checkoutEnabled={checkoutEnabled} />
 
-      <PricingPlanComparison />
-
-      <PricingCatalog initialCredits={signedIn ? credits : 0} checkoutEnabled={checkoutEnabled} signedIn={signedIn} />
-
-      <PricingFaq />
-
-      <PricingComparison />
-
-      <section className="rounded-2xl bg-[var(--ink)] px-6 py-10 text-center text-white md:px-12 md:py-14">
-        <h2 className="font-serif text-2xl md:text-3xl">Launch before you list</h2>
-        <p className="mx-auto mt-3 max-w-lg text-white/70">
-          Start with 10 free credits or book a demo — one photo to gallery, copy, and marketplace export.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Button asChild size="lg" className="rounded-xl">
-            <Link href={signedIn ? "/studio" : "/login?callbackUrl=/studio"}>
-              {signedIn ? "Open studio" : "Start free"}
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className="rounded-xl border-white/30 bg-transparent text-white hover:bg-white/10"
-          >
-            <Link href="/demo">Book a demo</Link>
-          </Button>
+      <MarketingSection scroll={false}>
+        <div data-m-scroll>
+          <PricingPlanComparison />
         </div>
-      </section>
+      </MarketingSection>
+
+      <MarketingSection scroll={false}>
+        <div data-m-scroll>
+          <PricingCatalog initialCredits={signedIn ? credits : 0} checkoutEnabled={checkoutEnabled} signedIn={signedIn} />
+        </div>
+      </MarketingSection>
+
+      <MarketingSection scroll={false}>
+        <div data-m-scroll>
+          <PricingFaq />
+        </div>
+      </MarketingSection>
+
+      <MarketingSection scroll={false}>
+        <div data-m-scroll>
+          <PricingComparison />
+        </div>
+      </MarketingSection>
+
+      {signedIn ? (
+        <section className="rounded-2xl bg-[var(--ink)] px-6 py-10 text-center text-white md:px-12 md:py-14">
+          <h2 className="font-serif text-2xl md:text-3xl">Launch before you list</h2>
+          <p className="mx-auto mt-3 max-w-lg text-white/70">
+            Start with 10 free credits or book a demo — one photo to gallery, copy, and marketplace export.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button asChild size="lg" className="rounded-xl">
+              <Link href="/studio">Open studio</Link>
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="rounded-xl border-white/30 bg-transparent text-white hover:bg-white/10"
+            >
+              <Link href="/demo">Book a demo</Link>
+            </Button>
+          </div>
+        </section>
+      ) : (
+        <MarketingInkBand
+          title="Launch before you list"
+          description="Start with 10 free credits or book a demo — one photo to gallery, copy, and marketplace export."
+          actions={
+            <>
+              <Button asChild size="lg" className="m-action rounded-xl">
+                <Link href="/login?callbackUrl=/studio">Start free</Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="m-action rounded-xl border-white/30 bg-transparent text-white hover:bg-white/10"
+              >
+                <Link href="/demo">Book a demo</Link>
+              </Button>
+            </>
+          }
+        />
+      )}
     </div>
   );
 }
@@ -173,18 +219,25 @@ export default async function PricingPage({
   }
 
   return (
-    <div className="min-h-screen bg-hero-glow">
-      <SiteHeader />
-      <main id="main" className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+    <PublicMarketingFrame>
+      <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+        <MarketingHero
+          eyebrow={USP_TAGLINE}
+          title="Simple plans for every catalog size"
+          description={`${USP_SUBHEAD.split(". ").slice(0, 2).join(". ")}. Credits — not a monthly listing cap — with packs when you need more.`}
+          align="center"
+        >
+          <p className="mt-3 text-xs text-[var(--muted-fg)]">{PRICING_VAT_NOTE}</p>
+        </MarketingHero>
         <PricingContent
           signedIn={false}
           credits={0}
           checkoutEnabled={checkoutEnabled}
           canceled={params.canceled}
           success={params.success}
+          hideHero
         />
-      </main>
-      <SiteFooter />
-    </div>
+      </div>
+    </PublicMarketingFrame>
   );
 }

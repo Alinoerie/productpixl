@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { MarketingPageShell } from "@/components/marketing/marketing-page-shell";
+import { MarketingHero } from "@/components/marketing/motion/marketing-hero";
+import { MarketingCtaBand } from "@/components/marketing/motion/marketing-section";
 import { LandingGallery } from "@/components/marketing/landing-gallery";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 import { Button } from "@/components/ui/button";
@@ -17,30 +19,28 @@ export default async function GalleryPage() {
 
   return (
     <MarketingPageShell>
-      <section className="px-4 py-16 md:py-20">
-        <div className="mx-auto max-w-6xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Gallery</p>
-          <h1 className="mt-3 font-serif text-4xl md:text-5xl">Real outputs, not mockups</h1>
-          <p className="mt-4 max-w-2xl text-lg text-[var(--muted-fg)]">
-            Every image below was generated from a single product photo — hero, lifestyle, detail, and packaging modules.
-          </p>
-          <div className="mt-8 max-w-sm">
-            <ShowcaseMosaic />
-          </div>
+      <MarketingHero
+        eyebrow="Gallery"
+        title="Real outputs, not mockups"
+        description="Every image below was generated from a single product photo — hero, lifestyle, detail, and packaging modules."
+      >
+        <div className="mt-8 max-w-sm">
+          <ShowcaseMosaic />
         </div>
-      </section>
+      </MarketingHero>
       <LandingGallery />
-      <section className="border-t border-[var(--border)] px-4 py-16">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6">
-          <div>
-            <h2 className="font-serif text-2xl">Ready to generate your own?</h2>
-            <p className="mt-2 text-sm text-[var(--muted-fg)]">Upload one photo — credits shown before you run.</p>
-          </div>
-          <Button asChild size="lg">
-            <Link href={session ? STUDIO_ROUTES.images : "/login"}>{session ? "Open images" : "Get started free"}</Link>
+      <MarketingCtaBand
+        title="Ready to generate your own?"
+        description="Upload one photo — credits shown before you run."
+        actions={
+          <Button asChild size="lg" className="m-action rounded-xl">
+            <Link href={session ? STUDIO_ROUTES.images : "/login"}>
+              {session ? "Open images" : "Get started free"}
+            </Link>
           </Button>
-        </div>
-      </section>
+        }
+        className="border-t border-[var(--border)]"
+      />
     </MarketingPageShell>
   );
 }
