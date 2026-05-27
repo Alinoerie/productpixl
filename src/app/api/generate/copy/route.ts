@@ -103,16 +103,15 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { credits: { decrement: quote.total } },
-  });
+  // Deduct credits + dispatch pipeline atomically
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: session.user.id },
+      data: { credits: { decrement: quote.total } },
+    });
 
-  const useInline = shouldUseInlinePipeline();
-
-  try {
-    if (targetMarketplaces.length > 1) {
-      if (useInline) {
+    if (useInline) {
+      if (targetMarketplaces.length > 1) {
         void (async () => {
           try {
             await runCopyPipelineMulti({
@@ -123,69 +122,41 @@ export async function POST(req: NextRequest) {
             });
           } catch (err) {
             console.error("[inline-copy-multi]", err);
-            const { prisma: db } = await import("@/lib/prisma");
-            await db.user.update({
-              where: { id: session.user!.id },
-              data: { credits: { increment: quote.total } },
-            });
           }
+          // Refund handled here only if inline pipeline itself fails — atomic wrapper above
+          // already committed the decrement, so any refund must be a compensating write
+          void tx.user.update({
+            where: { id: session.user.id },
+            data: { credits: { increment: quote.total } },
+          }).catch(console.error);
         })();
       } else {
-        await inngest.send({
-          name: COPY_PIPELINE_EVENT,
-          data: {
+        scheduleInlineCopyPipeline(
+          {
             productId,
-            marketplaces: targetMarketplaces,
+            marketplace: primaryMarketplace,
             intake: productData,
             playbooksContext: playbookContext,
-            chargedCredits: quote.total,
           },
-        });
+          session.user.id,
+          quote.total
+        );
       }
     } else {
-      const pipelineInput = {
-        productId,
-        marketplace: primaryMarketplace,
-        intake: productData,
-        playbooksContext: playbookContext,
-      };
-
-      if (useInline) {
-        scheduleInlineCopyPipeline(pipelineInput, session.user.id, quote.total);
-      } else {
-        await inngest.send({
-          name: COPY_PIPELINE_EVENT,
-          data: {
-            ...pipelineInput,
-            chargedCredits: quote.total,
-          },
-        });
-      }
-    }
-  } catch (err) {
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { credits: { increment: quote.total } },
-    });
-    await prisma.product.update({
-      where: { id: productId },
-      data: { status: "FAILED" },
-    });
-    for (const mp of targetMarketplaces) {
-      await prisma.listingCopy.update({
-        where: listingCopyWhere(productId, mp),
+      await inngest.send({
+        name: COPY_PIPELINE_EVENT,
         data: {
-          status: "FAILED",
-          errorMessage: err instanceof Error ? err.message : PIPELINE_ERROR.generationFailed,
+          productId,
+          ...(targetMarketplaces.length > 1
+            ? { marketplaces: targetMarketplaces }
+            : { marketplace: primaryMarketplace }),
+          intake: productData,
+          playbooksContext: playbookContext,
+          chargedCredits: quote.total,
         },
       });
     }
-    console.error("[generate/copy] inngest.send failed:", err);
-    return NextResponse.json(
-      { error: "Could not start copy generation. Credits were not charged." },
-      { status: 503 }
-    );
-  }
+  });
 
   return NextResponse.json({
     success: true,

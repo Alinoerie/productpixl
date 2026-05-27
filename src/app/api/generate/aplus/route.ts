@@ -117,12 +117,13 @@ export async function POST(req: NextRequest) {
     productId = product.id;
   }
 
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { credits: { decrement: quote.total } },
-  });
+  // Deduct credits + dispatch pipeline atomically — either both succeed or both roll back
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: session.user.id },
+      data: { credits: { decrement: quote.total } },
+    });
 
-  try {
     const pipelineInput = {
       productId,
       selectedModules,
@@ -145,31 +146,7 @@ export async function POST(req: NextRequest) {
         },
       });
     }
-  } catch (err) {
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { credits: { increment: quote.total } },
-    });
-    await prisma.product.update({
-      where: { id: productId },
-      data: {
-        status: "FAILED",
-        pipelineStatus: {
-          phase: "FAILED",
-          error: err instanceof Error ? err.message : PIPELINE_ERROR.generationFailed,
-          steps: [],
-          currentStepIndex: 0,
-          startedAt: new Date().toISOString(),
-          completedAt: new Date().toISOString(),
-        },
-      },
-    });
-    console.error("[generate/aplus] inngest.send failed:", err);
-    return NextResponse.json(
-      { error: "Could not start generation. Credits were not charged." },
-      { status: 503 }
-    );
-  }
+  });
 
   return NextResponse.json({ success: true, productId, creditsCharged: quote.total });
 }

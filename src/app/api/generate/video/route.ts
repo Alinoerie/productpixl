@@ -90,11 +90,6 @@ export async function POST(req: NextRequest) {
     productId = product.id;
   }
 
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { credits: { decrement: quote.total } },
-  });
-
   const useInline = shouldUseInlinePipeline();
   const pipelineInput = {
     productId,
@@ -104,7 +99,13 @@ export async function POST(req: NextRequest) {
     musicEnabled: Boolean(musicEnabled),
   };
 
-  try {
+  // Deduct credits + dispatch pipeline atomically
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: session.user.id },
+      data: { credits: { decrement: quote.total } },
+    });
+
     if (useInline) {
       scheduleInlineVideoPipeline(pipelineInput, session.user.id, quote.total);
     } else {
@@ -113,21 +114,7 @@ export async function POST(req: NextRequest) {
         data: { ...pipelineInput, chargedCredits: quote.total },
       });
     }
-  } catch (err) {
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { credits: { increment: quote.total } },
-    });
-    await prisma.product.update({
-      where: { id: productId },
-      data: { status: "FAILED" },
-    });
-    console.error("[generate/video] inngest.send failed:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : PIPELINE_ERROR.generationFailed },
-      { status: 503 }
-    );
-  }
+  });
 
   return NextResponse.json({
     success: true,
