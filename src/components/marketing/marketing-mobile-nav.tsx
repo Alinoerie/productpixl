@@ -52,7 +52,7 @@ export function MarketingMobileNav({ signedIn }: { signedIn: boolean }) {
         {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
       {open ? (
-        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Site menu">
+        <div className="fixed inset-0 z-[200] md:hidden" role="dialog" aria-modal="true" aria-label="Site menu">
           <button
             type="button"
             className="absolute inset-0 bg-black/40"

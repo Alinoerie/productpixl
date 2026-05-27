@@ -16,7 +16,7 @@ export async function SiteHeader() {
         <Link href="/" className="flex items-center gap-2">
           <ProductPixlWordmark size={44} />
         </Link>
-        <nav className="max-md:hidden flex items-center gap-4 lg:gap-5 text-sm font-medium text-[var(--foreground)]">
+        <nav className="hidden md:flex items-center gap-4 lg:gap-5 text-sm font-medium text-[var(--foreground)]">
           {MARKETING_NAV_LINKS.map((link) => (
             <Link
               key={link.href}
