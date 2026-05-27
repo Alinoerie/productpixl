@@ -103,6 +103,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const useInline = shouldUseInlinePipeline();
+
   // Deduct credits + dispatch pipeline atomically
   await prisma.$transaction(async (tx) => {
     await tx.user.update({

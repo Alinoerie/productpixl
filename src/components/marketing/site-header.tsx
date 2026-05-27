@@ -16,14 +16,14 @@ export async function SiteHeader() {
         <Link href="/" className="flex items-center gap-2">
           <ProductPixlWordmark size={44} />
         </Link>
-        <nav className="hidden md:flex items-center gap-4 lg:gap-5 text-sm font-medium text-[var(--muted-fg)]">
+        <nav className="max-md:hidden flex items-center gap-4 lg:gap-5 text-sm font-medium text-[var(--foreground)]">
           {MARKETING_NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "whitespace-nowrap hover:text-[var(--foreground)]",
-                !link.primary && "hidden lg:block",
+                "whitespace-nowrap opacity-70 hover:opacity-100 transition-opacity",
+                !link.primary && "max-lg:hidden",
                 link.highlight === "teal" && "text-[var(--teal)] hover:text-[var(--teal)]",
                 link.highlight === "accent" && "text-[var(--accent)] hover:text-[var(--accent)]"
               )}
