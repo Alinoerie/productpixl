@@ -79,7 +79,8 @@ function cellValue(row: string[], headers: string[], column?: string): string | 
   if (!column) return undefined;
   const index = headers.indexOf(column);
   if (index < 0) return undefined;
-  const value = row[index]?.trim();
+  // Don't silently trim cell values — preserve intentional whitespace in product data
+  const value = row[index];
   return value || undefined;
 }
 

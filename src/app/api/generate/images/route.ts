@@ -11,6 +11,7 @@ import { scheduleInlineImagePipeline } from "@/lib/run-image-pipeline-async";
 import { getVisualTemplate, templateContextBlock } from "@/lib/templates/catalog";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
 import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
+import { MARKETPLACES } from "@/lib/marketplaces";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -45,6 +46,14 @@ export async function POST(req: NextRequest) {
 
   if (!inputImageUrl || !productData?.name) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const validMarketplaceIds = new Set(MARKETPLACES.map((m) => m.id));
+  if (!validMarketplaceIds.has(marketplace)) {
+    return NextResponse.json(
+      { error: `Invalid marketplace: ${marketplace}. Valid values: ${[...validMarketplaceIds].join(", ")}` },
+      { status: 400 }
+    );
   }
 
   const quote = quoteImageRun({

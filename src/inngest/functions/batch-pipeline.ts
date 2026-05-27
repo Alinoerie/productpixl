@@ -13,7 +13,7 @@ import { scheduleInlineImagePipeline } from "@/lib/run-image-pipeline-async";
 import { intakeFromProduct } from "@/lib/credit-pricing";
 
 export const batchPipeline = inngest.createFunction(
-  { id: "batch-pipeline-run", retries: 1 },
+  { id: "batch-pipeline-run", retries: 3 },
   { event: BATCH_PIPELINE_EVENT },
   async ({ event, step }) => {
     const input = event.data as BatchPipelineInput;

@@ -10,6 +10,7 @@ import { scheduleInlineCopyPipeline } from "@/lib/run-copy-pipeline-async";
 import { runCopyPipelineMulti } from "@/pipelines/copy-pipeline-core";
 import { listingCopyWhere } from "@/lib/listing-copy";
 import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
+import { MARKETPLACES } from "@/lib/marketplaces";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -38,7 +39,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Product name and category are required" }, { status: 400 });
   }
 
+  const validMarketplaceIds = new Set(MARKETPLACES.map((m) => m.id));
   const targetMarketplaces = [...new Set((marketplaces?.length ? marketplaces : [marketplace]).filter(Boolean))];
+  const invalidMp = targetMarketplaces.find((mp) => !validMarketplaceIds.has(mp));
+  if (invalidMp) {
+    return NextResponse.json(
+      { error: `Invalid marketplace: ${invalidMp}. Valid values: ${[...validMarketplaceIds].join(", ")}` },
+      { status: 400 }
+    );
+  }
+
   const quote =
     targetMarketplaces.length > 1
       ? quoteCopyRunMulti({ marketplaces: targetMarketplaces, intake: productData })
@@ -125,12 +135,6 @@ export async function POST(req: NextRequest) {
           } catch (err) {
             console.error("[inline-copy-multi]", err);
           }
-          // Refund handled here only if inline pipeline itself fails — atomic wrapper above
-          // already committed the decrement, so any refund must be a compensating write
-          void tx.user.update({
-            where: { id: session.user.id },
-            data: { credits: { increment: quote.total } },
-          }).catch(console.error);
         })();
       } else {
         scheduleInlineCopyPipeline(
