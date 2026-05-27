@@ -7,6 +7,9 @@ import { getModulesForRun } from "@/pipelines/modules";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
 import { buildListingPrompt } from "@/pipelines/prompt-builder";
 import { FIDELITY_RETRY_PREFIX, generateListingImage } from "@/pipelines/image-gen";
+import { compositeProductOnScene } from "@/pipelines/composite-fallback";
+import { postProcessListingImage } from "@/pipelines/post-process/listing";
+import { isListingModuleScaleCritical } from "@/pipelines/modules";
 import type { PipelineStatusShape } from "@/lib/pipeline-progress";
 import {
   PIPELINE_ERROR,
@@ -50,15 +53,31 @@ async function generateModuleAsset(params: {
   referenceImageUrls: string[];
 }) {
   const { productId, userId, inputImageUrl, mod, prompt, referenceImageUrls } = params;
-  let buffer = await generateListingImage(inputImageUrl, prompt, mod.id, mod.resolution, {
-    referenceImageUrls,
-    allowFallback: mod.id !== "L1",
-  });
+  const scaleCritical = isListingModuleScaleCritical(mod.id);
+
+  let buffer: Buffer;
+  if (scaleCritical) {
+    buffer = await compositeProductOnScene({
+      productImageUrl: inputImageUrl,
+      scenePrompt: prompt,
+      aspectRatio: "1:1",
+      resolution: mod.resolution,
+      targetWidth: 1500,
+      targetHeight: 1500,
+      centerProduct: mod.id === "L1" || mod.id === "L2",
+    });
+    buffer = await postProcessListingImage(buffer, mod.id);
+  } else {
+    buffer = await generateListingImage(inputImageUrl, prompt, mod.id, mod.resolution, {
+      referenceImageUrls,
+      allowFallback: mod.id !== "L1",
+    });
+  }
 
   let imageUrl = await uploadBufferToCloudinary(buffer, `productpixl/${userId}/${productId}`);
   let qaScore = await scoreImageQuality(imageUrl, mod.id, inputImageUrl);
 
-  if (qaScore < 7) {
+  if (qaScore < 7 && !scaleCritical) {
     const retryPrompt = `${FIDELITY_RETRY_PREFIX}${prompt}`;
     buffer = await generateListingImage(inputImageUrl, retryPrompt, mod.id, mod.resolution, {
       referenceImageUrls,
@@ -68,20 +87,52 @@ async function generateModuleAsset(params: {
     qaScore = await scoreImageQuality(imageUrl, mod.id, inputImageUrl);
   }
 
+  if (qaScore < 7 && scaleCritical) {
+    try {
+      buffer = await compositeProductOnScene({
+        productImageUrl: inputImageUrl,
+        scenePrompt: `${FIDELITY_RETRY_PREFIX}${prompt}`,
+        aspectRatio: "1:1",
+        resolution: mod.resolution,
+        targetWidth: 1500,
+        targetHeight: 1500,
+        centerProduct: mod.id === "L2",
+      });
+      buffer = await postProcessListingImage(buffer, mod.id);
+      imageUrl = await uploadBufferToCloudinary(buffer, `productpixl/${userId}/${productId}`);
+      qaScore = await scoreImageQuality(imageUrl, mod.id, inputImageUrl);
+    } catch {
+      /* keep prior attempt scores */
+    }
+  }
+
   return { imageUrl, qaScore, prompt };
 }
 
 export type ImagePipelineInput = {
   productId: string;
-  includePackaging: boolean;
+  /** @deprecated use selectedModules */
+  includePackaging?: boolean;
+  selectedModules?: import("./modules").ListingModuleId[];
   promptOverrides?: Record<string, string>;
   analysis?: ProductAnalysis;
   intake: ProductIntakeData;
+  playbookContext?: string;
+  templateContext?: string;
 };
 
 /** Run the full image pipeline (used by Inngest steps and local dev inline runner). */
 export async function runImagePipelineCore(input: ImagePipelineInput): Promise<{ productId: string }> {
-  const { productId, includePackaging, intake, analysis: presetAnalysis, promptOverrides = {} } = input;
+  const {
+    productId,
+    includePackaging,
+    selectedModules,
+    intake,
+    analysis: presetAnalysis,
+    promptOverrides = {},
+  } = input;
+  const playbookContext = input.playbookContext;
+  const templateContext = input.templateContext;
 
   const product = await prisma.product.findUniqueOrThrow({
     where: { id: productId },
@@ -89,7 +140,7 @@ export async function runImagePipelineCore(input: ImagePipelineInput): Promise<{
   });
 
   const brandProfile = await getBrandProfileForUser(product.userId);
-  const modules = getModulesForRun(includePackaging);
+  const modules = getModulesForRun({ includePackaging, selectedModules });
   const extraRefs = referenceUrls(intake);
 
   const initial: PipelineStatusShape = {
@@ -152,6 +203,8 @@ export async function runImagePipelineCore(input: ImagePipelineInput): Promise<{
         buildListingPrompt(mod.id, analysis, intake, research, {
           brandProfile,
           marketplace: product.marketplace,
+          playbookContext,
+          templateContext,
         });
 
       const { imageUrl, qaScore } = await generateModuleAsset({
@@ -184,6 +237,8 @@ export async function runImagePipelineCore(input: ImagePipelineInput): Promise<{
           imageUrl,
           status: qaScore >= 7 ? "COMPLETE" : "FAILED",
           qaScore,
+          targetWidth: 1500,
+          targetHeight: 1500,
           errorMessage: qaScore >= 7 ? null : PIPELINE_ERROR.assetQaFailed,
         },
       });

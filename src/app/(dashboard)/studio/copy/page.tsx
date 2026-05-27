@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CopyWorkspace } from "@/components/copy/copy-workspace";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
+import { primaryListingCopy } from "@/lib/listing-copy";
 import { type MarketplaceId } from "@/lib/marketplaces";
 
 export default async function ContentStudioCopyPage({
@@ -19,12 +20,13 @@ export default async function ContentStudioCopyPage({
   if (params.productId && session?.user?.id) {
     const product = await prisma.product.findFirst({
       where: { id: params.productId, userId: session.user.id },
-      include: { listingCopy: true },
+      include: { listingCopies: true },
     });
     if (product) {
+      const listingCopyRow = primaryListingCopy(product.listingCopies, product.marketplace);
       const analysis = product.analysisJson as { brandName?: string } | null;
       const brandProfile = await getBrandProfileForUser(session.user.id);
-      const bullets = (product.listingCopy?.bullets as string[] | null) ?? [];
+      const bullets = (listingCopyRow?.bullets as string[] | null) ?? [];
       linkedProduct = {
         id: product.id,
         name: product.name,
@@ -39,12 +41,12 @@ export default async function ContentStudioCopyPage({
         differentiators: product.differentiators,
         amazonCategory: product.amazonCategory,
         brandName: analysis?.brandName ?? brandProfile.displayName ?? "",
-        listingCopy: product.listingCopy?.title
+        listingCopy: listingCopyRow?.title
           ? {
-              title: product.listingCopy.title,
+              title: listingCopyRow.title,
               bullets,
-              description: product.listingCopy.description ?? undefined,
-              backendKeywords: product.listingCopy.backendKeywords ?? undefined,
+              description: listingCopyRow.description ?? undefined,
+              backendKeywords: listingCopyRow.backendKeywords ?? undefined,
             }
           : null,
       };

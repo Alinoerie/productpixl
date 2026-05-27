@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
+import { PlaybookRerunButton } from "@/components/playbooks/playbook-rerun-button";
 
 export default async function MyPlaybooksPage({
   searchParams,
@@ -35,7 +36,7 @@ export default async function MyPlaybooksPage({
     <StudioPageShell
       eyebrow="Playbooks"
       title="My playbooks"
-      description="Saved playbook + brand combos for repeat catalog runs — batch execution arrives in Phase 2."
+      description="Saved playbook + brand combos — re-run batches across your catalog."
       headerActions={
         <Button asChild size="sm">
           <Link href={STUDIO_ROUTES.playbooks}>Browse expert playbooks</Link>
@@ -44,19 +45,19 @@ export default async function MyPlaybooksPage({
       guide={
         params.started
           ? {
-              step: "Phase 2",
-              title: "Playbook runs aren't live yet",
-              body: "Saved playbook templates will queue catalog runs in Phase 2. Use Image studio and Copy studio on each project today.",
-              actionHref: STUDIO_ROUTES.images,
-              actionLabel: "Open Image studio",
-              secondaryHref: STUDIO_ROUTES.projects,
-              secondaryLabel: "View projects",
+              step: "Queued",
+              title: "Playbook batch started",
+              body: "Your catalog run is processing. Track progress below or open individual projects when complete.",
+              actionHref: STUDIO_ROUTES.projects,
+              actionLabel: "View projects",
+              secondaryHref: STUDIO_ROUTES.playbooks,
+              secondaryLabel: "Browse playbooks",
               variant: "accent",
             }
           : {
-              step: "Phase 2 preview",
-              title: "Browse playbooks, run per project today",
-              body: "Expert playbooks show prompt direction you can preview now. Batch runs across your catalog ship in Phase 2.",
+              step: "Playbooks",
+              title: "Re-run saved playbook batches",
+              body: "Pick a saved template and launch another batch on the same brand catalog.",
               actionHref: STUDIO_ROUTES.playbooks,
               actionLabel: "Browse playbooks",
               secondaryHref: STUDIO_ROUTES.images,
@@ -93,9 +94,17 @@ export default async function MyPlaybooksPage({
                       </div>
                       <Badge variant="secondary">Saved</Badge>
                     </div>
-                    <Button asChild size="sm" variant="outline" className="mt-4">
-                      <Link href={`/playbooks/${item.playbookSlug}`}>Preview playbook</Link>
-                    </Button>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button asChild size="sm" variant="outline">
+                        <Link href={`/playbooks/${item.playbookSlug}`}>Preview playbook</Link>
+                      </Button>
+                      <PlaybookRerunButton
+                        playbookSlug={item.playbookSlug}
+                        brandId={item.brandId}
+                        productIds={((item.config as { productIds?: string[] } | null)?.productIds) ?? []}
+                        name={item.name}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               );

@@ -32,6 +32,10 @@ export const metadata: Metadata = {
     description:
       "One product photo → Amazon gallery images and RUFUS-ready copy. Pay per generation. No ASIN required.",
   },
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

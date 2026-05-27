@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { PIPELINE_ERROR } from "@/lib/pipeline-errors";
+import { inngest, PLAYBOOK_PIPELINE_EVENT } from "@/inngest/client";
+import { isInngestConfigured, inngestNotConfiguredResponse } from "@/lib/inngest-config";
+import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
+import { estimatePlaybookCredits } from "@/lib/playbooks/catalog";
+import { intakeFromProduct } from "@/lib/credit-pricing";
 
-/** Playbook batch runs ship in Phase 2 — block API until catalog execution is live. */
-const PLAYBOOKS_ENABLED = false;
+/** Playbook batch runs — fan-out to listing or A+ pipelines per product. */
+const PLAYBOOKS_ENABLED = true;
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -11,6 +16,10 @@ export async function POST(req: Request) {
 
   if (!PLAYBOOKS_ENABLED) {
     return NextResponse.json({ error: PIPELINE_ERROR.playbooksPhase2 }, { status: 503 });
+  }
+
+  if (!isInngestConfigured()) {
+    return inngestNotConfiguredResponse();
   }
 
   const { getPlaybook } = await import("@/lib/playbooks/catalog");
@@ -37,10 +46,22 @@ export async function POST(req: Request) {
 
   const products = await prisma.product.findMany({
     where: { id: { in: body.productIds }, userId: session.user.id },
-    select: { id: true },
   });
   if (products.length !== body.productIds.length) {
     return NextResponse.json({ error: "One or more products not found" }, { status: 400 });
+  }
+
+  const sample = products[0]!;
+  const quoteTotal = estimatePlaybookCredits(
+    body.playbookSlug,
+    products.length,
+    intakeFromProduct(sample)
+  );
+
+  const user = await requireCredits(session.user.id, quoteTotal);
+  if (!user) {
+    const available = await getUserCredits(session.user.id);
+    return insufficientCreditsResponse(quoteTotal, available);
   }
 
   const run = await prisma.playbookRun.create({
@@ -49,7 +70,8 @@ export async function POST(req: Request) {
       brandId: body.brandId,
       playbookSlug: body.playbookSlug,
       name: body.name ?? playbook.title,
-      status: "DRAFT",
+      status: "QUEUED",
+      totalCredits: quoteTotal,
       config: { productIds: body.productIds },
     },
   });
@@ -69,5 +91,34 @@ export async function POST(req: Request) {
     },
   });
 
-  return NextResponse.json({ runId: run.id });
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { credits: { decrement: quoteTotal } },
+  });
+
+  try {
+    await inngest.send({
+      name: PLAYBOOK_PIPELINE_EVENT,
+      data: {
+        runId: run.id,
+        userId: session.user.id,
+        playbookSlug: body.playbookSlug,
+        productIds: body.productIds,
+        chargedCredits: quoteTotal,
+      },
+    });
+  } catch (err) {
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { credits: { increment: quoteTotal } },
+    });
+    await prisma.playbookRun.update({
+      where: { id: run.id },
+      data: { status: "FAILED" },
+    });
+    console.error("[playbooks/run] inngest.send failed:", err);
+    return NextResponse.json({ error: "Could not start playbook run" }, { status: 503 });
+  }
+
+  return NextResponse.json({ runId: run.id, creditsCharged: quoteTotal });
 }

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { StudioOverview } from "@/components/studio/studio-overview";
 import { getActiveBrand } from "@/lib/brands";
+import { primaryListingCopy } from "@/lib/listing-copy";
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { Button } from "@/components/ui/button";
 
@@ -24,14 +25,14 @@ export default async function ContentStudioOverviewPage({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
       take: 3,
-      include: { assets: { where: { imageUrl: { not: null } }, take: 1 }, listingCopy: true },
+      include: { assets: { where: { imageUrl: { not: null } }, take: 1 }, listingCopies: true },
     }),
     prisma.product.count({ where: { userId: session.user.id } }),
     prisma.user.findUnique({ where: { id: session.user.id }, select: { credits: true } }),
     prisma.product.count({
       where: {
         userId: session.user.id,
-        listingCopy: { title: { not: null } },
+        listingCopies: { some: { title: { not: null } } },
         assets: { some: { imageUrl: { not: null } } },
       },
     }),
@@ -64,14 +65,17 @@ export default async function ContentStudioOverviewPage({
         totalProjects={totalProjects}
         exportReady={exportReady}
         brandCount={brandCount}
-        recentProjects={products.map((p) => ({
+        recentProjects={products.map((p) => {
+          const copy = primaryListingCopy(p.listingCopies, p.marketplace);
+          return {
           id: p.id,
           name: p.name,
           status: p.status,
           thumb: p.assets[0]?.imageUrl ?? null,
-          hasCopy: Boolean(p.listingCopy?.title),
+          hasCopy: Boolean(copy?.title),
           hasImages: p.assets.length > 0,
-        }))}
+        };
+        })}
       />
     </div>
   );

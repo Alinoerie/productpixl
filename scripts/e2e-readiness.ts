@@ -64,10 +64,21 @@ async function main() {
         : "not configured — purchases disabled"
   );
 
+  // Email / Resend
+  const emailStatus = (await import("../src/lib/email/resend-config")).getEmailConfigStatus();
+  flag(emailStatus.configured, "Resend email", emailStatus.configured ? `sender ${emailStatus.from}` : "missing API key");
+  if (emailStatus.warning) {
+    console.log(`  → ${emailStatus.warning}`);
+  }
+
   // Test user
   const user = await prisma.user.findUnique({
     where: { email: TEST_EMAIL },
-    include: { brandProfile: true, _count: { select: { products: true } } },
+    include: {
+      brandProfile: true,
+      brands: { where: { isDefault: true }, take: 1 },
+      _count: { select: { products: true } },
+    },
   });
 
   if (!user) {
@@ -78,9 +89,12 @@ async function main() {
     ready = flag(user.credits >= 100, "Credits", `${user.credits.toLocaleString()} available`) && ready;
     ready =
       flag(
-        user.brandProfile?.onboardingComplete === true,
+        user.brandProfile?.onboardingComplete === true ||
+          user.brands[0]?.onboardingComplete === true,
         "Brand onboarding",
-        user.brandProfile?.onboardingComplete ? "complete — studio unlocked" : "incomplete — finish /onboarding first"
+        user.brandProfile?.onboardingComplete || user.brands[0]?.onboardingComplete
+          ? "complete — studio unlocked"
+          : "incomplete — finish /onboarding first"
       ) && ready;
 
     const stuck = await prisma.product.count({

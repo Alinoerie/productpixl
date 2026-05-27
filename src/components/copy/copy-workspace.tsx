@@ -334,6 +334,7 @@ export function CopyWorkspace({
           productId: linkedProductId ?? undefined,
           inputImageUrl: imageUrl,
           marketplace,
+          marketplaces: marketplaces.length > 1 ? marketplaces : undefined,
           productData: { ...form, referenceImageUrls },
         }),
       });

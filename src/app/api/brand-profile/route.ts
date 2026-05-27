@@ -79,36 +79,12 @@ export async function PUT(req: NextRequest) {
     },
   });
 
-  await prisma.brandProfile.upsert({
-    where: { userId: session.user.id },
-    create: {
-      userId: session.user.id,
-      companyName: body.companyName ?? null,
-      companyDescription: body.companyDescription ?? null,
-      targetAudience: body.targetAudience ?? null,
+  return NextResponse.json({
+    profile: {
+      ...body,
+      brandId: brand.id,
+      brandName: brand.name,
       displayName: body.displayName ?? brand.name,
-      primaryColor: body.primaryColor ?? DEFAULT_BRAND_PROFILE.primaryColor,
-      secondaryColor: body.secondaryColor ?? DEFAULT_BRAND_PROFILE.secondaryColor,
-      tone: body.tone ?? DEFAULT_BRAND_PROFILE.tone,
-      logoUrl: body.logoUrl ?? null,
-      guidelines: body.guidelines ?? null,
-      brandStory: body.brandStory ?? null,
-      onboardingComplete: body.onboardingComplete ?? false,
-    },
-    update: {
-      companyName: body.companyName ?? null,
-      companyDescription: body.companyDescription ?? null,
-      targetAudience: body.targetAudience ?? null,
-      displayName: body.displayName ?? brand.name,
-      primaryColor: body.primaryColor,
-      secondaryColor: body.secondaryColor,
-      tone: body.tone,
-      logoUrl: body.logoUrl ?? null,
-      guidelines: body.guidelines ?? null,
-      brandStory: body.brandStory ?? null,
-      onboardingComplete: body.onboardingComplete,
     },
   });
-
-  return NextResponse.json({ profile: body });
 }

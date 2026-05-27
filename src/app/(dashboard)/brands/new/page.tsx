@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { SOFT_BRAND_LIMIT } from "@/lib/brands";
 import { createBrandFormAction } from "./actions";
 import { StudioPageShell } from "@/components/layout/studio-page-shell";
 import { Button } from "@/components/ui/button";
@@ -12,11 +14,18 @@ export default async function NewBrandPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const brandCount = await prisma.brand.count({ where: { userId: session.user.id } });
+  const atLimit = brandCount >= SOFT_BRAND_LIMIT;
+
   return (
     <StudioPageShell
       eyebrow="Brand"
       title="Create a new brand"
-      description="Separate catalogs, colors, and copy voice — ideal for agencies or multi-brand sellers."
+      description={
+        atLimit
+          ? `You've reached the soft limit of ${SOFT_BRAND_LIMIT} brands. Remove one or contact us for more.`
+          : "Separate catalogs, colors, and copy voice — ideal for agencies or multi-brand sellers."
+      }
       guide={{
         step: "After you create",
         title: "Set it active in the sidebar",
@@ -29,6 +38,11 @@ export default async function NewBrandPage() {
     >
       <Card className="mx-auto max-w-lg">
         <CardContent className="p-6">
+          {atLimit ? (
+            <p className="text-sm text-[var(--muted-fg)]">
+              Brand creation is paused at {SOFT_BRAND_LIMIT} brands until subscription billing ships.
+            </p>
+          ) : (
           <form action={createBrandFormAction} className="space-y-4">
             <div>
               <Label htmlFor="name">Brand name</Label>
@@ -47,6 +61,7 @@ export default async function NewBrandPage() {
               Create brand
             </Button>
           </form>
+          )}
         </CardContent>
       </Card>
     </StudioPageShell>

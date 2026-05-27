@@ -130,7 +130,7 @@ export function GuidePackUnlockForm({ className = "", onUnlocked }: GuidePackUnl
         </p>
       ) : null}
       <p className="text-xs text-[var(--muted-fg)]">
-        Free download · No credit card · We&apos;ll email you a link when delivery is enabled
+        Free download · No credit card · We email a link when delivery is configured for your address
       </p>
     </form>
   );

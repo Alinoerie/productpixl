@@ -1,16 +1,24 @@
-# MVP Image Modules (cursorproductpixl)
+# Listing modules (cursorproductpixl)
 
-Fast-path subset of the full PHOILA Listing pipeline. See [listing.md](./listing.md) for L1–L12 specifications.
+Full PHOILA L1–L12 library is registered in `src/pipelines/modules.ts`. See [listing.md](./listing.md) for specifications.
 
-| Module | Included in MVP | Notes |
-|--------|-----------------|-------|
-| L1 Main Hero | Always | White background, nano-banana-pro, 1500×1500 |
-| L3 Lifestyle | Always | Simplified scene prompts; composite in phase 2 |
-| L4 Texture | Always | Macro detail |
-| L8 Packaging | Optional (user toggle) | Unboxing / first-touch |
+| Module | Default in UI | Notes |
+|--------|---------------|-------|
+| L1 Main Hero | Always | White background, 4K |
+| L2 Size & Scale | Optional | Reference objects / measurements |
+| L3 Lifestyle | Core default | In-context scene, 4K |
+| L4 Texture | Core default | Macro detail, 2K |
+| L5 Mood & Atmosphere | Optional | Brand world, 4K |
+| L6 Quality Construction | Optional | Craftsmanship detail, 2K |
+| L7 Material Callout | Optional | Composition / certifications, 2K |
+| L8 Packaging | Optional | Unboxing / first-touch, 2K |
+| L9 Brand Story | Optional | Origin / provenance, 4K |
+| L10 Comparison | Optional | Versus generic/competitor, 2K |
+| L11 Lifestyle Alternate | Optional | Second lifestyle angle, 4K |
+| L12 Lifestyle Action | Optional | Active use / motion, 4K |
 
-Runtime config: `src/pipelines/modules.ts`
+**Starter run:** L1 + L3 + L4 (same as original MVP). Users can opt into any combination or **Full library (12)** in the image wizard.
 
-Generation model: `google/nano-banana-pro` with `allow_fallback_model: true`.
+Generation model: `google/nano-banana-pro` with `allow_fallback_model: true` (except L1 hero retry path).
 
-Rate limit: 12s between Replicate calls; 3 retries with exponential backoff on 429.
+Rate limit: 12s between Replicate calls; QA retry if score &lt; 7.

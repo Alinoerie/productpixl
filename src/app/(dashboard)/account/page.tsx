@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PaymentSuccessBanner } from "@/components/account/payment-success-banner";
 import { CreditUsageGuide } from "@/components/account/credit-usage-guide";
+import { EmailConfigBanner } from "@/components/account/email-config-banner";
 import { SignOutButton } from "@/components/account/sign-out-button";
 import { formatOrderStatus } from "@/lib/status-labels";
 import { StudioPageShell } from "@/components/layout/studio-page-shell";
@@ -44,6 +45,8 @@ export default async function AccountPage({
       description={session.user.email ?? undefined}
       guide={journey}
     >
+      <EmailConfigBanner />
+
       {params.success ? (
         <Suspense fallback={null}>
           <PaymentSuccessBanner />

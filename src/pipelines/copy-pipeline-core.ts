@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { runCopyResearch } from "@/pipelines/tavily";
 import { generateListingCopy } from "@/pipelines/copy-gen";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
+import { listingCopyWhere } from "@/lib/listing-copy";
 import type { ProductIntakeData } from "@/lib/product-intake";
 import type { ProductAnalysis } from "@/lib/ai";
 
@@ -9,11 +10,16 @@ export type CopyPipelineInput = {
   productId: string;
   marketplace: string;
   intake: ProductIntakeData;
+  playbooksContext?: string;
 };
 
-export async function markCopyPipelineFailed(productId: string, message: string) {
+export async function markCopyPipelineFailed(
+  productId: string,
+  marketplace: string,
+  message: string
+) {
   await prisma.listingCopy.update({
-    where: { productId },
+    where: listingCopyWhere(productId, marketplace),
     data: { status: "FAILED", errorMessage: message },
   });
   await prisma.product.update({
@@ -30,12 +36,13 @@ export async function markCopyPipelineFailed(productId: string, message: string)
 }
 
 export async function runCopyPipelineCore(input: CopyPipelineInput) {
-  const { productId, marketplace, intake } = input;
+  const { productId, marketplace, intake, playbooksContext } = input;
+  const where = listingCopyWhere(productId, marketplace);
 
   await prisma.listingCopy.upsert({
-    where: { productId },
+    where,
     create: { productId, marketplace, status: "PROCESSING" },
-    update: { status: "PROCESSING", marketplace, errorMessage: null },
+    update: { status: "PROCESSING", errorMessage: null },
   });
   await prisma.product.update({
     where: { id: productId },
@@ -79,10 +86,11 @@ export async function runCopyPipelineCore(input: CopyPipelineInput) {
     keywords: research.keywords,
     competitorTitles: research.competitorTitles,
     brandProfile,
+    playbooksContext,
   });
 
   await prisma.listingCopy.update({
-    where: { productId },
+    where,
     data: {
       title: copy.title,
       bullets: copy.bullets,
@@ -101,4 +109,23 @@ export async function runCopyPipelineCore(input: CopyPipelineInput) {
   });
 
   return { productId, status: "COMPLETE" as const };
+}
+
+/** Run copy for multiple marketplaces sequentially. */
+export async function runCopyPipelineMulti(input: {
+  productId: string;
+  marketplaces: string[];
+  intake: ProductIntakeData;
+  playbooksContext?: string;
+}) {
+  const marketplaces = [...new Set(input.marketplaces.filter(Boolean))];
+  for (const marketplace of marketplaces) {
+    await runCopyPipelineCore({
+      productId: input.productId,
+      marketplace,
+      intake: input.intake,
+      playbooksContext: input.playbooksContext,
+    });
+  }
+  return { productId: input.productId, status: "COMPLETE" as const, marketplaces };
 }

@@ -14,7 +14,7 @@ export async function GET(
   const { id } = await params;
   const product = await prisma.product.findFirst({
     where: { id, userId: session.user.id },
-    include: { assets: true, listingCopy: true },
+    include: { assets: true, listingCopies: true },
   });
 
   if (!product) {

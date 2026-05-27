@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getActiveBrandId, listBrandsForUser } from "@/lib/brands";
+import { getActiveBrandId, listBrandsForUser, SOFT_BRAND_LIMIT } from "@/lib/brands";
 import { BrandActivateButton } from "@/components/brand/brand-activate-button";
 import { StudioPageShell } from "@/components/layout/studio-page-shell";
 import { Button } from "@/components/ui/button";
@@ -34,9 +34,13 @@ export default async function BrandsPage() {
       title="All brands"
       description="One listing brand kit per catalog. The active brand in the sidebar drives colors, copy tone, and new product defaults."
       headerActions={
-        <Button asChild size="sm">
-          <Link href="/brands/new">New brand</Link>
-        </Button>
+        brands.length < SOFT_BRAND_LIMIT ? (
+          <Button asChild size="sm">
+            <Link href="/brands/new">New brand</Link>
+          </Button>
+        ) : (
+          <span className="text-xs text-[var(--muted-fg)]">Soft limit: {SOFT_BRAND_LIMIT} brands</span>
+        )
       }
       guide={{
         step: "How brands work",

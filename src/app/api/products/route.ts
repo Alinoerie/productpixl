@@ -14,7 +14,7 @@ export async function GET() {
     take: 50,
     include: {
       assets: { select: { id: true, moduleId: true, status: true, imageUrl: true } },
-      listingCopy: { select: { status: true, title: true } },
+      listingCopies: { select: { status: true, title: true, marketplace: true } },
     },
   });
 

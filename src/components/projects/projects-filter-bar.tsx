@@ -29,6 +29,14 @@ const IMAGES_OPTIONS = [
 
 const READY_OPTIONS = [{ value: "export", label: "Export-ready" }] as const;
 
+const PIPELINE_OPTIONS = [
+  { value: "", label: "Any pipeline" },
+  { value: "LISTING", label: "Listing" },
+  { value: "COPY", label: "Copy" },
+  { value: "APLUS", label: "A+" },
+  { value: "VIDEO", label: "Video" },
+] as const;
+
 export function buildProjectsQuery(params: Record<string, string | undefined>) {
   const q = new URLSearchParams();
   if (params.brandId) q.set("brandId", params.brandId);
@@ -37,6 +45,9 @@ export function buildProjectsQuery(params: Record<string, string | undefined>) {
   if (params.images) q.set("images", params.images);
   if (params.ready) q.set("ready", params.ready);
   if (params.q) q.set("q", params.q);
+  if (params.pipelineType) q.set("pipelineType", params.pipelineType);
+  if (params.playbookSlug) q.set("playbookSlug", params.playbookSlug);
+  if (params.templateSlug) q.set("templateSlug", params.templateSlug);
   if (params.page && params.page !== "1") q.set("page", params.page);
   const s = q.toString();
   return s ? `?${s}` : "";
@@ -63,6 +74,9 @@ export function ProjectsFilterBar({
   const copy = searchParams.get("copy") ?? "";
   const images = searchParams.get("images") ?? "";
   const ready = searchParams.get("ready") ?? "";
+  const pipelineType = searchParams.get("pipelineType") ?? "";
+  const playbookSlug = searchParams.get("playbookSlug") ?? "";
+  const templateSlug = searchParams.get("templateSlug") ?? "";
   const q = searchParams.get("q") ?? "";
   const [search, setSearch] = useState(q);
 
@@ -77,6 +91,9 @@ export function ProjectsFilterBar({
       copy: next.copy ?? copy,
       images: next.images ?? images,
       ready: next.ready ?? ready,
+      pipelineType: next.pipelineType ?? pipelineType,
+      playbookSlug: next.playbookSlug ?? playbookSlug,
+      templateSlug: next.templateSlug ?? templateSlug,
       q: next.q ?? q,
     };
     startTransition(() => {
@@ -107,7 +124,7 @@ export function ProjectsFilterBar({
             </span>
           ) : null}
         </p>
-        {(brandId || status || copy || images || ready || q) ? (
+        {(brandId || status || copy || images || ready || pipelineType || playbookSlug || templateSlug || q) ? (
           <Link
             href="/projects"
             className="text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
@@ -244,6 +261,40 @@ export function ProjectsFilterBar({
             {opt.label}
           </button>
         ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {PIPELINE_OPTIONS.map((opt) => (
+          <button
+            key={opt.value || "all-pipeline"}
+            type="button"
+            onClick={() => push({ pipelineType: opt.value })}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+              pipelineType === opt.value
+                ? "bg-[var(--accent)] text-white"
+                : "bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)]"
+            )}
+            aria-pressed={pipelineType === opt.value}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Input
+          name="playbookSlug"
+          value={playbookSlug}
+          onChange={(e) => push({ playbookSlug: e.target.value.trim() })}
+          placeholder="Filter by playbook slug…"
+          aria-label="Filter by playbook slug"
+        />
+        <Input
+          name="templateSlug"
+          value={templateSlug}
+          onChange={(e) => push({ templateSlug: e.target.value.trim() })}
+          placeholder="Filter by template slug…"
+          aria-label="Filter by template slug"
+        />
       </div>
     </div>
   );

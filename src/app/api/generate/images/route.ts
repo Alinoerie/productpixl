@@ -8,6 +8,8 @@ import { quoteImageRun } from "@/lib/credit-pricing";
 import { isInngestConfigured, inngestNotConfiguredResponse, shouldUseInlinePipeline } from "@/lib/inngest-config";
 import { PIPELINE_ERROR } from "@/lib/pipeline-errors";
 import { scheduleInlineImagePipeline } from "@/lib/run-image-pipeline-async";
+import { getVisualTemplate, templateContextBlock } from "@/lib/templates/catalog";
+import { getBrandProfileForUser } from "@/lib/brand-profile";
 import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
 
 export async function POST(req: NextRequest) {
@@ -21,18 +23,22 @@ export async function POST(req: NextRequest) {
     existingProductId,
     inputImageUrl,
     includePackaging = false,
+    selectedModules,
     productData,
     marketplace = "AMAZON_US",
     promptOverrides = {},
     analysis,
+    templateSlug,
   } = body as {
     existingProductId?: string;
     inputImageUrl: string;
     includePackaging?: boolean;
+    selectedModules?: import("@/pipelines/modules").ListingModuleId[];
     marketplace?: string;
     promptOverrides?: Record<string, string>;
     analysis?: ProductAnalysis;
     productData: ProductIntakeData;
+    templateSlug?: string;
   };
 
   if (!inputImageUrl || !productData?.name) {
@@ -41,6 +47,7 @@ export async function POST(req: NextRequest) {
 
   const quote = quoteImageRun({
     includePackaging: Boolean(includePackaging),
+    selectedModules,
     marketplace,
     intake: productData,
   });
@@ -58,6 +65,12 @@ export async function POST(req: NextRequest) {
   }
 
   let productId = existingProductId;
+  const brandProfile = await getBrandProfileForUser(session.user.id);
+  const template = templateSlug ? getVisualTemplate(templateSlug) : undefined;
+  const templateContext = template
+    ? templateContextBlock(template, productData.brandName || brandProfile.displayName || "")
+    : undefined;
+
   const productFields = {
     name: productData.name,
     inputImageUrl,
@@ -74,6 +87,7 @@ export async function POST(req: NextRequest) {
     differentiators: productData.differentiators,
     referenceImageUrls: productData.referenceImageUrls ?? [],
     amazonCategory: productData.category,
+    templateSlug: templateSlug ?? undefined,
     analysisJson: analysis ? (analysis as object) : undefined,
   };
 
@@ -109,9 +123,11 @@ export async function POST(req: NextRequest) {
     const pipelineInput = {
       productId,
       includePackaging,
+      selectedModules,
       promptOverrides,
       analysis,
       intake: productData,
+      templateContext,
     };
 
     if (useInline) {

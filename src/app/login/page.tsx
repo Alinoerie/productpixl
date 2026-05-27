@@ -6,6 +6,7 @@ import { isEmailAuthConfigured } from "@/lib/email/magic-link";
 import { GoogleSignInForm } from "@/components/auth/google-sign-in-form";
 import { EmailSignInForm } from "@/components/auth/email-sign-in-form";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
+import { ProductPixlWordmark } from "@/components/brand/productpixl-logo";
 import { loginDestinationLabel } from "@/lib/login-destination";
 import { USP_PILLARS, USP_SUBHEAD, USP_TAGLINE } from "@/lib/marketing-usp";
 
@@ -56,10 +57,7 @@ export default async function LoginPage({
     <div className="flex min-h-screen">
       <div className="hidden w-1/2 flex-col justify-between bg-[var(--ink)] p-12 text-white lg:flex">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-xs font-bold">
-            Px
-          </span>
-          <span className="font-serif text-xl">ProductPixl</span>
+          <ProductPixlWordmark size={48} textClassName="text-white" priority />
         </Link>
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent-soft)]">{USP_TAGLINE}</p>
@@ -91,10 +89,7 @@ export default async function LoginPage({
       <main id="main" className="flex flex-1 flex-col items-center justify-center bg-[var(--background)] px-4 py-12">
         <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 shadow-[var(--shadow-lg)] md:p-10">
           <Link href="/" className="mb-8 inline-flex items-center gap-2 lg:hidden">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ink)] text-xs font-bold text-white">
-              Px
-            </span>
-            <span className="font-serif text-xl">ProductPixl</span>
+            <ProductPixlWordmark size={44} priority />
           </Link>
           <h1 className="font-serif text-3xl">Sign in</h1>
           <p className="mt-2 text-[var(--muted-fg)]">

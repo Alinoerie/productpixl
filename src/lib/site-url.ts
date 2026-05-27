@@ -1,3 +1,4 @@
 export function siteUrl() {
-  return process.env.AUTH_URL ?? "https://productpixl.vercel.app";
+  const fromEnv = process.env.AUTH_URL?.trim();
+  return fromEnv || "https://productpixl.vercel.app";
 }

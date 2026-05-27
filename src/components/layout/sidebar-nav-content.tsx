@@ -7,6 +7,7 @@ import {
   Copy,
   FolderOpen,
   Layers,
+  LayoutGrid,
   Palette,
   PenLine,
   Sparkles,
@@ -16,6 +17,7 @@ import {
 import type { BrandSummary } from "@/lib/brands";
 import { BrandSwitcher } from "@/components/layout/brand-switcher";
 import { CreditBadge } from "@/components/layout/credit-badge";
+import { ProductPixlLogo, ProductPixlWordmark } from "@/components/brand/productpixl-logo";
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +29,12 @@ const createNav: NavItem[] = [
     label: "Content studio",
     icon: PenLine,
     hint: "Images, copy, and recent work",
+  },
+  {
+    href: STUDIO_ROUTES.aplus,
+    label: "A+ content",
+    icon: LayoutGrid,
+    hint: "Enhanced brand content modules",
   },
 ];
 
@@ -153,10 +161,11 @@ export function SidebarNavContent({
             onClick={onNavigate}
             className={cn("flex items-center gap-2", collapsed && "justify-center")}
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ink)] text-[10px] font-bold text-white">
-              Px
-            </span>
-            {!collapsed ? <span className="font-serif text-lg">ProductPixl</span> : null}
+            {collapsed ? (
+              <ProductPixlLogo size={44} />
+            ) : (
+              <ProductPixlWordmark size={44} textClassName="text-lg" />
+            )}
           </Link>
           <div className={cn("mt-4", collapsed && "mt-3 flex justify-center")}>
             <BrandSwitcher brands={brands} activeBrandId={activeBrandId} collapsed={collapsed} />

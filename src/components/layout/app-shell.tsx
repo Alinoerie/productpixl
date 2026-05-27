@@ -12,6 +12,7 @@ import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { getUserCredits } from "@/lib/require-credits";
 import { hasPaidCredits } from "@/lib/credits-access";
 import { AppShellNav } from "@/components/layout/app-shell-nav";
+import { ProductPixlWordmark } from "@/components/brand/productpixl-logo";
 
 export async function AppShell({
   children,
@@ -64,9 +65,11 @@ export async function AppShell({
           <div className="flex min-w-0 flex-1 flex-col">
             <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-[var(--border)] bg-[var(--card)]/95 px-3 shadow-[var(--shadow-sm)] backdrop-blur-md sm:px-4">
               <div className="flex min-w-0 items-center gap-2">
-                {userId ? <SidebarToggle /> : (
-                  <Link href={STUDIO_ROUTES.home} className="font-serif text-lg">
-                    ProductPixl
+                {userId ? (
+                  <SidebarToggle />
+                ) : (
+                  <Link href={STUDIO_ROUTES.home}>
+                    <ProductPixlWordmark size={44} textClassName="text-lg" />
                   </Link>
                 )}
               </div>

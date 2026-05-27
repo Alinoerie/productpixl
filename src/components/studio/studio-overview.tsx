@@ -5,8 +5,10 @@ import {
   ArrowRight,
   Camera,
   FileText,
+  Layers,
   Lock,
   Palette,
+  PenLine,
   PlayCircle,
   Sparkles,
   Wand2,
@@ -71,6 +73,17 @@ export function StudioOverview({
             credits={imageCredits}
             gradient="from-[#6366f1]/20 via-[#818cf8]/10 to-[#0891b2]/20"
             mockup={<ImagesMockup />}
+            stagger
+          />
+          <QuickLaunchCard
+            href={STUDIO_ROUTES.aplus}
+            icon={Layers}
+            title="A+ Content"
+            description="Amazon A+ modules M1–M15 at exact pixel dimensions — premium modules for Brand Registered."
+            credits={imageCredits + 12}
+            gradient="from-[#0d9488]/20 via-[#14b8a6]/10 to-[#6366f1]/15"
+            mockup={<ImagesMockup />}
+            variant="outline"
             stagger
           />
           <QuickLaunchCard

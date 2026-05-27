@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MARKETING_FOOTER_LINKS } from "@/lib/marketing-links";
 import { USP_ONE_LINER, USP_TAGLINE } from "@/lib/marketing-usp";
+import { ProductPixlWordmark } from "@/components/brand/productpixl-logo";
 
 export function SiteFooter() {
   return (
@@ -8,10 +9,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col gap-8 md:flex-row md:items-start md:justify-between">
         <div>
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ink)] text-xs font-bold text-white">
-              Px
-            </span>
-            <span className="font-serif text-xl">ProductPixl</span>
+            <ProductPixlWordmark size={44} />
           </Link>
           <p className="mt-3 max-w-xs text-sm text-[var(--muted-fg)]">
             <span className="font-medium text-[var(--foreground)]">{USP_TAGLINE}</span>

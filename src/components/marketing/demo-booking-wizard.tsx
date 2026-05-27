@@ -75,6 +75,8 @@ export function DemoBookingWizard() {
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [preferredLabel, setPreferredLabel] = useState("");
+  const [emailSent, setEmailSent] = useState<boolean | null>(null);
+  const [emailConfigWarning, setEmailConfigWarning] = useState<string | null>(null);
 
   const days = useMemo(() => getUpcomingDemoDays(5), []);
   const calendlyUrl = getCalendlyUrl();
@@ -147,7 +149,13 @@ export function DemoBookingWizard() {
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
       });
-      const data = (await res.json()) as { error?: string; preferredLabel?: string };
+      const data = (await res.json()) as {
+        error?: string;
+        preferredLabel?: string;
+        emailSent?: boolean;
+        emailConfigWarning?: string | null;
+        calendlyUrl?: string | null;
+      };
       if (!res.ok) {
         setStatus("error");
         setError(data.error ?? "Could not book demo. Try again.");
@@ -155,6 +163,8 @@ export function DemoBookingWizard() {
       }
 
       setPreferredLabel(data.preferredLabel ?? formatPreferredLabel(selectedDay, selectedTime));
+      setEmailSent(Boolean(data.emailSent));
+      setEmailConfigWarning(data.emailConfigWarning ?? null);
       setStep(3);
 
       if (calendlyUrl) {
@@ -402,13 +412,18 @@ export function DemoBookingWizard() {
           <p className="mx-auto mt-3 max-w-sm text-sm text-[var(--muted-fg)]">
             {preferredLabel ? (
               <>
-                We&apos;ll confirm your <strong className="text-[var(--foreground)]">{preferredLabel}</strong> session
-                by email with a calendar invite.
+                We saved your request for <strong className="text-[var(--foreground)]">{preferredLabel}</strong>.
+                {emailSent
+                  ? " Check your inbox for confirmation — it depends on a verified EMAIL_FROM domain in production."
+                  : " Email confirmation is skipped until Resend is configured with a verified sender."}
               </>
             ) : (
-              "We&apos;ll confirm your session by email with a calendar invite."
+              "We saved your request. Email confirmation depends on verified Resend delivery settings."
             )}
           </p>
+          {emailConfigWarning ? (
+            <p className="mx-auto mt-2 max-w-sm text-xs text-[var(--warning)]">{emailConfigWarning}</p>
+          ) : null}
           {calendlyUrl ? (
             <p className="mt-2 text-xs text-[var(--muted-fg)]">
               A scheduling window opened in a new tab — pick the exact slot there if you prefer.

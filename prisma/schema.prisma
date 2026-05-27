@@ -182,7 +182,7 @@ model Product {
   brand         Brand?       @relation(fields: [brandId], references: [id])
   playbookRun   PlaybookRun? @relation(fields: [playbookRunId], references: [id])
   assets        Asset[]
-  listingCopy   ListingCopy?
+  listingCopies ListingCopy[]
 }
 
 model SavedPlaybook {
@@ -202,15 +202,17 @@ model SavedPlaybook {
 }
 
 model PlaybookRun {
-  id           String   @id @default(cuid())
-  userId       String
-  brandId      String
-  playbookSlug String
-  name         String?
-  status       String   @default("DRAFT")
-  config       Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(cuid())
+  userId         String
+  brandId        String
+  playbookSlug   String
+  name           String?
+  status         String   @default("DRAFT")
+  totalCredits   Int      @default(0)
+  completedCount Int      @default(0)
+  config         Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   brand    Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
@@ -225,6 +227,9 @@ model Asset {
   moduleId     String
   pipelineType String   @default("LISTING")
   imageUrl     String?
+  videoUrl     String?
+  targetWidth  Int?
+  targetHeight Int?
   status       String   @default("PENDING")
   qaScore      Int?
   retryCount   Int      @default(0)
@@ -237,7 +242,7 @@ model Asset {
 
 model ListingCopy {
   id               String   @id @default(cuid())
-  productId        String   @unique
+  productId        String
   marketplace      String   @default("AMAZON_US")
   title            String?
   bullets          Json?
@@ -252,6 +257,8 @@ model ListingCopy {
   updatedAt        DateTime @updatedAt
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, marketplace])
 }
 
 model Order {

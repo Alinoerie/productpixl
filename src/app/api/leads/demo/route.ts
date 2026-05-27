@@ -5,7 +5,8 @@ import {
   buildDemoBookingConfirmationEmail,
   isDemoEmailConfigured,
 } from "@/lib/email/demo-booking";
-import { getEmailFrom, getResendApiKey } from "@/lib/email/resend-config";
+import { getEmailConfigStatus, getEmailFrom, getResendApiKey } from "@/lib/email/resend-config";
+import { getCalendlyUrl } from "@/lib/demo-booking-content";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TIME_RE = /^\d{2}:\d{2}$/;
@@ -80,6 +81,9 @@ export async function POST(req: Request) {
   }
 
   const origin = new URL(req.url).origin;
+  const emailStatus = getEmailConfigStatus();
+  const calendlyUrl = getCalendlyUrl();
+  let emailSent = false;
 
   if (isDemoEmailConfigured()) {
     try {
@@ -99,6 +103,7 @@ export async function POST(req: Request) {
           studioUrl: `${origin}/login`,
         }),
       });
+      emailSent = true;
 
       const adminEmail = process.env.DEMO_BOOKING_NOTIFY_EMAIL?.trim();
       if (adminEmail) {
@@ -122,5 +127,11 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, preferredLabel });
+  return NextResponse.json({
+    ok: true,
+    preferredLabel,
+    emailSent,
+    calendlyUrl: calendlyUrl || null,
+    emailConfigWarning: emailStatus.warning,
+  });
 }

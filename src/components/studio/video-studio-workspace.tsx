@@ -53,6 +53,9 @@ export function VideoStudioWorkspace({ initialCredits }: { initialCredits: numbe
   const [scanning, setScanning] = useState(false);
   const [fileName, setFileName] = useState("");
   const [uploadedUrl, setUploadedUrl] = useState("");
+  const [productId, setProductId] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [runStatus, setRunStatus] = useState<string | null>(null);
 
   async function onFile(file: File) {
     setUploading(true);
@@ -101,8 +104,10 @@ export function VideoStudioWorkspace({ initialCredits }: { initialCredits: numbe
         }),
       });
       if (!ok) throw new Error(data.error || "Could not queue video");
+      setProductId(data.productId ?? null);
+      setRunStatus("QUEUED");
       window.dispatchEvent(new Event("credits-updated"));
-      toast(data.message ?? "Video queued — beta rendering ships soon");
+      toast(data.message ?? "Video generation started");
       setStep(1);
     } catch (e) {
       toast(e instanceof Error ? e.message : "Video queue failed", "error");
@@ -110,6 +115,30 @@ export function VideoStudioWorkspace({ initialCredits }: { initialCredits: numbe
       setSubmitting(false);
     }
   }
+
+  useEffect(() => {
+    if (!productId || step !== 1) return;
+    let cancelled = false;
+    const poll = async () => {
+      const { ok, data } = await fetchJson<{
+        status?: string;
+        assets?: { videoUrl?: string | null; pipelineType?: string }[];
+      }>(`/api/products/${productId}/status`);
+      if (cancelled || !ok) return;
+      setRunStatus(data.status ?? null);
+      const videoAsset = data.assets?.find((a) => a.pipelineType === "VIDEO" || a.videoUrl);
+      if (videoAsset?.videoUrl) {
+        setVideoUrl(videoAsset.videoUrl);
+        return;
+      }
+      if (data.status === "COMPLETE" || data.status === "FAILED") return;
+      setTimeout(poll, 4000);
+    };
+    void poll();
+    return () => {
+      cancelled = true;
+    };
+  }, [productId, step]);
 
   return (
     <div className="space-y-8">
@@ -247,14 +276,40 @@ export function VideoStudioWorkspace({ initialCredits }: { initialCredits: numbe
           ) : (
             <>
               <p className="text-sm text-[var(--muted-fg)]">
-                Preview your reel below. Export buttons match platform specs when rendering is live.
+                {videoUrl
+                  ? "Your reel is ready — export for your target platform below."
+                  : runStatus === "FAILED"
+                    ? "Video generation failed — credits were refunded if the pipeline did not complete."
+                    : "Rendering your reel — this usually takes a few minutes."}
               </p>
+              {videoUrl ? (
+                <video src={videoUrl} controls className="max-h-80 w-full rounded-xl border border-[var(--border)]" />
+              ) : (
+                <p className="flex items-center gap-2 text-sm text-[var(--muted-fg)]">
+                  <Loader2 className="h-4 w-4 animate-spin" /> {runStatus ?? "Processing"}…
+                </p>
+              )}
               <div className="flex flex-wrap gap-2">
-                {["Export for TikTok", "Export for Amazon", "Export for Reels"].map((label) => (
-                  <Button key={label} variant="outline" size="sm" disabled>
-                    {label}
-                  </Button>
-                ))}
+                {videoUrl ? (
+                  <>
+                    <Button asChild size="sm">
+                      <a href={videoUrl} download target="_blank" rel="noreferrer">
+                        Download video
+                      </a>
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <a href={videoUrl} target="_blank" rel="noreferrer">
+                        Open in new tab
+                      </a>
+                    </Button>
+                  </>
+                ) : (
+                  ["Export for TikTok", "Export for Amazon", "Export for Reels"].map((label) => (
+                    <Button key={label} variant="outline" size="sm" disabled>
+                      {label}
+                    </Button>
+                  ))
+                )}
               </div>
               <Button variant="outline" onClick={() => setStep(0)}>
                 Back

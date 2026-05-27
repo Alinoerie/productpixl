@@ -8,6 +8,7 @@ import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/l
 import { getModulesForRun } from "@/pipelines/modules";
 import { buildListingPrompt } from "@/pipelines/prompt-builder";
 import { runCategoryResearch } from "@/pipelines/tavily";
+import { getVisualTemplate, templateContextBlock } from "@/lib/templates/catalog";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -18,9 +19,11 @@ export async function POST(req: NextRequest) {
   const body = (await req.json()) as {
     inputImageUrl?: string;
     includePackaging?: boolean;
+    selectedModules?: import("@/pipelines/modules").ListingModuleId[];
     marketplace?: string;
     analysis?: ProductAnalysis;
     productData?: ProductIntakeData;
+    templateSlug?: string;
   };
 
   if (!body.inputImageUrl || !body.productData?.name || !body.productData?.category) {
@@ -32,6 +35,7 @@ export async function POST(req: NextRequest) {
 
   const quote = quoteImageRun({
     includePackaging: Boolean(body.includePackaging),
+    selectedModules: body.selectedModules,
     marketplace: body.marketplace ?? "AMAZON_US",
     intake: body.productData,
   });
@@ -48,12 +52,20 @@ export async function POST(req: NextRequest) {
     referenceImageUrls: body.productData.referenceImageUrls ?? [],
   };
 
+  const template = body.templateSlug ? getVisualTemplate(body.templateSlug) : undefined;
+  const templateContext = template
+    ? templateContextBlock(template, productData.brandName || brandProfile.displayName || "")
+    : undefined;
+
   const [analysis, research] = await Promise.all([
     body.analysis ? Promise.resolve(body.analysis) : analyzeProductImage(body.inputImageUrl),
     runCategoryResearch(productData.name, productData.category),
   ]);
 
-  const modules = getModulesForRun(Boolean(body.includePackaging));
+  const modules = getModulesForRun({
+    includePackaging: Boolean(body.includePackaging),
+    selectedModules: body.selectedModules,
+  });
   const prompts = modules.map((mod) => ({
     moduleId: mod.id,
     label: mod.label,
@@ -61,6 +73,7 @@ export async function POST(req: NextRequest) {
     prompt: buildListingPrompt(mod.id, analysis, productData, research, {
       brandProfile,
       marketplace: body.marketplace ?? "AMAZON_US",
+      templateContext,
     }),
   }));
 

@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { NextStepGuide } from "@/components/ui/next-step-guide";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { StartPlaybookForm } from "@/components/playbooks/start-playbook-form";
+import { PlaybookRunWizard } from "@/components/playbooks/playbook-run-wizard";
 import { Phase2ComingSoonBanner } from "@/components/ui/phase2-coming-soon-banner";
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
 
@@ -45,10 +45,10 @@ export default async function PlaybookDetailPage({ params }: { params: Promise<{
       </PageHeader>
 
       <Phase2ComingSoonBanner
-        title={`${playbook.title} — batch run coming in Phase 2`}
-        body={`Prompt direction below shows how this playbook will apply to ${brand.name}. Run Image studio and Copy studio on individual projects until catalog runs ship.`}
-        primaryHref={STUDIO_ROUTES.images}
-        primaryLabel="Open Image studio"
+        title={`${playbook.title} — batch runs are live`}
+        body={`Run ${playbook.title} across selected ${brand.name} projects. Credits are quoted before the batch starts.`}
+        primaryHref="#run-playbook"
+        primaryLabel="Configure batch run"
         secondaryHref={STUDIO_ROUTES.projects}
         secondaryLabel="View projects"
       />
@@ -72,7 +72,7 @@ export default async function PlaybookDetailPage({ params }: { params: Promise<{
       </Card>
 
       <div id="run-playbook" className="scroll-mt-24">
-        <StartPlaybookForm
+        <PlaybookRunWizard
           playbookSlug={playbook.slug}
           playbookTitle={playbook.title}
           brandId={brand.id}

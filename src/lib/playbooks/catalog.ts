@@ -1,3 +1,8 @@
+import type { ListingModuleId } from "@/pipelines/modules";
+import type { AplusModuleId } from "@/pipelines/aplus-modules";
+import { quoteAplusRun, quoteImageRun } from "@/lib/credit-pricing";
+import type { ProductIntakeData } from "@/lib/product-intake";
+
 export type PlaybookCategory =
   | "amazon"
   | "lifestyle"
@@ -134,4 +139,77 @@ export function playbookContextBlock(playbook: PlaybookDefinition, brandName: st
     `— Brand: ${brandName} — apply brand palette, tone, and typography to every module.`,
     "Run this playbook consistently across the selected catalog SKUs.",
   ].join("\n");
+}
+
+export type PlaybookModuleSet = {
+  pipelineType: "LISTING" | "APLUS";
+  listingModules?: ListingModuleId[];
+  aplusModules?: AplusModuleId[];
+  brandRegistered?: boolean;
+};
+
+/** Map playbook slugs to default module sets for batch runs. */
+export function playbookModuleSet(slug: string): PlaybookModuleSet {
+  switch (slug) {
+    case "amazon-main-images":
+      return { pipelineType: "LISTING", listingModules: ["L1", "L2", "L3", "L4", "L10"] };
+    case "lifestyle":
+      return { pipelineType: "LISTING", listingModules: ["L1", "L3", "L5", "L11", "L12"] };
+    case "ugc":
+      return { pipelineType: "LISTING", listingModules: ["L1", "L3", "L8", "L12"] };
+    case "shopify":
+      return { pipelineType: "LISTING", listingModules: ["L1", "L3", "L4", "L2", "L5"] };
+    case "tiktok-shop":
+      return { pipelineType: "LISTING", listingModules: ["L1", "L3", "L4", "L11", "L12", "L5"] };
+    case "supplements-aplus":
+      return {
+        pipelineType: "APLUS",
+        brandRegistered: true,
+        aplusModules: ["M1", "M2", "M4", "M6", "M7", "M8", "M11", "M12"],
+      };
+    case "beauty-aplus":
+      return {
+        pipelineType: "APLUS",
+        brandRegistered: true,
+        aplusModules: ["M1", "M2", "M3", "M4", "M7", "M11", "M13", "M15"],
+      };
+    case "food-beverage-aplus":
+      return {
+        pipelineType: "APLUS",
+        brandRegistered: true,
+        aplusModules: ["M1", "M2", "M4", "M7", "M8", "M11", "M14"],
+      };
+    case "medicube-infographics":
+      return { pipelineType: "LISTING", listingModules: ["L1", "L4", "L7", "L10"] };
+    case "lemme-infographics":
+      return { pipelineType: "LISTING", listingModules: ["L1", "L3", "L7", "L10"] };
+    case "furniture-lifestyle":
+      return { pipelineType: "LISTING", listingModules: ["L1", "L2", "L3", "L5", "L6"] };
+    default:
+      return { pipelineType: "LISTING", listingModules: ["L1", "L3", "L4"] };
+  }
+}
+
+/** Estimate credits for a playbook batch. */
+export function estimatePlaybookCredits(
+  playbookSlug: string,
+  productCount: number,
+  sampleIntake: Partial<ProductIntakeData> & { marketplace?: string }
+): number {
+  const moduleSet = playbookModuleSet(playbookSlug);
+  const marketplace = sampleIntake.marketplace ?? "AMAZON_US";
+  const perProduct =
+    moduleSet.pipelineType === "APLUS"
+      ? quoteAplusRun({
+          selectedModules: moduleSet.aplusModules,
+          brandRegistered: moduleSet.brandRegistered,
+          marketplace,
+          intake: sampleIntake,
+        }).total
+      : quoteImageRun({
+          selectedModules: moduleSet.listingModules,
+          marketplace,
+          intake: sampleIntake,
+        }).total;
+  return perProduct * productCount;
 }

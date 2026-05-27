@@ -19,3 +19,28 @@ export function isResendConfigured(): boolean {
 export function isEmailAuthConfigured(): boolean {
   return isResendConfigured();
 }
+
+export type EmailConfigStatus = {
+  configured: boolean;
+  from: string;
+  productionReady: boolean;
+  usingDefaultFrom: boolean;
+  warning: string | null;
+};
+
+/** Surface Resend readiness for account/admin banners. */
+export function getEmailConfigStatus(): EmailConfigStatus {
+  const configured = isResendConfigured();
+  const from = getEmailFrom();
+  const usingDefaultFrom = from.includes("onboarding@resend.dev");
+  const productionReady = configured && !usingDefaultFrom;
+
+  let warning: string | null = null;
+  if (!configured) {
+    warning = "Resend API key missing — transactional email is disabled.";
+  } else if (usingDefaultFrom) {
+    warning = "Set EMAIL_FROM to a verified domain before production sends.";
+  }
+
+  return { configured, from, productionReady, usingDefaultFrom, warning };
+}

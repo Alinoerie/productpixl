@@ -13,6 +13,91 @@ export const listingCopySchema = z.object({
 
 export type ListingCopyOutput = z.infer<typeof listingCopySchema>;
 
+const BACKEND_KEYWORD_MAX_BYTES = 250;
+
+export type CopyLocale = "en" | "de" | "nl" | "fr";
+
+/** Map marketplace id → customer-facing copy locale. */
+export function localeForMarketplace(marketplace: string): CopyLocale {
+  if (marketplace === "AMAZON_DE") return "de";
+  if (marketplace === "BOL_NL") return "nl";
+  if (marketplace === "AMAZON_FR") return "fr";
+  return "en";
+}
+
+function localeInstructions(locale: CopyLocale, marketplace: string): string {
+  switch (locale) {
+    case "de":
+      return `Write ALL customer-facing copy in German (Deutsch). Formal "Sie" tone for Amazon DE. Metric units. EU compliance tone — no unsubstantiated health claims.`;
+    case "nl":
+      return `Write ALL customer-facing copy in Dutch (Nederlands) for Bol.com. Direct, trustworthy, less US marketing hype. Use metric units. Bol prefers factual benefits over superlatives.`;
+    case "fr":
+      return `Write ALL customer-facing copy in French (Français). Elegant, precise product language suitable for Amazon FR / EU shoppers. Metric units.`;
+    default:
+      if (marketplace === "AMAZON_UK") {
+        return "Write in UK English (colour, metre, organise).";
+      }
+      return "Write in US English unless otherwise specified.";
+  }
+}
+
+function byteLength(value: string): number {
+  return new TextEncoder().encode(value).length;
+}
+
+function trimBackendKeywordsToBytes(keywords: string, maxBytes = BACKEND_KEYWORD_MAX_BYTES): string {
+  const parts = keywords.split(",").map((p) => p.trim()).filter(Boolean);
+  const kept: string[] = [];
+  let total = 0;
+  for (const part of parts) {
+    const addition = (kept.length ? 2 : 0) + byteLength(part);
+    if (total + addition > maxBytes) break;
+    kept.push(part);
+    total += addition;
+  }
+  return kept.join(", ");
+}
+
+async function parseAndValidateCopy(
+  raw: string,
+  replicate: Replicate,
+  system: string,
+  user: string,
+  maxAttempts = 3
+): Promise<ListingCopyOutput> {
+  let parsed = listingCopySchema.parse(parseJsonFromModel(raw));
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (byteLength(parsed.backendKeywords) <= BACKEND_KEYWORD_MAX_BYTES) {
+      return parsed;
+    }
+    parsed = {
+      ...parsed,
+      backendKeywords: trimBackendKeywordsToBytes(parsed.backendKeywords),
+    };
+    if (byteLength(parsed.backendKeywords) <= BACKEND_KEYWORD_MAX_BYTES) {
+      return parsed;
+    }
+
+    const regen = await replicate.run("google/gemini-3-flash", {
+      input: {
+        prompt: `${system}\n\nProduct data:\n${user}\n\nPrevious backendKeywords exceeded 250 bytes. Regenerate ONLY backendKeywords as comma-separated terms, max 250 bytes total. Return JSON: { "backendKeywords": "..." }`,
+        max_tokens: 400,
+      },
+    });
+    const regenRaw = extractReplicateText(regen);
+    const regenParsed = parseJsonFromModel(regenRaw) as { backendKeywords?: string };
+    if (regenParsed.backendKeywords) {
+      parsed = { ...parsed, backendKeywords: regenParsed.backendKeywords };
+    }
+  }
+
+  return {
+    ...parsed,
+    backendKeywords: trimBackendKeywordsToBytes(parsed.backendKeywords),
+  };
+}
+
 export async function generateListingCopy(params: {
   productName: string;
   brandName: string;
@@ -30,11 +115,16 @@ export async function generateListingCopy(params: {
   keywords: string[];
   competitorTitles: string[];
   brandProfile?: BrandProfileData;
+  playbooksContext?: string;
 }): Promise<ListingCopyOutput> {
+  const locale = localeForMarketplace(params.marketplace);
+  const localeBlock = localeInstructions(locale, params.marketplace);
+
   if (isStubMode()) {
     await sleep(1500);
+    const suffix = locale === "de" ? " — Premium Qualität" : locale === "nl" ? " — Premium kwaliteit" : locale === "fr" ? " — Qualité premium" : "";
     return {
-      title: `${params.brandName} ${params.productName} — Premium ${params.category.split(">").pop()?.trim() ?? "Quality"}`,
+      title: `${params.brandName} ${params.productName}${suffix}`.slice(0, 200),
       bullets: [
         `Crafted for ${params.targetBuyer ?? "discerning buyers"} who expect visible quality.`,
         `Key materials: ${params.materials ?? "premium components"} — built to perform daily.`,
@@ -43,24 +133,25 @@ export async function generateListingCopy(params: {
         `Ships ready for ${params.marketplace.replace("_", " ")} — publish with confidence.`,
       ],
       description: `${params.brandName} ${params.productName} delivers the quality your customers expect on ${params.marketplace.replace("_", " ")}. ${params.analysisSummary ?? ""}`.trim(),
-      backendKeywords: params.keywords.slice(0, 8).join(", "),
+      backendKeywords: trimBackendKeywordsToBytes(params.keywords.slice(0, 8).join(", ")),
     };
   }
 
   const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
-  const isBol = params.marketplace === "BOL_NL";
   const brandBlock = params.brandProfile ? `\n${brandContextBlock(params.brandProfile)}` : "";
+  const playbookBlock = params.playbooksContext ? `\n${params.playbooksContext}` : "";
   const system = `You are a marketplace listing copywriter for ${params.marketplace}.
-Write in English unless marketplace is BOL_NL (then Dutch is preferred for customer-facing copy).
+${localeBlock}
 Optimize for Amazon A9 keyword relevance AND semantic/RUFUS-style discovery (benefit-led, answer shopper questions in bullets).
-Return ONLY valid JSON: { "title": string (max 200 chars), "bullets": [5 strings], "description": string, "backendKeywords": string (comma-separated, max 250 bytes) }
+Return ONLY valid JSON: { "title": string (max 200 chars), "bullets": [5 strings], "description": string, "backendKeywords": string (comma-separated, max 250 BYTES not characters) }
 Follow marketplace policy: no promotional claims, no competitor names, factual benefits.
-${isBol ? "Bol.com tone: direct, trustworthy, less aggressive US marketing hype." : ""}${brandBlock}`;
+backendKeywords MUST fit within 250 bytes when UTF-8 encoded.${brandBlock}${playbookBlock}`;
 
   const user = JSON.stringify({
     product: params.productName,
     brand: params.brandName,
     category: params.category,
+    locale,
     materials: params.materials,
     features: params.keyFeatures,
     buyer: params.targetBuyer,
@@ -82,8 +173,7 @@ ${isBol ? "Bol.com tone: direct, trustworthy, less aggressive US marketing hype.
   });
 
   const raw = extractReplicateText(output);
-  const parsed = parseJsonFromModel(raw);
-  return listingCopySchema.parse(parsed);
+  return parseAndValidateCopy(raw, replicate, system, user);
 }
 
 export type CopySectionId = "title" | "bullet" | "description" | "keywords";

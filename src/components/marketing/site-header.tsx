@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { MarketingMobileNav } from "@/components/marketing/marketing-mobile-nav";
 import { MARKETING_NAV_LINKS } from "@/lib/marketing-links";
+import { ProductPixlWordmark } from "@/components/brand/productpixl-logo";
 import { cn } from "@/lib/utils";
 
 export async function SiteHeader() {
@@ -13,10 +14,7 @@ export async function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-[var(--border)]/80 bg-[var(--background)]/90 backdrop-blur-md">
       <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ink)] text-xs font-bold text-white">
-            Px
-          </span>
-          <span className="font-serif text-xl tracking-tight">ProductPixl</span>
+          <ProductPixlWordmark size={44} />
         </Link>
         <nav className="hidden items-center gap-5 text-sm font-medium text-[var(--muted-fg)] lg:flex">
           {MARKETING_NAV_LINKS.map((link) => (

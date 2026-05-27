@@ -3,10 +3,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { inngest, COPY_PIPELINE_EVENT } from "@/inngest/client";
 import type { ProductIntakeData } from "@/lib/product-intake";
-import { quoteCopyRun } from "@/lib/credit-pricing";
+import { quoteCopyRun, quoteCopyRunMulti } from "@/lib/credit-pricing";
 import { isInngestConfigured, inngestNotConfiguredResponse, shouldUseInlinePipeline } from "@/lib/inngest-config";
 import { PIPELINE_ERROR } from "@/lib/pipeline-errors";
 import { scheduleInlineCopyPipeline } from "@/lib/run-copy-pipeline-async";
+import { runCopyPipelineMulti } from "@/pipelines/copy-pipeline-core";
+import { listingCopyWhere } from "@/lib/listing-copy";
 import { insufficientCreditsResponse, requireCredits, getUserCredits } from "@/lib/require-credits";
 
 export async function POST(req: NextRequest) {
@@ -20,19 +22,28 @@ export async function POST(req: NextRequest) {
     productId: existingProductId,
     inputImageUrl,
     marketplace = "AMAZON_US",
+    marketplaces,
     productData,
+    playbookContext,
   } = body as {
     productId?: string;
     inputImageUrl?: string;
     marketplace?: string;
+    marketplaces?: string[];
     productData: ProductIntakeData;
+    playbookContext?: string;
   };
 
   if (!productData?.name || !productData?.category) {
     return NextResponse.json({ error: "Product name and category are required" }, { status: 400 });
   }
 
-  const quote = quoteCopyRun({ marketplace, intake: productData });
+  const targetMarketplaces = [...new Set((marketplaces?.length ? marketplaces : [marketplace]).filter(Boolean))];
+  const quote =
+    targetMarketplaces.length > 1
+      ? quoteCopyRunMulti({ marketplaces: targetMarketplaces, intake: productData })
+      : quoteCopyRun({ marketplace: targetMarketplaces[0]!, intake: productData });
+
   if (!isInngestConfigured()) {
     return inngestNotConfiguredResponse();
   }
@@ -44,11 +55,12 @@ export async function POST(req: NextRequest) {
   }
 
   let productId = existingProductId;
+  const primaryMarketplace = targetMarketplaces[0]!;
 
   const productFields = {
     name: productData.name,
     inputImageUrl: inputImageUrl || "",
-    marketplace,
+    marketplace: primaryMarketplace,
     status: "QUEUED" as const,
     materials: productData.materials,
     keyFeatures: productData.keyFeatures,
@@ -83,11 +95,13 @@ export async function POST(req: NextRequest) {
     productId = product.id;
   }
 
-  await prisma.listingCopy.upsert({
-    where: { productId },
-    create: { productId, marketplace, status: "QUEUED" },
-    update: { marketplace, status: "QUEUED", errorMessage: null },
-  });
+  for (const mp of targetMarketplaces) {
+    await prisma.listingCopy.upsert({
+      where: listingCopyWhere(productId, mp),
+      create: { productId, marketplace: mp, status: "QUEUED" },
+      update: { status: "QUEUED", errorMessage: null },
+    });
+  }
 
   await prisma.user.update({
     where: { id: session.user.id },
@@ -97,18 +111,56 @@ export async function POST(req: NextRequest) {
   const useInline = shouldUseInlinePipeline();
 
   try {
-    const pipelineInput = { productId, marketplace, intake: productData };
-
-    if (useInline) {
-      scheduleInlineCopyPipeline(pipelineInput, session.user.id, quote.total);
+    if (targetMarketplaces.length > 1) {
+      if (useInline) {
+        void (async () => {
+          try {
+            await runCopyPipelineMulti({
+              productId,
+              marketplaces: targetMarketplaces,
+              intake: productData,
+              playbooksContext: playbookContext,
+            });
+          } catch (err) {
+            console.error("[inline-copy-multi]", err);
+            const { prisma: db } = await import("@/lib/prisma");
+            await db.user.update({
+              where: { id: session.user!.id },
+              data: { credits: { increment: quote.total } },
+            });
+          }
+        })();
+      } else {
+        await inngest.send({
+          name: COPY_PIPELINE_EVENT,
+          data: {
+            productId,
+            marketplaces: targetMarketplaces,
+            intake: productData,
+            playbooksContext: playbookContext,
+            chargedCredits: quote.total,
+          },
+        });
+      }
     } else {
-      await inngest.send({
-        name: COPY_PIPELINE_EVENT,
-        data: {
-          ...pipelineInput,
-          chargedCredits: quote.total,
-        },
-      });
+      const pipelineInput = {
+        productId,
+        marketplace: primaryMarketplace,
+        intake: productData,
+        playbooksContext: playbookContext,
+      };
+
+      if (useInline) {
+        scheduleInlineCopyPipeline(pipelineInput, session.user.id, quote.total);
+      } else {
+        await inngest.send({
+          name: COPY_PIPELINE_EVENT,
+          data: {
+            ...pipelineInput,
+            chargedCredits: quote.total,
+          },
+        });
+      }
     }
   } catch (err) {
     await prisma.user.update({
@@ -119,13 +171,15 @@ export async function POST(req: NextRequest) {
       where: { id: productId },
       data: { status: "FAILED" },
     });
-    await prisma.listingCopy.update({
-      where: { productId },
-      data: {
-        status: "FAILED",
-        errorMessage: err instanceof Error ? err.message : PIPELINE_ERROR.generationFailed,
-      },
-    });
+    for (const mp of targetMarketplaces) {
+      await prisma.listingCopy.update({
+        where: listingCopyWhere(productId, mp),
+        data: {
+          status: "FAILED",
+          errorMessage: err instanceof Error ? err.message : PIPELINE_ERROR.generationFailed,
+        },
+      });
+    }
     console.error("[generate/copy] inngest.send failed:", err);
     return NextResponse.json(
       { error: "Could not start copy generation. Credits were not charged." },
@@ -133,5 +187,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  return NextResponse.json({ success: true, productId, creditsCharged: quote.total });
+  return NextResponse.json({
+    success: true,
+    productId,
+    marketplaces: targetMarketplaces,
+    creditsCharged: quote.total,
+  });
 }

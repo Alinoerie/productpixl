@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { gradeListing } from "@/lib/listing-grader";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { primaryListingCopy, listingCopyWhere } from "@/lib/listing-copy";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,11 +30,12 @@ export async function POST(req: NextRequest) {
       if (session?.user?.id) {
         const product = await prisma.product.findFirst({
           where: { id: body.productId, userId: session.user.id },
-          include: { listingCopy: true },
+          include: { listingCopies: true },
         });
-        if (product?.listingCopy) {
+        const listingCopy = primaryListingCopy(product?.listingCopies, product?.marketplace);
+        if (product && listingCopy) {
           await prisma.listingCopy.update({
-            where: { productId: body.productId },
+            where: listingCopyWhere(product.id, product.marketplace),
             data: {
               grade: result.grade,
               gradeScore: result.score,

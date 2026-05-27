@@ -3,7 +3,7 @@ import { analyzeProductImage, scoreImageQuality } from "@/lib/ai";
 import { uploadBufferToCloudinary } from "@/lib/cloudinary";
 import { getBrandProfileForUser } from "@/lib/brand-profile";
 import { intakeFromProduct } from "@/lib/credit-pricing";
-import { getModulesForRun, type ListingModuleId } from "@/pipelines/modules";
+import { getModuleById, type ListingModuleId } from "@/pipelines/modules";
 import { buildListingPrompt } from "@/pipelines/prompt-builder";
 import { FIDELITY_RETRY_PREFIX, generateListingImage } from "@/pipelines/image-gen";
 import type { ResearchSummary } from "@/pipelines/prompt-builder";
@@ -41,7 +41,7 @@ export async function regenerateAsset(params: {
     antiPatterns: [],
   };
 
-  const mod = getModulesForRun(true).find((m) => m.id === params.moduleId);
+  const mod = getModuleById(params.moduleId);
   if (!mod) throw new Error("Invalid module");
 
   const prompt = buildListingPrompt(mod.id, analysis, intake, research, {

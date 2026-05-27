@@ -4,15 +4,16 @@ import { ChevronRight, ClipboardCheck, ImageIcon } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
-import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
 import { ProjectsFilterBar, buildProjectsQuery } from "@/components/projects/projects-filter-bar";
+import { ProjectsSelectableGrid } from "@/components/projects/projects-selectable-grid";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getProjectsJourney } from "@/lib/user-journey";
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
 import { getActiveBrandId } from "@/lib/brands";
+import { primaryListingCopy } from "@/lib/listing-copy";
 import { StudioPageShell } from "@/components/layout/studio-page-shell";
 
 const PAGE_SIZE = 24;
@@ -83,7 +84,17 @@ function getFilterEmptyState(filters: {
 
 function buildWhere(
   userId: string,
-  filters: { status?: string; copy?: string; images?: string; ready?: string; q?: string; brandId?: string }
+  filters: {
+    status?: string;
+    copy?: string;
+    images?: string;
+    ready?: string;
+    q?: string;
+    brandId?: string;
+    playbookSlug?: string;
+    templateSlug?: string;
+    pipelineType?: string;
+  }
 ): Prisma.ProductWhereInput {
   const where: Prisma.ProductWhereInput = { userId };
 
@@ -100,24 +111,30 @@ function buildWhere(
   }
 
   if (filters.copy === "with") {
-    where.listingCopy = { title: { not: null } };
+    where.listingCopies = { some: { title: { not: null } } };
   } else if (filters.copy === "without") {
-    where.OR = [
-      { listingCopy: { is: null } },
-      { listingCopy: { is: { title: null } } },
-      { listingCopy: { is: { title: "" } } },
-    ];
+    where.listingCopies = { none: { title: { not: null } } };
   }
 
   if (filters.images === "with") {
     where.assets = { some: { imageUrl: { not: null } } };
   } else if (filters.images === "without") {
-    where.NOT = { assets: { some: { imageUrl: { not: null } } } };
+    where.assets = { none: { imageUrl: { not: null } } };
   }
 
   if (filters.ready === "export") {
-    where.listingCopy = { title: { not: null } };
+    where.listingCopies = { some: { title: { not: null } } };
     where.assets = { some: { imageUrl: { not: null } } };
+  }
+
+  if (filters.playbookSlug) {
+    where.playbookSlug = filters.playbookSlug;
+  }
+  if (filters.templateSlug) {
+    where.templateSlug = filters.templateSlug;
+  }
+  if (filters.pipelineType && ["LISTING", "COPY", "APLUS", "VIDEO"].includes(filters.pipelineType)) {
+    where.pipelineType = filters.pipelineType;
   }
 
   return where;
@@ -138,6 +155,9 @@ export default async function ProjectsPage({
     ready?: string;
     q?: string;
     brandId?: string;
+    playbookSlug?: string;
+    templateSlug?: string;
+    pipelineType?: string;
   }>;
 }) {
   const session = await auth();
@@ -166,6 +186,9 @@ export default async function ProjectsPage({
     ready: params.ready,
     q: params.q,
     brandId: filterBrandId,
+    playbookSlug: params.playbookSlug,
+    templateSlug: params.templateSlug,
+    pipelineType: params.pipelineType,
   };
   const where = buildWhere(session.user.id, filters);
 
@@ -175,7 +198,7 @@ export default async function ProjectsPage({
       orderBy: { createdAt: "desc" },
       skip,
       take: PAGE_SIZE,
-      include: { assets: { orderBy: { moduleId: "asc" } }, listingCopy: true },
+      include: { assets: { orderBy: { moduleId: "asc" } }, listingCopies: true },
     }),
     prisma.product.count({ where }),
     prisma.product.count({ where: { userId: session.user.id } }),
@@ -183,7 +206,8 @@ export default async function ProjectsPage({
 
   const totalPages = Math.max(1, Math.ceil(filtered / PAGE_SIZE));
   const hasFilters = Boolean(
-    filters.status || filters.copy || filters.images || filters.ready || filters.q?.trim() || filters.brandId
+    filters.status || filters.copy || filters.images || filters.ready || filters.q?.trim() || filters.brandId ||
+    filters.playbookSlug || filters.templateSlug || filters.pipelineType
   );
   const filterBrand = filterBrandId ? brands.find((b) => b.id === filterBrandId) : null;
   const journey = getProjectsJourney(total);
@@ -267,24 +291,22 @@ export default async function ProjectsPage({
         })()
       ) : (
         <>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {products.map((p) => {
+          <ProjectsSelectableGrid
+            products={products.map((p) => {
               const thumbs = p.assets.filter((a) => a.imageUrl).slice(0, 4);
-              return (
-                <DashboardProjectCard
-                  key={p.id}
-                  id={p.id}
-                  name={p.name}
-                  status={p.status}
-                  marketplace={p.marketplace}
-                  createdAt={p.createdAt}
-                  hasCopy={Boolean(p.listingCopy?.title)}
-                  hasImages={thumbs.length > 0}
-                  thumbs={thumbs}
-                />
-              );
+              const copy = primaryListingCopy(p.listingCopies, p.marketplace);
+              return {
+                id: p.id,
+                name: p.name,
+                status: p.status,
+                marketplace: p.marketplace,
+                createdAt: p.createdAt,
+                hasCopy: Boolean(copy?.title),
+                hasImages: thumbs.length > 0,
+                thumbs,
+              };
             })}
-          </div>
+          />
 
           {totalPages > 1 ? (
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-6">

@@ -9,6 +9,7 @@ export function scheduleInlineCopyPipeline(input: CopyPipelineInput, userId: str
       console.error("[inline-copy-pipeline]", err);
       await markCopyPipelineFailed(
         input.productId,
+        input.marketplace,
         err instanceof Error ? err.message : "Pipeline failed"
       );
       const { prisma } = await import("@/lib/prisma");

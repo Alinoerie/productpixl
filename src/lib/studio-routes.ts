@@ -2,6 +2,7 @@
 export const STUDIO_ROUTES = {
   home: "/studio",
   images: "/studio/images",
+  aplus: "/studio/aplus",
   copy: "/studio/copy",
   video: "/studio/video",
   brandProfile: "/brand",
@@ -25,6 +26,14 @@ export function studioImagesHref(query?: { productId?: string | null; template?:
   if (query.productId) params.set("productId", query.productId);
   if (query.template) params.set("template", query.template);
   return `${STUDIO_ROUTES.images}?${params.toString()}`;
+}
+
+export function studioAplusHref(query?: { productId?: string | null; template?: string }) {
+  if (!query?.productId && !query?.template) return STUDIO_ROUTES.aplus;
+  const params = new URLSearchParams();
+  if (query.productId) params.set("productId", query.productId);
+  if (query.template) params.set("template", query.template);
+  return `${STUDIO_ROUTES.aplus}?${params.toString()}`;
 }
 
 export function studioCopyHref(productId?: string) {
@@ -60,6 +69,11 @@ export const CONTENT_STUDIO_TABS = [
     href: STUDIO_ROUTES.images,
     label: "Images",
     match: (path: string) => path.startsWith(STUDIO_ROUTES.images),
+  },
+  {
+    href: STUDIO_ROUTES.aplus,
+    label: "A+",
+    match: (path: string) => path.startsWith(STUDIO_ROUTES.aplus),
   },
   {
     href: STUDIO_ROUTES.copy,

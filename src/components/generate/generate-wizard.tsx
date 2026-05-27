@@ -44,6 +44,11 @@ import { UnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
 import { PIPELINE_ERROR, SUPPORT_EMAIL, toSellerPipelineError } from "@/lib/pipeline-errors";
 import { PipelineErrorMessage } from "@/components/ui/pipeline-error-message";
 import { downloadGalleryZip } from "@/lib/download-export-pack";
+import {
+  DEFAULT_LISTING_MODULE_IDS,
+  LISTING_MODULE_LIBRARY,
+  type ListingModuleId,
+} from "@/pipelines/modules";
 
 interface PromptPlanItem {
   moduleId: string;
@@ -107,7 +112,7 @@ export function GenerateWizard({
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [includePackaging, setIncludePackaging] = useState(false);
+  const [selectedModules, setSelectedModules] = useState<ListingModuleId[]>(DEFAULT_LISTING_MODULE_IDS);
   const [marketplace, setMarketplace] = useState<MarketplaceId>("AMAZON_US");
   const [productId, setProductId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -146,24 +151,35 @@ export function GenerateWizard({
     [form, referenceImageUrls]
   );
 
+  const toggleModule = (moduleId: ListingModuleId) => {
+    if (moduleId === "L1") return;
+    setSelectedModules((prev) => {
+      const next = new Set(prev);
+      if (next.has(moduleId)) next.delete(moduleId);
+      else next.add(moduleId);
+      return LISTING_MODULE_LIBRARY.filter((m) => next.has(m.id)).map((m) => m.id);
+    });
+    setPromptPlan([]);
+  };
+
   const imageQuote = useMemo(
     () =>
       quoteImageRun({
-        includePackaging,
+        selectedModules,
         marketplace,
         intake: intakePayload(),
       }),
-    [includePackaging, marketplace, intakePayload]
+    [selectedModules, marketplace, intakePayload]
   );
 
   const imageModuleBreakdown = useMemo(
     () =>
       quoteImageModuleBreakdown({
-        includePackaging,
+        selectedModules,
         marketplace,
         intake: intakePayload(),
       }),
-    [includePackaging, marketplace, intakePayload]
+    [selectedModules, marketplace, intakePayload]
   );
 
   const onFile = async (file: File) => {
@@ -285,10 +301,11 @@ export function GenerateWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           inputImageUrl: imageUrl,
-          includePackaging,
+          selectedModules,
           marketplace,
           productData: intakePayload(),
           analysis: savedAnalysis ?? undefined,
+          templateSlug,
         }),
       });
       if (!ok) throw new Error(data.error || "Failed to build prompt plan");
@@ -298,7 +315,7 @@ export function GenerateWizard({
     } finally {
       setPlanningPrompts(false);
     }
-  }, [imageUrl, includePackaging, marketplace, intakePayload, savedAnalysis]);
+  }, [imageUrl, selectedModules, marketplace, intakePayload, savedAnalysis]);
 
   useEffect(() => {
     if (step !== 2 || promptPlan.length || planningPrompts || !imageUrl) return;
@@ -322,10 +339,11 @@ export function GenerateWizard({
           body: JSON.stringify({
             existingProductId: productId ?? linkedProductId ?? undefined,
             inputImageUrl: imageUrl,
-            includePackaging,
+            selectedModules,
             marketplace,
             productData: intakePayload(),
             analysis: savedAnalysis ?? undefined,
+            templateSlug,
             promptOverrides: Object.fromEntries(promptPlan.map((p) => [p.moduleId, p.prompt])),
           }),
         }
@@ -511,7 +529,7 @@ export function GenerateWizard({
 
   const PHASES = ["RECEIVING", "ANALYZING", "RESEARCHING", "SELECTING", "GENERATING", "QA", "COMPLETE"];
   const marketplaceLabel = getMarketplace(marketplace).label;
-  const moduleSummary = includePackaging ? "Hero · Lifestyle · Detail · Packaging" : "Hero · Lifestyle · Detail";
+  const moduleSummary = selectedModules.map((id) => formatModuleLabel(id)).join(" · ");
   const template = templateSlug ? getVisualTemplate(templateSlug) : undefined;
   const railIndex = step >= 3 ? 1 : 0;
   const setImagePreview = useImageStudioStore((s) => s.setPreviewUrl);
@@ -549,8 +567,7 @@ export function GenerateWizard({
           title="Image studio"
           description={
             <>
-              {moduleSummary}
-              {includePackaging ? "" : ""} —{" "}
+              {moduleSummary} —{" "}
               <CreditsRequiredLine total={imageQuote.total} detailLine={imageQuote.detailLine} />
             </>
           }
@@ -793,24 +810,68 @@ export function GenerateWizard({
             <p className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 px-3 py-2 text-sm">
               Marketplace: <strong>{marketplaceLabel}</strong> — change on the product info step if needed.
             </p>
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/40 p-4">
-              <label className="flex cursor-pointer items-start gap-3">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={includePackaging}
-                  onChange={(e) => {
-                    setIncludePackaging(e.target.checked);
-                    setPromptPlan([]);
-                  }}
-                />
-                <div>
-                  <p className="font-medium">Include packaging shot</p>
-                  <p className="mt-1 text-sm text-[var(--muted-fg)]">
-                    Adds an unboxing / pack shot module — uses a few more credits
-                  </p>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/40 p-4 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-medium">Listing modules</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedModules(DEFAULT_LISTING_MODULE_IDS);
+                      setPromptPlan([]);
+                    }}
+                  >
+                    Starter (3)
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedModules(LISTING_MODULE_LIBRARY.map((m) => m.id));
+                      setPromptPlan([]);
+                    }}
+                  >
+                    Full library (12)
+                  </Button>
                 </div>
-              </label>
+              </div>
+              <p className="text-sm text-[var(--muted-fg)]">
+                Hero (L1) is always included. Add optional modules from the full PHOILA L1–L12 library — credits update as you select.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {LISTING_MODULE_LIBRARY.map((mod) => {
+                  const checked = selectedModules.includes(mod.id);
+                  const locked = mod.id === "L1";
+                  return (
+                    <label
+                      key={mod.id}
+                      className={cn(
+                        "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors",
+                        checked ? "border-[var(--accent)]/40 bg-[var(--card)]" : "border-[var(--border)]/80 bg-[var(--background)]",
+                        locked && "cursor-default opacity-90"
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-1"
+                        checked={checked}
+                        disabled={locked}
+                        onChange={() => toggleModule(mod.id)}
+                      />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {mod.label}
+                          {mod.optional ? null : <span className="ml-1 text-xs text-[var(--muted-fg)]">(core)</span>}
+                        </p>
+                        <p className="mt-0.5 text-xs text-[var(--muted-fg)]">{mod.description}</p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
             <ul className="space-y-2 text-sm text-[var(--muted-fg)]">
               <li className="flex gap-2">

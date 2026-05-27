@@ -45,3 +45,14 @@ export async function uploadUrlToCloudinary(
   });
   return result.secure_url;
 }
+
+export async function uploadVideoUrlToCloudinary(
+  videoUrl: string,
+  folder: string
+): Promise<string> {
+  const result = await cloudinary.uploader.upload(videoUrl, {
+    folder,
+    resource_type: "video",
+  });
+  return result.secure_url;
+}

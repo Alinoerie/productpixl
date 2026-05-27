@@ -18,11 +18,17 @@ const PIPELINE_PHASE: Record<string, string> = {
 
 const MODULE_LABELS: Record<string, string> = {
   L1: "Hero",
+  L2: "Size & scale",
   L3: "Lifestyle",
   L4: "Detail",
-  L5: "Flat lay",
-  L6: "Context",
+  L5: "Mood",
+  L6: "Construction",
+  L7: "Materials",
   L8: "Packaging",
+  L9: "Brand story",
+  L10: "Comparison",
+  L11: "Lifestyle alt",
+  L12: "Action",
 };
 
 export function formatProductStatus(status: string) {

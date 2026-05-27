@@ -71,18 +71,27 @@ export default async function HowItWorksPage() {
           </div>
           <MarketingStagger className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {LISTING_MODULES.map((m) => {
-              const sample = SHOWCASE_MODULE_SAMPLES[m.id];
+              const sample =
+                m.id in SHOWCASE_MODULE_SAMPLES
+                  ? SHOWCASE_MODULE_SAMPLES[m.id as keyof typeof SHOWCASE_MODULE_SAMPLES]
+                  : null;
               return (
                 <MarketingStaggerItem key={m.id}>
                   <div className="group overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-sm)] transition-transform duration-500 hover:-translate-y-1 motion-reduce:transform-none">
                     <div className="relative aspect-[4/3] overflow-hidden bg-[var(--muted)]" data-m-parallax>
-                      <Image
-                        src={sample.image}
-                        alt={sample.alt}
-                        fill
-                        sizes="280px"
-                        className="object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transform-none"
-                      />
+                      {sample ? (
+                        <Image
+                          src={sample.image}
+                          alt={sample.alt}
+                          fill
+                          sizes="280px"
+                          className="object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transform-none"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center px-4 text-center text-sm text-[var(--muted-fg)]">
+                          Sample coming soon — available in the full L1–L12 library
+                        </div>
+                      )}
                       <span className="absolute left-3 top-3 rounded-full bg-[var(--ink)]/80 px-2.5 py-1 font-serif text-sm text-white">
                         {m.id}
                       </span>

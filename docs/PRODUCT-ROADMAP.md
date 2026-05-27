@@ -17,26 +17,26 @@ Phased plan for sidebar navigation, multi-brand, playbooks, templates, batch cat
 
 ## Phase 2 — Playbooks & batch runs
 
-- [ ] Playbook run wizard: brand → products → confirm credits → queue Inngest jobs
-- [ ] Clone listing: variations, translations, catalog scale (1 → N SKUs)
-- [ ] Listing builder: multi-SKU batch from spreadsheet/CSV import
-- [ ] Save playbook configs to **My Playbooks** (template + brand + prompts)
-- [ ] Wire playbook slug into prompt builder + image/copy pipelines
-- [ ] Enable `POST /api/playbooks/run` (currently returns 503 until execution ships)
+- [x] Playbook run wizard: brand → products → confirm credits → queue Inngest jobs
+- [x] Clone listing: variations, translations, catalog scale (1 → N SKUs)
+- [x] Listing builder: multi-SKU batch from spreadsheet/CSV import
+- [x] Save playbook configs to **My Playbooks** (template + brand + prompts)
+- [x] Wire playbook slug into prompt builder + image/copy pipelines
+- [x] Enable `POST /api/playbooks/run` (batch execution via credits)
 
 ## Phase 3 — Visual template library
 
-- [ ] Seed template gallery (A+, infographics, lifestyle, UGC, Shopify, TikTok)
-- [ ] Filters: category, channel, text/no-text, industry, format
-- [ ] **Use template** flow → prefill generate wizard with template + brand palette swap
-- [ ] Track `templateSlug` on products
+- [x] Seed template gallery (A+, infographics, lifestyle, UGC, Shopify, TikTok)
+- [x] Filters: category, channel, text/no-text, industry, format
+- [x] **Use template** flow → prefill generate wizard with template + brand palette swap
+- [x] Track `templateSlug` on products
 
 ## Phase 4 — Multi-brand & catalog scale
 
-- [ ] Migrate legacy `BrandProfile` → default `Brand` row per user
-- [ ] Brand profile fields: language, tagline, tone, audience, values, aesthetic
-- [ ] Projects: bulk actions, playbook/template filters at scale
-- [ ] Team members & brand limits per plan tier
+- [x] Migrate legacy `BrandProfile` → default `Brand` row per user
+- [x] Brand profile fields: language, tagline, tone, audience, values, aesthetic
+- [x] Projects: bulk actions, playbook/template filters at scale
+- [ ] Team members & brand limits per plan tier (soft UI limit only; billing deferred)
 
 ## Phase 5 — Billing & production
 
@@ -54,9 +54,9 @@ Phased plan for sidebar navigation, multi-brand, playbooks, templates, batch cat
 | Copy studio | `/studio/copy` | Listing copy |
 | Projects | `/projects` | Canonical project list |
 | Project detail | `/products/[id]` | Legacy URL kept for deep links |
-| Listing builder | `/batch/listing-builder` | Phase 2 placeholder |
-| Clone catalog | `/batch/clone` | Phase 2 placeholder |
-| Expert playbooks | `/playbooks` | Preview only until Phase 2 |
+| Listing builder | `/batch/listing-builder` | CSV batch intake |
+| Clone catalog | `/batch/clone` | Variation / translation clone |
+| Expert playbooks | `/playbooks` | Playbook catalog |
 | My playbooks | `/my-playbooks` | Saved templates |
 | Visual templates | `/templates` | Template gallery |
 | Brand profile | `/brand` | Active brand kit |

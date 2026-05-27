@@ -18,8 +18,8 @@ export const WORKFLOW_STEPS: { icon: LucideIcon; title: string; body: string }[]
   },
   {
     icon: Layers,
-    title: "Gallery + copy generated",
-    body: "Hero, lifestyle, and detail images — plus listing copy — built with listing-specific prompts.",
+    title: "Gallery + A+ + copy generated",
+    body: "Hero, lifestyle, and detail images — A+ brand content modules — plus localized listing copy — built with listing-specific prompts.",
   },
   {
     icon: Zap,
@@ -30,9 +30,24 @@ export const WORKFLOW_STEPS: { icon: LucideIcon; title: string; body: string }[]
 
 export const LISTING_MODULES = [
   { id: "L1", label: "Main hero", desc: "White-background hero, Amazon-compliant 1:1" },
+  { id: "L2", label: "Size & scale", desc: "Reference objects or measurements for buyer confidence" },
   { id: "L3", label: "Lifestyle", desc: "In-context scene that sells the use case" },
   { id: "L4", label: "Detail", desc: "Texture, materials, and label fidelity" },
-  { id: "L8", label: "Packaging", desc: "Optional unboxing / pack shot module" },
+  { id: "L5", label: "Mood", desc: "Brand atmosphere and aspirational world" },
+  { id: "L6", label: "Construction", desc: "Craftsmanship and build-quality proof" },
+  { id: "L7", label: "Materials", desc: "Composition, ingredients, and certifications" },
+  { id: "L8", label: "Packaging", desc: "Unboxing and what arrives at the door" },
+  { id: "L9", label: "Brand story", desc: "Origin, values, and provenance" },
+  { id: "L10", label: "Comparison", desc: "Versus generic or competitor positioning" },
+  { id: "L11", label: "Lifestyle alt", desc: "Second lifestyle angle for another buyer segment" },
+  { id: "L12", label: "Action", desc: "Product in active use — motion and payoff" },
+] as const;
+
+export const APLUS_MODULES = [
+  { id: "M1", label: "Header", desc: "Brand hero — first impression at 970×600" },
+  { id: "M7", label: "Large image", desc: "Full-width atmospheric hero at 1500×600" },
+  { id: "M11", label: "FAQ visual", desc: "Premium trust signal for Brand Registered sellers" },
+  { id: "M13", label: "Shoppable", desc: "Interactive lifestyle with hotspot focal points" },
 ] as const;
 
 export const EXPLORE_LINKS = [

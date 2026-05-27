@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
     kind: "image" | "copy" | "regenerate";
     marketplace?: string;
     includePackaging?: boolean;
+    selectedModules?: ListingModuleId[];
     intake?: Partial<ProductIntakeData>;
     moduleId?: ListingModuleId;
   };
@@ -29,6 +30,7 @@ export async function POST(req: NextRequest) {
     case "image":
       quote = quoteImageRun({
         includePackaging: Boolean(body.includePackaging),
+        selectedModules: body.selectedModules,
         marketplace: body.marketplace ?? "AMAZON_US",
         intake: body.intake ?? {},
       });

@@ -1,12 +1,40 @@
 import type { ProductIntakeData } from "@/lib/product-intake";
 import { getModulesForRun, type ListingModuleId } from "@/pipelines/modules";
+import { getModulesForRun as getAplusModulesForRun, isPremiumAplusModule, type AplusModuleId } from "@/pipelines/aplus-modules";
 
 /** Opaque per-module weights — summed per image, not advertised as a rate card. */
 const MODULE_WEIGHT: Record<ListingModuleId, number> = {
   L1: 4,
+  L2: 4,
   L3: 8,
   L4: 3,
+  L5: 6,
+  L6: 4,
+  L7: 4,
   L8: 5,
+  L9: 6,
+  L10: 5,
+  L11: 7,
+  L12: 7,
+};
+
+/** Opaque per-module weights for A+ content (M1–M15). */
+const APLUS_MODULE_WEIGHT: Record<AplusModuleId, number> = {
+  M1: 5,
+  M2: 4,
+  M3: 5,
+  M4: 6,
+  M5: 5,
+  M6: 6,
+  M7: 9,
+  M8: 4,
+  M9: 5,
+  M10: 4,
+  M11: 7,
+  M12: 10,
+  M13: 10,
+  M14: 9,
+  M15: 11,
 };
 
 export type CreditQuote = {
@@ -61,8 +89,18 @@ function creditsForModule(moduleId: ListingModuleId, ctx: CreditPricingContext):
   const base = MODULE_WEIGHT[moduleId];
   const depth = intakeDepth(ctx.intake);
   const market = marketplaceDepth(ctx.marketplace);
-  const resolutionLift = moduleId === "L1" || moduleId === "L3" ? 1.5 : 0.75;
-  const sceneLift = moduleId === "L3" ? 2 : moduleId === "L8" ? 1.25 : 0;
+  const resolutionLift =
+    moduleId === "L1" || moduleId === "L3" || moduleId === "L5" || moduleId === "L9" || moduleId === "L11" || moduleId === "L12"
+      ? 1.5
+      : 0.75;
+  const sceneLift =
+    moduleId === "L3" || moduleId === "L11" || moduleId === "L12"
+      ? 2
+      : moduleId === "L8"
+        ? 1.25
+        : moduleId === "L5" || moduleId === "L9"
+          ? 1.5
+          : 0;
   return roundCredits(base + depth * 0.45 + market * 0.35 + resolutionLift + sceneLift);
 }
 
@@ -73,7 +111,8 @@ function pipelineOrchestration(ctx: CreditPricingContext, moduleCount: number): 
 }
 
 export function quoteImageRun(params: {
-  includePackaging: boolean;
+  includePackaging?: boolean;
+  selectedModules?: ListingModuleId[];
   marketplace: string;
   intake: Partial<ProductIntakeData>;
 }): CreditQuote {
@@ -81,7 +120,10 @@ export function quoteImageRun(params: {
     marketplace: params.marketplace,
     intake: params.intake,
   };
-  const modules = getModulesForRun(params.includePackaging);
+  const modules = getModulesForRun({
+    includePackaging: params.includePackaging,
+    selectedModules: params.selectedModules,
+  });
   const perImage = modules.map((mod) => creditsForModule(mod.id, ctx));
   const imageTotal = perImage.reduce((sum, n) => sum + n, 0);
   const orchestration = pipelineOrchestration(ctx, modules.length);
@@ -179,7 +221,8 @@ export function quoteVideoRun(params: {
 }
 
 export function quoteImageModuleBreakdown(params: {
-  includePackaging: boolean;
+  includePackaging?: boolean;
+  selectedModules?: ListingModuleId[];
   marketplace: string;
   intake: Partial<ProductIntakeData>;
 }): { label: string; credits: number }[] {
@@ -187,7 +230,10 @@ export function quoteImageModuleBreakdown(params: {
     marketplace: params.marketplace,
     intake: params.intake,
   };
-  const modules = getModulesForRun(params.includePackaging);
+  const modules = getModulesForRun({
+    includePackaging: params.includePackaging,
+    selectedModules: params.selectedModules,
+  });
   const perImage = modules.map((mod) => ({
     label: mod.label ?? mod.id,
     credits: creditsForModule(mod.id, ctx),
@@ -212,6 +258,71 @@ export function quoteRegenerateModule(
   };
 }
 
+function creditsForAplusModule(moduleId: AplusModuleId, ctx: CreditPricingContext): number {
+  const base = APLUS_MODULE_WEIGHT[moduleId];
+  const depth = intakeDepth(ctx.intake);
+  const market = marketplaceDepth(ctx.marketplace);
+  const wideLift = moduleId === "M7" || moduleId === "M12" || moduleId === "M13" || moduleId === "M14" || moduleId === "M15" ? 2.5 : 0.75;
+  const premiumLift = isPremiumAplusModule(moduleId) ? 2 : 0;
+  return roundCredits(base + depth * 0.5 + market * 0.4 + wideLift + premiumLift);
+}
+
+function aplusOrchestration(ctx: CreditPricingContext, moduleCount: number): number {
+  const depth = intakeDepth(ctx.intake);
+  const market = marketplaceDepth(ctx.marketplace);
+  return roundCredits(3 + moduleCount * 0.75 + depth * 0.4 + market * 0.55);
+}
+
+export function quoteAplusRun(params: {
+  selectedModules?: AplusModuleId[];
+  brandRegistered?: boolean;
+  marketplace: string;
+  intake: Partial<ProductIntakeData>;
+}): CreditQuote {
+  const ctx: CreditPricingContext = {
+    marketplace: params.marketplace,
+    intake: params.intake,
+  };
+  const modules = getAplusModulesForRun({
+    selectedModules: params.selectedModules,
+    brandRegistered: params.brandRegistered,
+  });
+  const perImage = modules.map((mod) => creditsForAplusModule(mod.id, ctx));
+  const imageTotal = perImage.reduce((sum, n) => sum + n, 0);
+  const orchestration = aplusOrchestration(ctx, modules.length);
+  const total = imageTotal + orchestration;
+  const depth = intakeDepth(params.intake);
+  const market = marketplaceDepth(params.marketplace);
+
+  return {
+    total,
+    imageCount: modules.length,
+    summary: formatCreditsRequired(total),
+    detailLine: buildDetailLine({
+      imageCount: modules.length,
+      depth,
+      market,
+      kind: "aplus",
+    }),
+  };
+}
+
+export function quoteRegenerateAplusModule(
+  moduleId: AplusModuleId,
+  marketplace: string,
+  intake: Partial<ProductIntakeData>
+): CreditQuote {
+  const ctx: CreditPricingContext = { marketplace, intake };
+  const single = creditsForAplusModule(moduleId, ctx);
+  const total = roundCredits(single + 2);
+  return {
+    total,
+    imageCount: 1,
+    summary: formatCreditsRequired(total),
+    detailLine: "Single A+ module refinement · exact Amazon dimensions",
+  };
+}
+
 export function formatCreditsRequired(total: number): string {
   return `${total.toLocaleString()} credit${total === 1 ? "" : "s"}`;
 }
@@ -230,6 +341,42 @@ export function typicalImageRunCredits(): number {
       targetBuyer: "Busy home cooks",
     },
   }).total;
+}
+
+/** Batch listing builder / clone — per-row credit total × row count. */
+export function quoteBatchRun(params: {
+  rowCount: number;
+  kind: "image" | "copy" | "both";
+  marketplace: string;
+  intake?: Partial<ProductIntakeData>;
+  includePackaging?: boolean;
+  selectedModules?: ListingModuleId[];
+}): CreditQuote {
+  const rowCount = Math.max(1, params.rowCount);
+  const intake = params.intake ?? { name: "Batch SKU", category: "General" };
+  const imageQuote = quoteImageRun({
+    includePackaging: Boolean(params.includePackaging),
+    selectedModules: params.selectedModules,
+    marketplace: params.marketplace,
+    intake,
+  });
+  const copyQuote = quoteCopyRun({ marketplace: params.marketplace, intake });
+
+  let perRow = 0;
+  if (params.kind === "image") perRow = imageQuote.total;
+  else if (params.kind === "copy") perRow = copyQuote.total;
+  else perRow = imageQuote.total + copyQuote.total;
+
+  const total = roundCredits(perRow * rowCount);
+  const kindLabel =
+    params.kind === "both" ? "images + copy" : params.kind === "image" ? "gallery images" : "listing copy";
+
+  return {
+    total,
+    imageCount: params.kind !== "copy" ? imageQuote.imageCount : undefined,
+    summary: formatCreditsRequired(total),
+    detailLine: `${rowCount} SKU${rowCount === 1 ? "" : "s"} × ${kindLabel} — ${formatCreditsRequired(perRow)} each`,
+  };
 }
 
 /** Typical copy run for pricing calculator. */
@@ -287,7 +434,7 @@ function buildDetailLine(params: {
   includePackaging?: boolean;
   depth: number;
   market: number;
-  kind: "image" | "copy";
+  kind: "image" | "copy" | "aplus";
 }): string {
   const parts: string[] = [];
   if (params.kind === "image" && params.imageCount) {
@@ -295,6 +442,9 @@ function buildDetailLine(params: {
       `${params.imageCount} gallery image${params.imageCount === 1 ? "" : "s"}`
     );
     if (params.includePackaging) parts.push("packaging module");
+  }
+  if (params.kind === "aplus" && params.imageCount) {
+    parts.push(`${params.imageCount} A+ module${params.imageCount === 1 ? "" : "s"}`);
   }
   if (params.kind === "copy") parts.push("research + RUFUS copy stack");
   if (params.depth >= 4) parts.push("rich product intake");

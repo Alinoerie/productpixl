@@ -37,6 +37,7 @@ import { getProductJourney } from "@/lib/user-journey";
 import { PIPELINE_ERROR, toSellerPipelineError } from "@/lib/pipeline-errors";
 import { isQueuedStale, type PipelineStatusShape } from "@/lib/pipeline-progress";
 import { STUDIO_ROUTES, studioCopyHref, studioImagesHref } from "@/lib/studio-routes";
+import { primaryListingCopy } from "@/lib/listing-copy";
 
 export default async function ProductPage({
   params,
@@ -49,20 +50,21 @@ export default async function ProductPage({
   const { id } = await params;
   const product = await prisma.product.findFirst({
     where: { id, userId: session.user.id },
-    include: { assets: { orderBy: { moduleId: "asc" } }, listingCopy: true },
+    include: { assets: { orderBy: { moduleId: "asc" } }, listingCopies: true },
   });
 
   if (!product) notFound();
 
-  const bullets = (product.listingCopy?.bullets as string[] | null) ?? [];
+  const listingCopy = primaryListingCopy(product.listingCopies, product.marketplace);
+  const bullets = (listingCopy?.bullets as string[] | null) ?? [];
   const completedAssets = product.assets.filter((a) => a.status === "COMPLETE" && a.imageUrl);
   const hasGallery = product.assets.length > 0 || product.status === "PROCESSING";
   const isNewProject =
     completedAssets.length === 0 &&
-    !product.listingCopy?.title &&
+    !listingCopy?.title &&
     product.status !== "PROCESSING" &&
     product.status !== "QUEUED";
-  const showPublishSections = completedAssets.length > 0 || Boolean(product.listingCopy?.title);
+  const showPublishSections = completedAssets.length > 0 || Boolean(listingCopy?.title);
   const galleryAssets = product.assets.map((a) => ({
     id: a.id,
     moduleId: a.moduleId,
@@ -85,7 +87,7 @@ export default async function ProductPage({
     productId: product.id,
     status: product.status,
     completedImages: completedAssets.length,
-    hasCopy: Boolean(product.listingCopy?.title),
+    hasCopy: Boolean(listingCopy?.title),
   });
   const queuedStale = isQueuedStale(product.status, product.pipelineStatus, product.updatedAt);
   const runInProgress = product.status === "QUEUED" || product.status === "PROCESSING";
@@ -119,16 +121,16 @@ export default async function ProductPage({
               <Badge className={statusBadgeClass(product.status)}>
                 {formatProductStatus(product.status)}
               </Badge>
-              {product.listingCopy?.title ? (
+              {listingCopy?.title ? (
                 <ProductGradeBadge
                   productId={product.id}
-                  initialGrade={product.listingCopy.grade}
-                  initialScore={product.listingCopy.gradeScore}
+                  initialGrade={listingCopy.grade}
+                  initialScore={listingCopy.gradeScore}
                   listingCopy={{
-                    title: product.listingCopy.title,
+                    title: listingCopy.title,
                     bullets,
-                    description: product.listingCopy.description ?? undefined,
-                    backendKeywords: product.listingCopy.backendKeywords ?? undefined,
+                    description: listingCopy.description ?? undefined,
+                    backendKeywords: listingCopy.backendKeywords ?? undefined,
                     productId: product.id,
                   }}
                 />
@@ -137,12 +139,12 @@ export default async function ProductPage({
             <p className="mt-2 text-sm text-[var(--muted-fg)]">
               {getMarketplace(product.marketplace).label} ·{" "}
               {new Date(product.createdAt).toLocaleDateString()}
-              {product.listingCopy?.title ? " · Copy attached" : ""}
+              {listingCopy?.title ? " · Copy attached" : ""}
               {completedAssets.length > 0 ? ` · ${completedAssets.length} images` : ""}
             </p>
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row md:hidden">
-            {completedAssets.length > 0 && !product.listingCopy?.title ? (
+            {completedAssets.length > 0 && !listingCopy?.title ? (
               <Button asChild className="w-full">
                 <Link href={studioCopyHref(product.id)}>Generate copy</Link>
               </Button>
@@ -163,19 +165,19 @@ export default async function ProductPage({
             </Button>
           </div>
           <div className="hidden flex-wrap gap-2 md:flex">
-            {completedAssets.length > 0 && !product.listingCopy?.title ? (
+            {completedAssets.length > 0 && !listingCopy?.title ? (
               <Button asChild>
                 <Link href={studioCopyHref(product.id)}>Generate copy</Link>
               </Button>
             ) : null}
-            {product.listingCopy?.title ? (
+            {listingCopy?.title ? (
               <GradeListingButton
                 productId={product.id}
                 listingCopy={{
-                  title: product.listingCopy.title,
+                  title: listingCopy.title,
                   bullets,
-                  description: product.listingCopy.description ?? undefined,
-                  backendKeywords: product.listingCopy.backendKeywords ?? undefined,
+                  description: listingCopy.description ?? undefined,
+                  backendKeywords: listingCopy.backendKeywords ?? undefined,
                   productId: product.id,
                 }}
               />
@@ -198,7 +200,7 @@ export default async function ProductPage({
         </div>
 
         <ProductSectionNav
-          hasCopy={Boolean(product.listingCopy?.title)}
+          hasCopy={Boolean(listingCopy?.title)}
           hasGallery={hasGallery || completedAssets.length === 0}
           compact={!showPublishSections}
         />
@@ -240,9 +242,9 @@ export default async function ProductPage({
           </div>
         )}
 
-        {product.listingCopy?.status === "FAILED" ? (
+        {listingCopy?.status === "FAILED" ? (
           <div className="rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
-            <p>{toSellerPipelineError(product.listingCopy.errorMessage ?? PIPELINE_ERROR.copyFailed)}</p>
+            <p>{toSellerPipelineError(listingCopy.errorMessage ?? PIPELINE_ERROR.copyFailed)}</p>
             <Button asChild size="sm" variant="outline" className="mt-3 border-[var(--error-border)]">
               <Link href={studioCopyHref(product.id)}>Retry in Copy</Link>
             </Button>
@@ -262,10 +264,10 @@ export default async function ProductPage({
             <Card className="border-dashed">
               <CardContent className="py-12 text-center">
                 <p className="font-serif text-lg">
-                  {product.listingCopy?.title ? "Copy saved — add gallery images" : "No images yet"}
+                  {listingCopy?.title ? "Copy saved — add gallery images" : "No images yet"}
                 </p>
                 <p className="mt-2 text-sm text-[var(--muted-fg)]">
-                  {product.listingCopy?.title
+                  {listingCopy?.title
                     ? "Upload a product photo in Image studio to generate your gallery."
                     : "Start in Image studio to populate this project."}
                 </p>
@@ -277,13 +279,13 @@ export default async function ProductPage({
           )}
         </div>
 
-        {product.listingCopy?.title ? (
+        {listingCopy?.title ? (
           <ProductListingPanel
             productId={product.id}
-            title={product.listingCopy.title}
+            title={listingCopy.title}
             bullets={bullets}
-            description={product.listingCopy.description}
-            keywords={product.listingCopy.backendKeywords}
+            description={listingCopy.description}
+            keywords={listingCopy.backendKeywords}
           />
         ) : completedAssets.length > 0 ? (
           <Card className="border-[var(--teal)]/30 bg-[var(--teal-soft)]/40">
@@ -306,16 +308,16 @@ export default async function ProductPage({
             <ProductReadiness
               productId={product.id}
               imageCount={completedAssets.length}
-              hasCopy={Boolean(product.listingCopy?.title)}
-              grade={product.listingCopy?.grade}
-              gradeScore={product.listingCopy?.gradeScore}
+              hasCopy={Boolean(listingCopy?.title)}
+              grade={listingCopy?.grade}
+              gradeScore={listingCopy?.gradeScore}
               listingCopy={
-                product.listingCopy?.title
+                listingCopy?.title
                   ? {
-                      title: product.listingCopy.title,
+                      title: listingCopy.title,
                       bullets,
-                      description: product.listingCopy.description,
-                      backendKeywords: product.listingCopy.backendKeywords,
+                      description: listingCopy.description,
+                      backendKeywords: listingCopy.backendKeywords,
                     }
                   : null
               }
@@ -328,12 +330,12 @@ export default async function ProductPage({
               marketplaceId={product.marketplace as MarketplaceId}
               assets={product.assets}
               listingCopy={
-                product.listingCopy
+                listingCopy
                   ? {
-                      title: product.listingCopy.title,
+                      title: listingCopy.title,
                       bullets: bullets,
-                      description: product.listingCopy.description,
-                      backendKeywords: product.listingCopy.backendKeywords,
+                      description: listingCopy.description,
+                      backendKeywords: listingCopy.backendKeywords,
                     }
                   : null
               }
@@ -350,16 +352,16 @@ export default async function ProductPage({
               sectionId={false}
               productId={product.id}
               imageCount={completedAssets.length}
-              hasCopy={Boolean(product.listingCopy?.title)}
-              grade={product.listingCopy?.grade}
-              gradeScore={product.listingCopy?.gradeScore}
+              hasCopy={Boolean(listingCopy?.title)}
+              grade={listingCopy?.grade}
+              gradeScore={listingCopy?.gradeScore}
               listingCopy={
-                product.listingCopy?.title
+                listingCopy?.title
                   ? {
-                      title: product.listingCopy.title,
+                      title: listingCopy.title,
                       bullets,
-                      description: product.listingCopy.description,
-                      backendKeywords: product.listingCopy.backendKeywords,
+                      description: listingCopy.description,
+                      backendKeywords: listingCopy.backendKeywords,
                     }
                   : null
               }
@@ -371,12 +373,12 @@ export default async function ProductPage({
               marketplaceId={product.marketplace as MarketplaceId}
               assets={product.assets}
               listingCopy={
-                product.listingCopy
+                listingCopy
                   ? {
-                      title: product.listingCopy.title,
+                      title: listingCopy.title,
                       bullets: bullets,
-                      description: product.listingCopy.description,
-                      backendKeywords: product.listingCopy.backendKeywords,
+                      description: listingCopy.description,
+                      backendKeywords: listingCopy.backendKeywords,
                     }
                   : null
               }
@@ -391,15 +393,15 @@ export default async function ProductPage({
         <ProductMobileActions
           productId={product.id}
           hasImages={completedAssets.length > 0}
-          hasCopy={Boolean(product.listingCopy?.title)}
+          hasCopy={Boolean(listingCopy?.title)}
           status={product.status}
           listingCopy={
-            product.listingCopy?.title
+            listingCopy?.title
               ? {
-                  title: product.listingCopy.title,
+                  title: listingCopy.title,
                   bullets,
-                  description: product.listingCopy.description,
-                  backendKeywords: product.listingCopy.backendKeywords,
+                  description: listingCopy.description,
+                  backendKeywords: listingCopy.backendKeywords,
                 }
               : null
           }

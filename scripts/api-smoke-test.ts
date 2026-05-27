@@ -61,12 +61,15 @@ async function timed<T>(name: string, fn: () => Promise<T>): Promise<T | null> {
 }
 
 async function sessionCookie(userId: string, credits: number): Promise<string> {
+  const isHttps = BASE_URL.startsWith("https://");
+  const cookieName = isHttps ? "__Secure-authjs.session-token" : "authjs.session-token";
+  const salt = cookieName;
   const token = await encode({
     token: { sub: userId, id: userId, credits },
     secret: process.env.AUTH_SECRET!,
-    salt: "authjs.session-token",
+    salt,
   });
-  return `authjs.session-token=${token}`;
+  return `${cookieName}=${token}`;
 }
 
 async function api(
@@ -160,15 +163,15 @@ async function main() {
       onboardingComplete: true,
     },
   });
-  const smokeCredits = process.env.SMOKE_PRESERVE_CREDITS === "1" ? user.credits : 10;
+  const smokeCredits = process.env.SMOKE_PRESERVE_CREDITS === "1" ? user.credits : 500;
   if (process.env.SMOKE_PRESERVE_CREDITS !== "1") {
-    await prisma.user.update({ where: { id: user.id }, data: { credits: 10 } });
+    await prisma.user.update({ where: { id: user.id }, data: { credits: 500 } });
   }
   pass(
     "DB setup",
     process.env.SMOKE_PRESERVE_CREDITS === "1"
       ? `brand profile ready (${smokeCredits.toLocaleString()} credits preserved)`
-      : "brand profile + 10 credits for smoke test user"
+      : "brand profile + 500 credits for smoke test user"
   );
 
   const cookie = await sessionCookie(user.id, smokeCredits);
@@ -194,7 +197,7 @@ async function main() {
   );
 
   if (analysis && research) {
-    const mod = getModulesForRun(false)[0];
+    const mod = getModulesForRun({})[0];
     const prompt = buildListingPrompt(
       mod.id,
       analysis,
@@ -286,6 +289,34 @@ async function main() {
   }
 
   // Copy pipeline (1 credit) — optional if SKIP_PIPELINE=1
+  await api("HTTP POST /api/batch/listing-builder validate (401)", "/api/batch/listing-builder", "", {
+    method: "POST",
+    body: JSON.stringify({ action: "validate", csvText: "name,image\nTest,https://example.com/a.jpg", columnMap: { name: "name", inputImageUrl: "image" } }),
+    expectStatus: 401,
+  });
+
+  const batchValidate = await api("HTTP POST /api/batch/listing-builder validate", "/api/batch/listing-builder", cookie, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "validate",
+      csvText: "name,image\nTest SKU,https://res.cloudinary.com/demo/sample.jpg",
+      columnMap: { name: "name", inputImageUrl: "image", category: "" },
+      marketplace: "AMAZON_US",
+      runKind: "copy",
+    }),
+  });
+  if (batchValidate?.rowCount === 1 || batchValidate?.valid === true) {
+    pass("Batch listing-builder validate", "CSV row accepted");
+  } else if (batchValidate) {
+    fail("Batch listing-builder validate", JSON.stringify(batchValidate).slice(0, 200));
+  }
+
+  await api("HTTP POST /api/playbooks/run (503 or 200)", "/api/playbooks/run", cookie, {
+    method: "POST",
+    body: JSON.stringify({ playbookSlug: "amazon-main-images", brandId: "invalid", productIds: [] }),
+    expectStatus: 400,
+  });
+
   if (process.env.SKIP_PIPELINE !== "1") {
     const copyRes = await api("HTTP POST /api/generate/copy", "/api/generate/copy", cookie, {
       method: "POST",

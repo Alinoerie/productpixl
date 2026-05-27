@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { primaryListingCopy, listingCopyWhere } from "@/lib/listing-copy";
 
 const patchSchema = z.object({
   title: z.string().min(1).max(500),
@@ -22,14 +23,15 @@ export async function PATCH(
   const { id } = await params;
   const product = await prisma.product.findFirst({
     where: { id, userId: session.user.id },
-    include: { listingCopy: true },
+    include: { listingCopies: true },
   });
 
   if (!product) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (!product.listingCopy) {
+  const existingCopy = primaryListingCopy(product.listingCopies, product.marketplace);
+  if (!existingCopy) {
     return NextResponse.json({ error: "No listing copy on this project" }, { status: 404 });
   }
 
@@ -41,7 +43,7 @@ export async function PATCH(
   }
 
   const listingCopy = await prisma.listingCopy.update({
-    where: { productId: id },
+    where: listingCopyWhere(id, product.marketplace),
     data: {
       title: body.title,
       bullets: body.bullets,

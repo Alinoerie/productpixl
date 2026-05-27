@@ -77,16 +77,25 @@ The attached reference image(s) show the exact product — preserve it pixel-for
 Do NOT change, regenerate, blur, distort, recolor, restyle, or alter product elements.
 The product must remain IDENTICAL to reference fidelity.`;
 
+  const buyer = intake.targetBuyer || analysis.suggestedTargetBuyer || "target buyer";
+
   const scenes: Record<ListingModuleId, string> = {
     L1: `
 [SCENE BLOCK — L1 MAIN HERO]
 Scene: Pure white (#FFFFFF) infinity cove, product only, no props, no models, no hands.
 Product occupies 75–85% of frame, centered, front-facing or slight 3/4 view, full label legible.
 Amazon main-image constraints are absolute: no text overlays, no watermarks, no environmental context.`,
+    L2: `
+[SCENE BLOCK — L2 SIZE & SCALE REFERENCE]
+Scene: product shown with clear, readable size context for online buyers.
+Use flat-lay with a familiar reference (coin, credit card, smartphone) OR worn/placed next to a ruler or tape measure.
+Respect scale anchor: ${scaleAnchor}. Product must not appear enlarged beyond stated dimensions.
+Background: white or very light neutral. Lighting: clean, even, product clearly legible.
+TRIGGER ACTIVATION: remove size uncertainty for "${buyer}".`,
     L3: `
 [SCENE BLOCK — L3 LIFESTYLE IN-CONTEXT]
 Foreground (0–30% depth): one specific supporting prop that matches buyer context, no clutter.
-Mid-ground (30–60% depth): product in natural use by ${intake.targetBuyer || analysis.suggestedTargetBuyer || "target buyer"}, scale anchored to ${scaleAnchor}.
+Mid-ground (30–60% depth): product in natural use by ${buyer}, scale anchored to ${scaleAnchor}.
 Background (60–100% depth): realistic environment with warm, natural light and clear depth.
 COMPETITOR CONTRAST: avoid cliché "${antiPatterns[0]}"; differentiate via "${positioningGap}".
 TRIGGER ACTIVATION: address buyer objection "${trigger}" through visible in-use proof and realistic scale.`,
@@ -96,12 +105,52 @@ Scene: extreme macro close-up focused on tactile quality and construction detail
 Show real material grain: ${intake.materials || analysis.materials}.
 Controlled side-light to reveal depth and authenticity; no synthetic CGI smoothness.
 COMPETITOR CONTRAST: avoid cliché "${antiPatterns[1] ?? antiPatterns[0]}"; prioritize premium material proof.`,
+    L5: `
+[SCENE BLOCK — L5 MOOD & ATMOSPHERE]
+Scene: brand world and aspirational atmosphere — product may appear naturally but is not required.
+Mood aligned with ${intake.vibe || analysis.mood}. Editorial, premium, category-appropriate environment.
+Lighting: atmospheric — warm, dramatic, or minimal per brand positioning.
+COMPETITOR CONTRAST: avoid "${antiPatterns[0]}"; own "${positioningGap}".`,
+    L6: `
+[SCENE BLOCK — L6 QUALITY CONSTRUCTION]
+Scene: craftsmanship and hidden quality — seams, lining, hardware, cap mechanism, or cross-section detail.
+Medium close-up revealing build quality beyond a standard pack shot.
+Side-light to emphasize depth and assembly precision.
+TRIGGER ACTIVATION: prove premium construction vs cheap alternatives.`,
+    L7: `
+[SCENE BLOCK — L7 FABRIC & MATERIAL CALLOUT]
+Scene: material story told visually — swatch, key ingredient, composition callout, or certification badges integrated into composition.
+Highlight: ${intake.materials || analysis.materials}. ${intake.keyFeatures || analysis.differentiators || "Key product claims"}.
+Clinical precision for health/science categories; warm/earthy for natural products.
+TRIGGER ACTIVATION: rational proof supporting emotional purchase.`,
     L8: `
 [SCENE BLOCK — L8 PACKAGING & UNBOXING]
 Scene: packaging and first-touch unboxing layout, clean and inviting.
 Packaging branding must remain accurate and legible.
 Props must be specific and minimal; visual focus stays on the product and included contents.
 TRIGGER ACTIVATION: reduce uncertainty by clearly showing what arrives and product readiness.`,
+    L9: `
+[SCENE BLOCK — L9 BRAND STORY]
+Scene: origin and provenance — workshop, farm, founder context, heritage, or cultural setting authentic to the brand.
+Brand name visible and intentional. Warm, specific, not generic stock.
+Mood: ${intake.vibe || analysis.mood}. Differentiate via "${positioningGap}".`,
+    L10: `
+[SCENE BLOCK — L10 COMPARISON / VERSUS]
+Scene: our product clearly hero — larger, better lit, dominant left or foreground.
+Generic/unbranded or secondary competitor product smaller or background; equal lighting treatment, fair comparison.
+Visual hierarchy: quality gap immediately visible without manipulative lighting.
+COMPETITOR CONTRAST: avoid "${antiPatterns[1] ?? antiPatterns[0]}".`,
+    L11: `
+[SCENE BLOCK — L11 LIFESTYLE ALTERNATE]
+Scene: same product as L3 but meaningfully different context — outdoor vs indoor, different demographic, or result-state vs application.
+Scale anchor: ${scaleAnchor}. Parallel quality bar to L3, not a lower-priority shot.
+TRIGGER ACTIVATION: reach buyers who did not connect with the primary lifestyle angle.`,
+    L12: `
+[SCENE BLOCK — L12 LIFESTYLE ACTION]
+Scene: active use — product mid-motion, application, consumption, or performance moment (not static still life).
+Energetic lighting; slight motion feel acceptable. Product clearly visible during value delivery.
+Scale anchor: ${scaleAnchor}. Buyer: ${buyer}.
+TRIGGER ACTIVATION: create urgency and desire through action, not context alone.`,
   };
 
   const style = `

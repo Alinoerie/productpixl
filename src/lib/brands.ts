@@ -4,6 +4,7 @@ import { DEFAULT_BRAND_PROFILE } from "@/lib/brand-profile-types";
 import { prisma } from "@/lib/prisma";
 
 export const ACTIVE_BRAND_COOKIE = "pp-active-brand";
+export const SOFT_BRAND_LIMIT = 5;
 
 export type BrandSummary = {
   id: string;
@@ -64,13 +65,43 @@ function mapBrandRow(row: {
   };
 }
 
+/** One-time copy of legacy BrandProfile fields into the default Brand row. */
+async function migrateLegacyBrandProfile(userId: string, brandId: string) {
+  const legacy = await prisma.brandProfile.findUnique({ where: { userId } });
+  if (!legacy) return;
+
+  const brand = await prisma.brand.findUnique({ where: { id: brandId } });
+  if (!brand) return;
+
+  await prisma.brand.update({
+    where: { id: brandId },
+    data: {
+      name: brand.name || legacy.displayName?.trim() || legacy.companyName?.trim() || brand.name,
+      companyName: brand.companyName ?? legacy.companyName,
+      companyDescription: brand.companyDescription ?? legacy.companyDescription,
+      targetAudience: brand.targetAudience ?? legacy.targetAudience,
+      tone: brand.tone || legacy.tone,
+      primaryColor: brand.primaryColor || legacy.primaryColor,
+      secondaryColor: brand.secondaryColor || legacy.secondaryColor,
+      logoUrl: brand.logoUrl ?? legacy.logoUrl,
+      guidelines: brand.guidelines ?? legacy.guidelines,
+      brandStory: brand.brandStory ?? legacy.brandStory,
+      onboardingComplete: brand.onboardingComplete || legacy.onboardingComplete,
+    },
+  });
+}
+
 /** Ensure at least one brand exists; migrate legacy BrandProfile into default brand. */
 export async function ensureDefaultBrand(userId: string): Promise<BrandRecord> {
   const existing = await prisma.brand.findFirst({
     where: { userId },
     orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
   });
-  if (existing) return mapBrandRow(existing);
+  if (existing) {
+    await migrateLegacyBrandProfile(userId, existing.id);
+    const refreshed = await prisma.brand.findUnique({ where: { id: existing.id } });
+    return mapBrandRow(refreshed ?? existing);
+  }
 
   const legacy = await prisma.brandProfile.findUnique({ where: { userId } });
   const name = legacy?.displayName?.trim() || legacy?.companyName?.trim() || "My brand";
@@ -154,6 +185,10 @@ export async function createBrand(userId: string, input: { name: string; descrip
   if (!name) throw new Error("Brand name is required");
 
   const count = await prisma.brand.count({ where: { userId } });
+  if (count >= SOFT_BRAND_LIMIT) {
+    throw new Error(`Brand limit reached (${SOFT_BRAND_LIMIT}). Remove a brand or contact us for more.`);
+  }
+
   const brand = await prisma.brand.create({
     data: {
       userId,
