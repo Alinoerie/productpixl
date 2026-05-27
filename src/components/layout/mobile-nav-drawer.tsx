@@ -41,13 +41,21 @@ export function MobileNavDrawer({
 
   return (
     <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Studio menu">
-      <button type="button" className="absolute inset-0 bg-black/40" aria-label="Close menu" onClick={onClose} />
-      <aside className="absolute bottom-0 left-0 top-0 flex w-[min(100%,20rem)] flex-col border-r border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-lg)]">
+      <button type="button" className="absolute inset-0 bg-black/40 cursor-default" aria-label="Close menu" onClick={onClose} />
+      <aside
+        className="absolute bottom-0 left-0 top-0 flex w-[min(100%,20rem)] flex-col border-r border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-lg)]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
           <p className="text-sm font-semibold">Menu</p>
-          <Button type="button" variant="ghost" size="sm" aria-label="Close menu" onClick={onClose}>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={onClose}
+            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg text-[var(--muted-fg)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+          >
             <X className="h-5 w-5" />
-          </Button>
+          </button>
         </div>
         <SidebarNavContent
           brands={brands}
@@ -56,6 +64,7 @@ export function MobileNavDrawer({
           projectCount={projectCount}
           onNavigate={onClose}
           studioLocked={studioLocked}
+          collapsed={false}
         />
       </aside>
     </div>

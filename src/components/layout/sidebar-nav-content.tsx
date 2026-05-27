@@ -201,28 +201,28 @@ export function SidebarNavContent({
       ) : null}
 
       <nav className="flex-1 space-y-6 overflow-y-auto p-3" aria-label="Studio navigation">
-        <NavSection title="Create" items={createNav} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} studioLocked={studioLocked} />
-        <NavSection title="Brand" items={brandNav} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />
+        {/* Create nav lives in the bottom bar on mobile — not duplicated here */}
+        <NavSection title="Brand" items={brandNav} pathname={pathname} collapsed={false} onNavigate={onNavigate} />
         {showAdvancedNav ? (
           <>
-            <NavSection title="Batch" items={batchNav} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />
+            <NavSection title="Batch" items={batchNav} pathname={pathname} collapsed={false} onNavigate={onNavigate} />
             <NavSection
               title="Playbooks"
               items={playbookNav}
               pathname={pathname}
-              collapsed={collapsed}
+              collapsed={false}
               onNavigate={onNavigate}
             />
             <NavSection
               title="Integrations"
               items={integrationsNav}
               pathname={pathname}
-              collapsed={collapsed}
+              collapsed={false}
               onNavigate={onNavigate}
             />
           </>
         ) : null}
-        <NavSection title="Library" items={libraryNav} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />
+        <NavSection title="Library" items={libraryNav} pathname={pathname} collapsed={false} onNavigate={onNavigate} />
       </nav>
 
       <div className={cn("space-y-2 border-t border-[var(--border)] p-3", collapsed && "px-2")}>
