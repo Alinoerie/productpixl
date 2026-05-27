@@ -40,10 +40,10 @@ export function MobileNavDrawer({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Studio menu">
+    <div className="fixed inset-0 z-[60] md:hidden" role="dialog" aria-modal="true" aria-label="Studio menu">
       <button type="button" className="absolute inset-0 bg-black/40 cursor-default" aria-label="Close menu" onClick={onClose} />
       <aside
-        className="absolute bottom-0 left-0 top-0 flex w-[min(100%,20rem)] flex-col border-r border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-lg)]"
+        className="absolute bottom-0 left-0 top-0 z-[61] flex w-[min(100%,20rem)] flex-col border-r border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-lg)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">

@@ -24,7 +24,7 @@ export function AppSidebar({
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-screen shrink-0 flex flex-col border-r border-[var(--border)] bg-[var(--card)] md:flex",
+        "sticky top-0 hidden h-screen shrink-0 relative z-10 flex flex-col border-r border-[var(--border)] bg-[var(--card)] md:flex",
         collapsed ? "w-[72px]" : "w-64"
       )}
     >
