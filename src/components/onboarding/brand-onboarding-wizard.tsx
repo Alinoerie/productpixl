@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
@@ -43,6 +43,22 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
   const router = useRouter();
   const { toast } = useToast();
   const [step, setStep] = useState(0);
+
+  // Restore persisted step from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("onboarding-step");
+    if (saved !== null) {
+      const n = parseInt(saved, 10);
+      if (!isNaN(n) && n >= 0 && n < STEPS.length) setStep(n);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist step to localStorage on change
+  useEffect(() => {
+    localStorage.setItem("onboarding-step", String(step));
+  }, [step]);
+
   const [profile, setProfile] = useState<OnboardProfile>({
     companyName: initialProfile.companyName ?? "",
     companyDescription: initialProfile.companyDescription ?? "",
@@ -198,6 +214,7 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
     const ok = await saveProfile(true);
     if (ok) {
       toast("Brand kit ready — open Content studio");
+      localStorage.removeItem("onboarding-step");
       router.push(`${STUDIO_ROUTES.home}?firstRun=1`);
       router.refresh();
     }

@@ -322,7 +322,7 @@ export function GenerateWizard({
   useEffect(() => {
     if (step !== 2 || promptPlan.length || planningPrompts || !imageUrl) return;
     void buildPromptPlan();
-  }, [step, promptPlan.length, planningPrompts, imageUrl, buildPromptPlan]);
+  }, [step, promptPlan.length, planningPrompts, imageUrl]);
 
   const startGeneration = async () => {
     if (!promptPlan.length) {

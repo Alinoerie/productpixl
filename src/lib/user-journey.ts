@@ -27,7 +27,7 @@ export async function getStudioPreflight(userId: string) {
 
 export function getOnboardingJourney(): JourneyStep {
   return {
-    step: "Step 1 of 3",
+    step: "Step 1 of 4",
     title: "Tell us about your brand",
     body: "Four quick steps lock in colors, tone, and rules. Every image and copy run uses your active brand automatically.",
     actionHref: "#brand-form",
