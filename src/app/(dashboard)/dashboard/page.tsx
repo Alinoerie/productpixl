@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { RedirectBanner } from "@/components/ui/redirect-banner";
 
 export default function DashboardRedirect() {
-  redirect("/studio");
+  return <RedirectBanner destination="/studio" />;
 }

@@ -14,63 +14,6 @@ export type JourneyStep = {
   variant?: "default" | "accent" | "muted";
 };
 
-export async function getDashboardJourney(userId: string): Promise<JourneyStep> {
-  const [onboardingComplete, credits, projectCount] = await Promise.all([
-    isBrandOnboardingComplete(userId),
-    prisma.user.findUnique({ where: { id: userId }, select: { credits: true } }).then((u) => u?.credits ?? 0),
-    prisma.product.count({ where: { userId } }),
-  ]);
-
-  if (!onboardingComplete) {
-    return {
-      step: "Step 1 of 3",
-      title: "Set up your brand first",
-      body: "Complete your listing brand kit so every image and copy run matches your catalog voice and colors.",
-      actionHref: "/onboarding",
-      actionLabel: "Start brand setup",
-      secondaryHref: "/how-it-works",
-      secondaryLabel: "How it works",
-      variant: "accent",
-    };
-  }
-
-  if (!hasPaidCredits(credits)) {
-    return {
-      step: "Credits needed",
-      title: "Top up to unlock the studios",
-      body: "Image studio and listing copy require credits. Projects, brand kit, account, and the free grader stay open.",
-      actionHref: "/pricing?locked=1",
-      actionLabel: "View pricing",
-      secondaryHref: "/grader",
-      secondaryLabel: "Free grader",
-      variant: "muted",
-    };
-  }
-
-  if (projectCount === 0) {
-    return {
-      step: "Step 2 of 3",
-      title: "Generate your first gallery",
-      body: "Upload one product photo. We analyze it, show credits required, then build hero, lifestyle, and detail images from your original shot.",
-      actionHref: STUDIO_ROUTES.images,
-      actionLabel: "Open images",
-      secondaryHref: STUDIO_ROUTES.copy,
-      secondaryLabel: "Copy only",
-      variant: "accent",
-    };
-  }
-
-  return {
-    step: "Suggested next",
-    title: "Add listing copy or start another SKU",
-    body: "Open a project to export assets, spot-edit a module, or run the copy studio for the same product.",
-    actionHref: STUDIO_ROUTES.projects,
-    actionLabel: "View projects",
-    secondaryHref: STUDIO_ROUTES.images,
-    secondaryLabel: "New image run",
-  };
-}
-
 export async function getStudioPreflight(userId: string) {
   const [onboardingComplete, user] = await Promise.all([
     isBrandOnboardingComplete(userId),

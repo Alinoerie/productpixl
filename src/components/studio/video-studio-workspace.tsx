@@ -8,6 +8,7 @@ import { StudioPreview } from "@/components/studio/studio-preview";
 import { CreditEstimateBar } from "@/components/studio/credit-estimate-bar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { InsufficientCreditsAlert } from "@/components/ui/insufficient-credits-alert";
 import {
   MOTION_STYLES,
   VIDEO_FORMATS,
@@ -257,6 +258,10 @@ export function VideoStudioWorkspace({ initialCredits }: { initialCredits: numbe
                 ) : null}
                 <p className="mt-2 text-xs text-[var(--muted-fg)]">Royalty-free, cleared for Amazon and TikTok.</p>
               </div>
+
+              {initialCredits < creditTotal ? (
+                <InsufficientCreditsAlert required={creditTotal} available={initialCredits} />
+              ) : null}
 
               <CreditEstimateBar
                 modules={[

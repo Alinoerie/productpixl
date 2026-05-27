@@ -15,8 +15,8 @@ import { StudioPageShell } from "@/components/layout/studio-page-shell";
 import { getAccountJourney } from "@/lib/user-journey";
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
 
-function formatAmount(cents: number) {
-  return new Intl.NumberFormat("en-EU", { style: "currency", currency: "EUR" }).format(cents / 100);
+function formatAmount(cents: number, currency = "EUR") {
+  return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(cents / 100);
 }
 
 export default async function AccountPage({
@@ -140,7 +140,14 @@ export default async function AccountPage({
                       {new Date(o.createdAt).toLocaleDateString()} · {formatAmount(o.amount)}
                     </p>
                   </div>
-                  <Badge variant="secondary">{formatOrderStatus(o.status)}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/api/invoices/${o.id}`} target="_blank">
+                        Download invoice
+                      </Link>
+                    </Button>
+                    <Badge variant="secondary">{formatOrderStatus(o.status)}</Badge>
+                  </div>
                 </li>
               ))}
             </ul>

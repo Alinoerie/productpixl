@@ -91,14 +91,12 @@ export default async function BrandsPage() {
                       >
                         View projects
                       </Link>
-                      {isActive ? (
-                        <Link
-                          href={STUDIO_ROUTES.brandProfile}
-                          className="text-[var(--muted-fg)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-                        >
-                          Edit brand kit
-                        </Link>
-                      ) : null}
+                      <Link
+                        href={STUDIO_ROUTES.brandProfile}
+                        className="text-[var(--muted-fg)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+                      >
+                        Edit brand kit
+                      </Link>
                     </div>
                   </div>
                   <BrandActivateButton brandId={brand.id} active={isActive} />

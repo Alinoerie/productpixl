@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { STUDIO_ROUTES } from "@/lib/studio-routes";
@@ -13,6 +13,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StudioStepper } from "@/components/ui/studio-stepper";
 import { PageHeader } from "@/components/ui/page-header";
 import { useToast } from "@/components/ui/toast-provider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { fetchJson } from "@/lib/fetch-json";
 import type { BrandProfileData } from "@/lib/brand-profile";
 import {
@@ -56,6 +63,35 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const isDirty = useMemo(() => {
+    return (
+      profile.displayName !== (initialProfile.displayName ?? "") ||
+      profile.tagline !== (initialProfile.tagline ?? null) ||
+      profile.language !== "en" ||
+      profile.logoUrl !== (initialProfile.logoUrl ?? "") ||
+      profile.primaryColor !== initialProfile.primaryColor ||
+      profile.secondaryColor !== initialProfile.secondaryColor ||
+      profile.brandAesthetic !== (initialProfile.brandAesthetic ?? null) ||
+      profile.targetAudience !== (initialProfile.targetAudience ?? "") ||
+      profile.tone !== (initialProfile.tone ?? "") ||
+      profile.brandStory !== (initialProfile.brandStory ?? "") ||
+      profile.guidelines !== (initialProfile.guidelines ?? "")
+    );
+  }, [profile, initialProfile]);
+
+  const handleBack = useCallback(
+    (targetStep: number) => {
+      if (isDirty) {
+        const confirmed = window.confirm(
+          "You have unsaved changes. Are you sure you want to go back?"
+        );
+        if (!confirmed) return;
+      }
+      setStep(targetStep);
+    },
+    [isDirty]
+  );
 
   const kitReady = Boolean(
     profile.displayName?.trim() && profile.tone?.trim() && (profile.brandStory?.trim() || profile.tagline?.trim())
@@ -209,18 +245,21 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
             </div>
             <div>
               <Label htmlFor="onboard-language">Listing language</Label>
-              <select
-                id="onboard-language"
+              <Select
                 value={profile.language ?? "en"}
-                onChange={(e) => setProfile({ ...profile, language: e.target.value })}
-                className="mt-1 flex h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm"
+                onValueChange={(value) => setProfile({ ...profile, language: value })}
               >
-                {LISTING_LANGUAGES.map((lang) => (
-                  <option key={lang.value} value={lang.value}>
-                    {lang.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="onboard-language" className="mt-1 w-full">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LISTING_LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.value} value={lang.value}>
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="onboard-logo">Logo (recommended)</Label>
@@ -336,7 +375,7 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
               />
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button variant="outline" onClick={() => setStep(0)}>
+              <Button variant="outline" onClick={() => void handleBack(0)}>
                 Back
               </Button>
               <Button disabled={saving} onClick={() => void continueStep(2)}>
@@ -432,7 +471,7 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
               />
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button variant="outline" onClick={() => setStep(1)}>
+              <Button variant="outline" onClick={() => void handleBack(1)}>
                 Back
               </Button>
               <Button
@@ -472,7 +511,7 @@ export function BrandOnboardingWizard({ initialProfile }: { initialProfile: Bran
               </li>
             </ul>
             <div className="flex flex-wrap gap-3">
-              <Button variant="outline" onClick={() => setStep(2)}>
+              <Button variant="outline" onClick={() => void handleBack(2)}>
                 Back
               </Button>
               <Button disabled={saving || !kitReady} onClick={() => void finishOnboarding()}>
