@@ -5,6 +5,7 @@ export const imagePipeline = inngest.createFunction(
   {
     id: "image-pipeline-run",
     retries: 3,
+    timeouts: { finish: "5m" },
   },
   { event: IMAGE_PIPELINE_EVENT },
   async ({ event, step }) => {

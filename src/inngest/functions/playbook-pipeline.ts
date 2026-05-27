@@ -15,7 +15,7 @@ type PlaybookPipelineEvent = {
 };
 
 export const playbookPipeline = inngest.createFunction(
-  { id: "playbook-pipeline-run", retries: 2 },
+  { id: "playbook-pipeline-run", retries: 2, timeouts: { finish: "10m" } },
   { event: PLAYBOOK_PIPELINE_EVENT },
   async ({ event, step }) => {
     const { runId, userId, playbookSlug, productIds } = event.data as PlaybookPipelineEvent;

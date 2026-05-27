@@ -7,7 +7,7 @@ import {
   quoteRegenerateModule,
 } from "@/lib/credit-pricing";
 import { getUserCredits, insufficientCreditsResponse, requireCredits } from "@/lib/require-credits";
-import type { ListingModuleId } from "@/pipelines/modules";
+import { LISTING_MODULE_LIBRARY, type ListingModuleId } from "@/pipelines/modules";
 
 export const maxDuration = 120;
 
@@ -28,7 +28,16 @@ export async function POST(
       return NextResponse.json({ error: "Describe what to change (hint required)" }, { status: 400 });
     }
 
-    const moduleId = (body.moduleId ?? assetId.split("-").pop() ?? "L1") as ListingModuleId;
+    const rawModuleId = body.moduleId ?? assetId.split("-").pop() ?? "L1";
+    // Validate moduleId against the known library — reject unknown values
+    const ALL_MODULE_IDS: ListingModuleId[] = ["L1","L2","L3","L4","L5","L6","L7","L8","L9","L10","L11","L12"];
+    if (!(ALL_MODULE_IDS as string[]).includes(rawModuleId)) {
+      return NextResponse.json(
+        { error: `Invalid moduleId: ${rawModuleId}. Valid values: ${ALL_MODULE_IDS.join(", ")}` },
+        { status: 400 }
+      );
+    }
+    const moduleId = rawModuleId as ListingModuleId;
 
     const product = await prisma.product.findFirst({
       where: { id: productId, userId: session.user.id },

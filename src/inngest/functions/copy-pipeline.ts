@@ -11,7 +11,7 @@ type CopyPipelineEvent = CopyPipelineInput & {
 };
 
 export const copyPipeline = inngest.createFunction(
-  { id: "copy-pipeline-run", retries: 3 },
+  { id: "copy-pipeline-run", retries: 3, timeouts: { finish: "5m" } },
   { event: COPY_PIPELINE_EVENT },
   async ({ event, step }) => {
     const input = event.data as CopyPipelineEvent;

@@ -5,6 +5,7 @@ export const aplusPipeline = inngest.createFunction(
   {
     id: "aplus-pipeline-run",
     retries: 3,
+    timeouts: { finish: "5m" },
   },
   { event: APLUS_PIPELINE_EVENT },
   async ({ event, step }) => {
