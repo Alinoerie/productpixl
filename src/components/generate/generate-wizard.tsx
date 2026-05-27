@@ -122,7 +122,7 @@ export function GenerateWizard({
   } | null>(null);
 
   const mobileStickyFooter =
-    "sticky bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-10 md:static md:bottom-auto";
+    "sticky bottom-[var(--mobile-nav-offset)] z-10 md:static md:bottom-auto";
 
   const [form, setForm] = useState<ProductIntakeData>({
     ...EMPTY_PRODUCT_INTAKE,

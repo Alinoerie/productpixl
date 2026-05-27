@@ -81,8 +81,9 @@ export default async function ContentStudioOverviewPage({
 
       {totalProjects === 0 ? (
         <p className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--muted)]/30 px-4 py-3 text-sm text-[var(--muted-fg)]">
-          <strong className="text-[var(--foreground)]">Batch tools & playbooks</strong> unlock in the sidebar after
-          your first project — start in Images or Copy above.
+          <strong className="text-[var(--foreground)]">Batch tools & playbooks</strong> unlock after your first
+          project — tap <strong className="text-[var(--foreground)]">More</strong> in the bottom bar (or the menu
+          icon up top) once you have a project, or start in Images / Copy below.
         </p>
       ) : null}
 

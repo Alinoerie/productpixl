@@ -95,7 +95,7 @@ export default async function ProductPage({
 
   return (
     <ProductEditProvider>
-      <div className="space-y-8 pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-0">
+      <div className="space-y-8 pb-[calc(var(--mobile-nav-offset)+4rem)] md:pb-0">
         <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-[var(--muted-fg)]">
           <Link href={STUDIO_ROUTES.home} className="hover:text-[var(--foreground)]">
             Content studio
@@ -115,7 +115,7 @@ export default async function ProductPage({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-serif text-3xl">{product.name}</h1>
+              <h1 className="font-serif text-2xl sm:text-3xl">{product.name}</h1>
               <Badge className={statusBadgeClass(product.status)}>
                 {formatProductStatus(product.status)}
               </Badge>
@@ -140,6 +140,27 @@ export default async function ProductPage({
               {product.listingCopy?.title ? " · Copy attached" : ""}
               {completedAssets.length > 0 ? ` · ${completedAssets.length} images` : ""}
             </p>
+          </div>
+          <div className="flex w-full flex-col gap-2 sm:flex-row md:hidden">
+            {completedAssets.length > 0 && !product.listingCopy?.title ? (
+              <Button asChild className="w-full">
+                <Link href={studioCopyHref(product.id)}>Generate copy</Link>
+              </Button>
+            ) : null}
+            {product.status === "FAILED" ? (
+              <Button asChild className="w-full">
+                <Link href={studioImagesHref({ productId: product.id })}>Retry run</Link>
+              </Button>
+            ) : runInProgress ? (
+              <ResetStuckRunButton productId={product.id} label="Reset stuck run" variant="outline" className="w-full" />
+            ) : (
+              <Button asChild variant="outline" className="w-full">
+                <Link href={studioImagesHref({ productId: product.id })}>New image run</Link>
+              </Button>
+            )}
+            <Button asChild variant="ghost" className="w-full">
+              <Link href={STUDIO_ROUTES.home}>Back to studio</Link>
+            </Button>
           </div>
           <div className="hidden flex-wrap gap-2 md:flex">
             {completedAssets.length > 0 && !product.listingCopy?.title ? (

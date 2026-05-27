@@ -416,7 +416,7 @@ export function CopyWorkspace({
   );
   const showNextStepsCard = showGraderImportBanner || showProjectNextSteps;
   const mobileStickyFooter =
-    "sticky bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-10 md:static md:bottom-auto";
+    "sticky bottom-[var(--mobile-nav-offset)] z-10 md:static md:bottom-auto";
 
   const isDirty = useMemo(() => {
     if (!copy?.title || !savedBaseline) return false;
@@ -1153,7 +1153,7 @@ export function CopyWorkspace({
       )}
 
       {copy?.title && productId && isDirty ? (
-        <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
+        <div className="fixed inset-x-0 bottom-[var(--mobile-nav-offset)] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
           <Button className="w-full" size="sm" disabled={saving} onClick={saveCopy}>
             {saving ? (
               <>

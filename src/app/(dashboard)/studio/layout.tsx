@@ -9,8 +9,8 @@ export default async function StudioLayout({ children }: { children: React.React
   const studioLocked = !hasPaidCredits(credits);
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8">
-      <ContentStudioSubnav studioLocked={studioLocked} />
+    <div className="mx-auto w-full max-w-5xl space-y-6 md:space-y-8">
+      <ContentStudioSubnav studioLocked={studioLocked} className="hidden px-1 md:flex md:rounded-2xl md:border md:border-[var(--border)] md:bg-[var(--card)] md:p-1.5" />
       {children}
     </div>
   );

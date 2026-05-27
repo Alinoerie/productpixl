@@ -286,7 +286,7 @@ export function GraderTool({ signedIn = false }: { signedIn?: boolean }) {
         className={cn(
           "fixed inset-x-0 z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden",
           signedIn
-            ? "bottom-[calc(3.75rem+env(safe-area-inset-bottom))]"
+            ? "bottom-[var(--mobile-nav-offset)]"
             : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         )}
       >

@@ -55,7 +55,7 @@ export function ProductSectionNav({
   return (
     <nav
       aria-label="Jump to section"
-      className="sticky top-14 z-30 -mx-4 flex gap-2 overflow-x-auto border-b border-[var(--border)] bg-[var(--background)]/95 px-4 py-2 backdrop-blur-sm scrollbar-none md:mx-0 md:rounded-xl md:border md:px-3"
+      className="sticky top-14 z-30 flex gap-2 overflow-x-auto border-b border-[var(--border)] bg-[var(--background)]/95 px-1 py-2 backdrop-blur-sm scrollbar-none md:mx-0 md:rounded-xl md:border md:px-3"
     >
       {links.map((link) => {
         const isActive = active === link.href;

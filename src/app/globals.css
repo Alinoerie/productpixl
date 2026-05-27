@@ -32,6 +32,7 @@
   --shadow-lg: 0 24px 56px rgb(15 23 42 / 0.12);
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
+  --mobile-nav-offset: calc(4.5rem + env(safe-area-inset-bottom));
 }
 
 @theme inline {
@@ -169,3 +170,20 @@ html {
 .grade-c { color: #d97706; background: #fffbeb; }
 .grade-d { color: #ea580c; background: #ffedd5; }
 .grade-f { color: #dc2626; background: #fef2f2; }
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-sticky-above-nav {
+  bottom: var(--mobile-nav-offset);
+}
+
+.mobile-fixed-above-nav {
+  bottom: var(--mobile-nav-offset);
+}

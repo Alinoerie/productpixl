@@ -19,7 +19,7 @@ export function MarketingMobileNav({ signedIn }: { signedIn: boolean }) {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    const firstLink = panelRef.current?.querySelector("a");
+    const firstLink = panelRef.current?.querySelector("a, button");
     if (firstLink instanceof HTMLElement) firstLink.focus();
 
     const onKey = (e: KeyboardEvent) => {
@@ -43,6 +43,7 @@ export function MarketingMobileNav({ signedIn }: { signedIn: boolean }) {
         type="button"
         variant="ghost"
         size="sm"
+        className="min-h-11 min-w-11"
         aria-expanded={open}
         aria-controls="marketing-mobile-nav"
         aria-label={open ? "Close menu" : "Open menu"}
@@ -51,25 +52,31 @@ export function MarketingMobileNav({ signedIn }: { signedIn: boolean }) {
         {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
       {open ? (
-        <>
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Site menu">
           <button
             type="button"
-            className="fixed inset-0 top-16 z-40 bg-black/20"
+            className="absolute inset-0 bg-black/40"
             aria-label="Close menu"
             onClick={() => setOpen(false)}
           />
           <nav
             id="marketing-mobile-nav"
             ref={panelRef}
-            className="absolute left-0 right-0 top-16 z-50 border-b border-[var(--border)] bg-[var(--background)] px-4 py-4 shadow-[var(--shadow-md)]"
+            className="absolute bottom-0 left-0 top-0 flex w-[min(100%,20rem)] flex-col border-r border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-lg)]"
           >
-            <ul className="space-y-1">
+            <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+              <span className="font-serif text-lg">ProductPixl</span>
+              <Button type="button" variant="ghost" size="sm" aria-label="Close menu" onClick={() => setOpen(false)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <ul className="flex-1 space-y-1 overflow-y-auto p-4">
               {MARKETING_NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
                     className={cn(
-                      "block rounded-lg px-3 py-2 text-sm font-medium hover:bg-[var(--muted)]",
+                      "flex min-h-11 items-center rounded-lg px-3 text-sm font-medium hover:bg-[var(--muted)]",
                       link.highlight === "teal" && "text-[var(--teal)]",
                       link.highlight === "accent" && "text-[var(--accent)]"
                     )}
@@ -79,16 +86,23 @@ export function MarketingMobileNav({ signedIn }: { signedIn: boolean }) {
                   </Link>
                 </li>
               ))}
-              <li className="pt-2">
-                <Button asChild size="sm" className="w-full">
-                  <Link href={signedIn ? STUDIO_ROUTES.home : "/login"} onClick={() => setOpen(false)}>
-                    {signedIn ? "Open studio" : "Start free"}
+            </ul>
+            <div className="space-y-2 border-t border-[var(--border)] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+              {!signedIn ? (
+                <Button asChild variant="outline" className="w-full min-h-11">
+                  <Link href="/login" onClick={() => setOpen(false)}>
+                    Sign in
                   </Link>
                 </Button>
-              </li>
-            </ul>
+              ) : null}
+              <Button asChild className="w-full min-h-11">
+                <Link href={signedIn ? STUDIO_ROUTES.home : "/login"} onClick={() => setOpen(false)}>
+                  {signedIn ? "Open studio" : "Start free — 10 credits"}
+                </Link>
+              </Button>
+            </div>
           </nav>
-        </>
+        </div>
       ) : null}
     </div>
   );

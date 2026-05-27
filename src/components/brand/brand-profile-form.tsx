@@ -516,7 +516,7 @@ export function BrandProfileForm() {
       </div>
 
       {isDirty ? (
-        <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
+        <div className="fixed inset-x-0 bottom-[var(--mobile-nav-offset)] z-30 border-t border-[var(--border)] bg-[var(--card)]/95 p-3 backdrop-blur-md md:hidden">
           <Button className="w-full" disabled={saving} onClick={save}>
             {saving ? (
               <>

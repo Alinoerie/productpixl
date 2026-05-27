@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getActiveBrandId, listBrandsForUser } from "@/lib/brands";
 import { prisma } from "@/lib/prisma";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AppShellMobileChrome } from "@/components/layout/app-shell-mobile";
 import { CreditBadge } from "@/components/layout/credit-badge";
 import { SidebarProvider, SidebarToggle } from "@/components/layout/sidebar-context";
 import { CreditsPaywallBanner } from "@/components/ui/credits-paywall-banner";
@@ -38,7 +39,10 @@ export async function AppShell({
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-[var(--background)]">
+      <div
+        className="min-h-screen bg-[var(--background)]"
+        style={{ ["--mobile-nav-offset" as string]: "calc(4.5rem + env(safe-area-inset-bottom))" }}
+      >
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-[var(--card)] focus:px-4 focus:py-2 focus:shadow-[var(--shadow-md)]"
@@ -58,22 +62,18 @@ export async function AppShell({
           ) : null}
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--card)]/95 px-4 shadow-[var(--shadow-sm)] backdrop-blur-md">
-              <div className="flex items-center gap-2">
-                <SidebarToggle />
-                {!userId ? (
+            <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-[var(--border)] bg-[var(--card)]/95 px-3 shadow-[var(--shadow-sm)] backdrop-blur-md sm:px-4">
+              <div className="flex min-w-0 items-center gap-2">
+                {userId ? <SidebarToggle /> : (
                   <Link href={STUDIO_ROUTES.home} className="font-serif text-lg">
                     ProductPixl
                   </Link>
-                ) : null}
+                )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                 {userId ? <AppShellNav studioLocked={studioLocked} /> : null}
-                <Button asChild size="sm" variant="outline" className="hidden sm:inline-flex">
+                <Button asChild size="sm" variant="outline" className="hidden lg:inline-flex">
                   <Link href="/pricing">Upgrade</Link>
-                </Button>
-                <Button asChild size="sm" variant="ghost" className="hidden sm:inline-flex">
-                  <Link href="/account?invite=1">Invite</Link>
                 </Button>
                 <div className="md:hidden">
                   <CreditBadge initialCredits={credits} />
@@ -83,10 +83,10 @@ export async function AppShell({
 
             <main
               id="main"
-              className="flex-1 px-4 py-8 pb-24 md:px-8 md:py-10 md:pb-10"
+              className="flex-1 px-4 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:px-8 md:py-10 md:pb-10"
             >
               {showPaywallBanner && studioLocked ? (
-                <div className="mb-8">
+                <div className="mb-6 md:mb-8">
                   <CreditsPaywallBanner />
                 </div>
               ) : null}
@@ -94,6 +94,16 @@ export async function AppShell({
             </main>
           </div>
         </div>
+
+        {userId ? (
+          <AppShellMobileChrome
+            brands={brands}
+            activeBrandId={activeBrandId}
+            initialCredits={credits}
+            projectCount={projectCount}
+            studioLocked={studioLocked}
+          />
+        ) : null}
       </div>
     </SidebarProvider>
   );
