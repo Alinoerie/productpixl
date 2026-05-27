@@ -48,10 +48,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const validMarketplaceIds = new Set(MARKETPLACES.map((m) => m.id));
+  const validMarketplaceIds = new Set<string>(MARKETPLACES.map((m) => m.id));
   if (!validMarketplaceIds.has(marketplace)) {
     return NextResponse.json(
-      { error: `Invalid marketplace: ${marketplace}. Valid values: ${[...validMarketplaceIds].join(", ")}` },
+      { error: `Invalid marketplace: ${String(marketplace)}. Valid values: ${[...validMarketplaceIds].join(", ")}` },
       { status: 400 }
     );
   }
