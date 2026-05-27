@@ -35,7 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import { useToast } from "@/components/ui/toast-provider";
 import { GradeListingButton } from "@/components/products/grade-listing-button";
-import { Camera, Check, Download, Images, Loader2, Sparkles } from "lucide-react";
+import { Camera, Check, Download, Images, Loader2, Lock, Sparkles } from "lucide-react";
 import { type MarketplaceId } from "@/lib/marketplaces";
 import { getMarketplace } from "@/lib/marketplaces";
 import { getVisualTemplate } from "@/lib/templates/catalog";
@@ -128,6 +128,8 @@ export function GenerateWizard({
   const [savedAnalysis, setSavedAnalysis] = useState<ProductAnalysis | null>(null);
   const [analysisStubMode, setAnalysisStubMode] = useState(false);
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
+  const [backgroundLocked, setBackgroundLocked] = useState(false);
+  const [lockedBackground, setLockedBackground] = useState("");
   const [projectListingCopy, setProjectListingCopy] = useState<{
     title: string;
     bullets: string[];
@@ -345,6 +347,7 @@ export function GenerateWizard({
             analysis: savedAnalysis ?? undefined,
             templateSlug,
             promptOverrides: Object.fromEntries(promptPlan.map((p) => [p.moduleId, p.prompt])),
+            bgLock: backgroundLocked && lockedBackground ? lockedBackground : undefined,
           }),
         }
       );
@@ -874,6 +877,42 @@ export function GenerateWizard({
                     </label>
                   );
                 })}
+              </div>
+            </div>
+            {/* Background lock toggle */}
+            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+              <div className="flex items-start gap-3">
+                <input
+                  id="bg-lock-toggle"
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={backgroundLocked}
+                  onChange={(e) => {
+                    setBackgroundLocked(e.target.checked);
+                    if (!e.target.checked) setLockedBackground("");
+                  }}
+                />
+                <div className="flex-1">
+                  <label htmlFor="bg-lock-toggle" className="text-sm font-medium cursor-pointer">
+                    <Lock className="inline h-3.5 w-3.5 mr-1.5 mb-0.5 text-[var(--accent)]" />
+                    Lock background style across all modules
+                  </label>
+                  <p className="mt-1 text-xs text-[var(--muted-fg)]">
+                    Reuse the background from your uploaded photo for all gallery modules. Useful when you have a specific lifestyle context you want to preserve across variations.
+                  </p>
+                  {backgroundLocked ? (
+                    <div className="mt-3 space-y-1.5">
+                      <p className="text-xs font-medium text-[var(--muted-fg)]">Describe the background to lock:</p>
+                      <Textarea
+                        id="locked-bg-input"
+                        placeholder="e.g. warm wooden kitchen shelf, clean white marble counter, outdoor garden setting"
+                        value={lockedBackground}
+                        onChange={(e) => setLockedBackground(e.target.value)}
+                        className="min-h-[60px] text-xs"
+                      />
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
             <ul className="space-y-2 text-sm text-[var(--muted-fg)]">

@@ -119,6 +119,8 @@ export type ImagePipelineInput = {
   intake: ProductIntakeData;
   playbookContext?: string;
   templateContext?: string;
+  /** Lock the background style — passed as a description string when backgroundLocked is true */
+  bgLock?: string;
 };
 
 /** Run the full image pipeline (used by Inngest steps and local dev inline runner). */
@@ -133,6 +135,7 @@ export async function runImagePipelineCore(input: ImagePipelineInput): Promise<{
   } = input;
   const playbookContext = input.playbookContext;
   const templateContext = input.templateContext;
+  const bgLock = input.bgLock;
 
   const product = await prisma.product.findUniqueOrThrow({
     where: { id: productId },
@@ -205,6 +208,7 @@ export async function runImagePipelineCore(input: ImagePipelineInput): Promise<{
           marketplace: product.marketplace,
           playbookContext,
           templateContext,
+          bgLock,
         });
 
       const { imageUrl, qaScore } = await generateModuleAsset({

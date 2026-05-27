@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     promptOverrides = {},
     analysis,
     templateSlug,
+    bgLock,
   } = body as {
     existingProductId?: string;
     inputImageUrl: string;
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
     analysis?: ProductAnalysis;
     productData: ProductIntakeData;
     templateSlug?: string;
+    bgLock?: string;
   };
 
   if (!inputImageUrl || !productData?.name) {
@@ -128,6 +130,7 @@ export async function POST(req: NextRequest) {
       analysis,
       intake: productData,
       templateContext,
+      bgLock,
     };
 
     if (useInline) {

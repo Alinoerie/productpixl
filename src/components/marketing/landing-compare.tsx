@@ -14,6 +14,7 @@ const FEATURES: { label: string; note?: string }[] = [
   { label: "Batch & variation runs" },
   { label: "EU & Bol.com marketplace native" },
   { label: "Product fidelity — shape & colors preserved", note: "We never warp or replace your product" },
+  { label: "Background lock across gallery modules", note: "Keep a consistent background across all generated images" },
   { label: "Pay per run — no monthly subscription" },
 ];
 
@@ -29,25 +30,37 @@ const TOOLS: {
     highlight: true,
     price: "€0 to start",
     priceNote: "10 free credits · pay per run",
-    tiers: ["yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes"],
+    tiers: ["yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes"],
   },
   {
     name: "WizStudio",
     price: "$250–1,125/mo",
     priceNote: "Per-download model · enterprise SKUs",
-    tiers: ["yes", "yes", "no", "no", "no", "yes", "no", "yes", "no"],
+    tiers: ["yes", "yes", "no", "no", "no", "yes", "no", "yes", "no", "no"],
   },
   {
     name: "Pixii",
     price: "$200+/mo",
     priceNote: "Subscription · requires live ASIN",
-    tiers: ["no", "yes", "no", "yes", "no", "no", "no", "partial", "no"],
+    tiers: ["no", "yes", "no", "yes", "no", "no", "no", "partial", "no", "no"],
+  },
+  {
+    name: "Pebblely",
+    price: "From $29/mo",
+    priceNote: "Subscription · 70 images/mo on Starter",
+    tiers: ["yes", "yes", "no", "no", "yes", "no", "no", "no", "no", "no"],
+  },
+  {
+    name: "Botika",
+    price: "From $23/mo",
+    priceNote: "Subscription · AI model training",
+    tiers: ["yes", "yes", "no", "no", "yes", "no", "no", "no", "no", "no"],
   },
   {
     name: "ChatGPT / generic AI",
     price: "Free / $20+/mo",
     priceNote: "No marketplace modules or image pipeline",
-    tiers: ["yes", "no", "no", "partial", "no", "no", "no", "no", "yes"],
+    tiers: ["yes", "no", "no", "partial", "no", "no", "no", "no", "yes", "no"],
   },
 ];
 
