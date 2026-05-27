@@ -191,18 +191,19 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Card 3: Bol.com ready */}
+            {/* Card 3: European marketplaces */}
             <div className="card-surface p-7 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[var(--accent-soft)] to-transparent rounded-bl-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
               <div className="flex h-full flex-col">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent-soft)] border border-[rgba(245,158,11,0.15)] mb-5">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-[var(--accent)]">
-                    <path d="M3 4h14M3 10h14M3 16h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M3 10h14M10 3c-2 2-3 5-3 7s1 5 3 7M10 3c2 2 3 5 3 7s-1 5-3 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 </div>
-                <h3 className="font-semibold text-[var(--foreground)] text-lg">Bol.com ready</h3>
+                <h3 className="font-semibold text-[var(--foreground)] text-lg">EU & UK marketplaces</h3>
                 <p className="mt-2 text-sm leading-relaxed text-[var(--muted-fg)] flex-1">
-                  EU tone, export packs, and marketplace formatting built specifically for Bol.com sellers.
+                  Amazon EU + UK supported. Export formats built for European seller requirements.
                 </p>
               </div>
             </div>
