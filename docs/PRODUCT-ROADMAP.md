@@ -43,15 +43,17 @@ Phased plan for sidebar navigation, multi-brand, playbooks, templates, batch cat
 - [ ] Stripe checkout + subscriptions for Growth / Scale (monthly credits allocation)
 - [ ] Plan enforcement: brand count, team seats, Clone/Steal-the-Look gates on Scale+
 - [ ] Enterprise contact flow + API/MCP placeholders
-- [ ] Production Inngest on Vercel (see `docs/INNGEST_VERCEL.md`)
+- [x] Production Inngest on Vercel (see `docs/INNGEST_VERCEL.md`)
 
 ## Navigation map
 
 | Item | Route | Notes |
 |------|-------|-------|
 | Content studio | `/studio` | Home hub |
-| Image studio | `/studio/images` | Gallery generation |
-| Copy studio | `/studio/copy` | Listing copy |
+| Image studio | `/studio/images` | Listing gallery L1–L12 |
+| A+ content studio | `/studio/aplus` | A+ modules M1–M15 |
+| Video studio | `/studio/video` | Minimax image-to-video |
+| Copy studio | `/studio/copy` | Multi-marketplace listing copy |
 | Projects | `/projects` | Canonical project list |
 | Project detail | `/products/[id]` | Legacy URL kept for deep links |
 | Listing builder | `/batch/listing-builder` | CSV batch intake |

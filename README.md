@@ -40,10 +40,17 @@ pnpm dev
 | Feature | Route |
 |--------|--------|
 | Content studio home | `/studio` |
-| Image studio | `/studio/images` |
+| Image studio (L1–L12) | `/studio/images` |
+| A+ content studio (M1–M15) | `/studio/aplus` |
+| Video studio | `/studio/video` |
 | Listing copy | `/studio/copy` |
 | Projects (all SKUs / runs) | `/projects` |
 | Project detail | `/products/[id]` |
+| Batch listing builder (CSV) | `/batch/listing-builder` |
+| Clone catalog | `/batch/clone` |
+| Expert playbooks | `/playbooks` |
+| My playbooks | `/my-playbooks` |
+| Visual templates | `/templates` |
 | Brand onboarding | `/onboarding` |
 | Listing brand kit | `/brand` |
 | All brands | `/brands` |
@@ -90,17 +97,25 @@ npx tsx scripts/set-user-credits.ts your@email.com 9999999
 npx tsx scripts/reset-stuck-products.ts your@email.com   # if runs stuck at Queued
 ```
 
-**Suggested journey:** sign in → `/onboarding` → `/studio` → `/studio/images` → open project → `/studio/copy` → export from project page → `/grader` (free).
+**Suggested journey:** sign in → `/onboarding` → `/studio` → `/studio/images` → open project → `/studio/aplus` or `/studio/copy` → export from project page → `/grader` (free).
 
 ## Manual test checklist
 
 - [ ] Sign in → `/onboarding` if brand kit incomplete
-- [ ] `/studio` — Images + Copy cards; batch/playbooks hint when zero projects
-- [ ] `/projects` — filters, brand chips, card grid; `/products` redirects here
+- [ ] `/studio` — Images, A+, Video, Copy cards; batch/playbooks hint when zero projects
+- [ ] `/studio/images` — L1–L12 module picker, template slug from `/templates`
+- [ ] `/studio/aplus` — 6–12 modules, brand-registered toggle for M11–M15
+- [ ] `/studio/video` — poll until COMPLETE, export MP4
+- [ ] `/studio/copy` — multi-marketplace POST
+- [ ] `/playbooks/[slug]` — run wizard → Inngest fan-out
+- [ ] `/batch/listing-builder` — CSV upload
+- [ ] `/batch/clone` — variation/translation clone
+- [ ] `/projects` — filters + bulk actions; `/products` redirects here
 - [ ] `/studio/copy?productId=` — jumps to Edit copy when project has listing copy
 - [ ] `/products/[id]` — gallery first; export/readiness collapsed until images or copy exist
+- [ ] `/pricing` — Growth/Scale show features; monthly buttons say coming soon
 - [ ] Generation errors show plain language + contact support (no Inngest jargon)
-- [ ] `pnpm test:smoke:prod` passes after Inngest connected
+- [ ] `pnpm test:smoke:prod` passes
 
 ## Stub mode
 
