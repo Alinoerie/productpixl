@@ -1,36 +1,36 @@
 import type { Metadata } from "next";
-import { DM_Sans, Instrument_Serif } from "next/font/google";
+import { DM_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import { siteUrl } from "@/lib/site-url";
+import { SiteHeader } from "@/components/marketing/site-header";
+import { SiteFooter } from "@/components/marketing/site-footer";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-dm-sans",
 });
 
-const instrument = Instrument_Serif({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-instrument",
+  variable: "--font-space-grotesk",
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl()),
-  title: "ProductPixl — AI listing studio for Amazon sellers",
+  metadataBase: new URL("https://productpixl.com"),
+  title: "ProductPixl — AI product imagery for marketplace sellers",
   description:
-    "One product photo → Amazon gallery images and RUFUS-ready copy. Pay per generation. No ASIN required.",
+    "Upload one product photo. Get studio-quality listing images for Amazon, eBay, Etsy and EU marketplaces. No photoshoot. No designer.",
   openGraph: {
-    title: "ProductPixl — AI listing studio for Amazon sellers",
+    title: "ProductPixl — AI product imagery for marketplace sellers",
     description:
-      "One product photo → Amazon gallery images and RUFUS-ready copy. Pay per generation. No ASIN required.",
+      "Upload one product photo. Get studio-quality listing images for Amazon, eBay, Etsy and EU marketplaces. No photoshoot. No designer.",
     siteName: "ProductPixl",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ProductPixl — AI listing studio for Amazon sellers",
+    title: "ProductPixl — AI product imagery for marketplace sellers",
     description:
-      "One product photo → Amazon gallery images and RUFUS-ready copy. Pay per generation. No ASIN required.",
+      "Upload one product photo. Get studio-quality listing images for Amazon, eBay, Etsy and EU marketplaces.",
   },
   icons: {
     icon: "/logo.png",
@@ -41,14 +41,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} ${instrument.variable} antialiased`}>
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-[var(--ink)] focus:px-4 focus:py-2 focus:text-sm focus:text-white"
-        >
-          Skip to content
-        </a>
-        {children}
+      <body className={`${dmSans.variable} ${spaceGrotesk.variable} antialiased`}>
+        <SiteHeader />
+        <main id="main">{children}</main>
+        <SiteFooter />
       </body>
     </html>
   );
