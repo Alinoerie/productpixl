@@ -677,16 +677,13 @@ function FinalCtaSection() {
 export default function HomePage() {
   return (
     <>
-      <NavBar />
-      <main id="main">
-        <HeroSection />
-        <BentoSection />
-        <HowItWorksSection />
-        <SocialProofSection />
-        <PricingSection />
-        <FaqSection />
-        <FinalCtaSection />
-      </main>
+      <HeroSection />
+      <BentoSection />
+      <HowItWorksSection />
+      <SocialProofSection />
+      <PricingSection />
+      <FaqSection />
+      <FinalCtaSection />
     </>
   );
 }

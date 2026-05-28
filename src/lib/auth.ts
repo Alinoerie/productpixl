@@ -22,17 +22,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     ...authConfig.callbacks,
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session: jwtSession }) {
       if (user?.id) {
         token.id = user.id;
-      }
-      if (token.id) {
         const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
+          where: { id: user.id },
           select: { credits: true, image: true },
         });
         token.credits = dbUser?.credits ?? 10;
         if (dbUser?.image) token.picture = dbUser.image;
+      }
+      if (trigger === "update" && jwtSession?.credits !== undefined) {
+        token.credits = jwtSession.credits;
       }
       return token;
     },
