@@ -1,0 +1,410 @@
+import Link from "next/link";
+import { Suspense } from "react";
+import { ChevronRight, ClipboardCheck } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ShowcaseMosaic } from "@/components/marketing/showcase-mosaic";
+import { ProjectsFilterBar, buildProjectsQuery } from "@/components/projects/projects-filter-bar";
+import { ProjectsSelectableGrid } from "@/components/projects/projects-selectable-grid";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getProjectsJourney } from "@/lib/user-journey";
+import { STUDIO_ROUTES } from "@/lib/studio-routes";
+import { getActiveBrandId } from "@/lib/brands";
+import { primaryListingCopy } from "@/lib/listing-copy";
+import { StudioPageShell } from "@/components/layout/studio-page-shell";
+
+const PAGE_SIZE = 24;
+
+function getFilterEmptyState(filters: {
+  status?: string;
+  copy?: string;
+  images?: string;
+  ready?: string;
+  q?: string;
+}) {
+  if (filters.ready === "export") {
+    return {
+      title: "No export-ready projects yet",
+      description:
+        "Export-ready projects have both gallery images and listing copy saved. Generate images, write copy, or finish both on an existing project.",
+      primary: { href: STUDIO_ROUTES.images, label: "Start image run" },
+      secondary: { href: STUDIO_ROUTES.copy, label: "Generate listing copy" },
+    };
+  }
+  if (filters.status === "FAILED") {
+    return {
+      title: "No failed projects",
+      description: "All image runs completed successfully — or failures were retried already.",
+      primary: { href: STUDIO_ROUTES.images, label: "Start new image run" },
+      secondary: { href: "/projects", label: "Clear filters" },
+    };
+  }
+  if (filters.status === "QUEUED" || filters.status === "PROCESSING") {
+    return {
+      title: "No active runs",
+      description: "Queued and processing projects appear here while gallery images are generating.",
+      primary: { href: STUDIO_ROUTES.images, label: "Start image run" },
+      secondary: { href: "/projects", label: "Clear filters" },
+    };
+  }
+  if (filters.copy === "without") {
+    return {
+      title: "All projects have listing copy",
+      description: "Try a different filter, or generate copy for a new product.",
+      primary: { href: STUDIO_ROUTES.copy, label: "Generate listing copy" },
+      secondary: { href: "/projects", label: "Clear filters" },
+    };
+  }
+  if (filters.images === "without") {
+    return {
+      title: "All projects have gallery images",
+      description: "Try a different filter, or start a new image run.",
+      primary: { href: STUDIO_ROUTES.images, label: "Start image run" },
+      secondary: { href: "/projects", label: "Clear filters" },
+    };
+  }
+  if (filters.q?.trim()) {
+    return {
+      title: "No matches for your search",
+      description: `Nothing matched “${filters.q.trim()}”. Try another product name or clear filters.`,
+      primary: { href: "/projects", label: "Clear filters" },
+      secondary: { href: STUDIO_ROUTES.images, label: "Start new project" },
+    };
+  }
+  return {
+    title: "No matches",
+    description: "Try clearing filters or search with a different product name.",
+    primary: { href: "/projects", label: "Clear filters" },
+    secondary: { href: STUDIO_ROUTES.images, label: "Open images" },
+  };
+}
+
+function buildWhere(
+  userId: string,
+  filters: {
+    status?: string;
+    copy?: string;
+    images?: string;
+    ready?: string;
+    q?: string;
+    brandId?: string;
+    playbookSlug?: string;
+    templateSlug?: string;
+    pipelineType?: string;
+  }
+): Prisma.ProductWhereInput {
+  const where: Prisma.ProductWhereInput = { userId };
+
+  if (filters.brandId) {
+    where.brandId = filters.brandId;
+  }
+
+  if (filters.status && ["COMPLETE", "PROCESSING", "FAILED", "QUEUED"].includes(filters.status)) {
+    where.status = filters.status;
+  }
+
+  if (filters.q?.trim()) {
+    where.name = { contains: filters.q.trim(), mode: "insensitive" };
+  }
+
+  if (filters.copy === "with") {
+    where.listingCopies = { some: { title: { not: null } } };
+  } else if (filters.copy === "without") {
+    where.listingCopies = { none: { title: { not: null } } };
+  }
+
+  if (filters.images === "with") {
+    where.assets = { some: { imageUrl: { not: null } } };
+  } else if (filters.images === "without") {
+    where.assets = { none: { imageUrl: { not: null } } };
+  }
+
+  if (filters.ready === "export") {
+    where.listingCopies = { some: { title: { not: null } } };
+    where.assets = { some: { imageUrl: { not: null } } };
+  }
+
+  if (filters.playbookSlug) {
+    where.playbookSlug = filters.playbookSlug;
+  }
+  if (filters.templateSlug) {
+    where.templateSlug = filters.templateSlug;
+  }
+  if (filters.pipelineType && ["LISTING", "COPY", "APLUS", "VIDEO"].includes(filters.pipelineType)) {
+    where.pipelineType = filters.pipelineType;
+  }
+
+  return where;
+}
+
+function FiltersFallback() {
+  return <Skeleton className="h-40 w-full rounded-2xl" />;
+}
+
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    page?: string;
+    status?: string;
+    copy?: string;
+    images?: string;
+    ready?: string;
+    q?: string;
+    brandId?: string;
+    playbookSlug?: string;
+    templateSlug?: string;
+    pipelineType?: string;
+    sort?: string;
+    order?: string;
+  }>;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) return null;
+
+  const params = await searchParams;
+  const page = Math.max(1, Number(params.page) || 1);
+  const skip = (page - 1) * PAGE_SIZE;
+
+  // Sort defaults: updatedAt desc
+  const sortField = ["updatedAt", "createdAt", "name", "status"].includes(params.sort ?? "")
+    ? (params.sort as "updatedAt" | "createdAt" | "name" | "status")
+    : "updatedAt";
+  const sortOrder = params.order === "asc" ? "asc" : "desc";
+
+  const [brands, activeBrandId] = await Promise.all([
+    prisma.brand.findMany({
+      where: { userId: session.user.id },
+      orderBy: [{ isDefault: "desc" }, { name: "asc" }],
+      select: { id: true, name: true },
+    }),
+    getActiveBrandId(session.user.id),
+  ]);
+
+  const filterBrandId =
+    params.brandId && brands.some((b) => b.id === params.brandId) ? params.brandId : undefined;
+
+  const filters = {
+    status: params.status,
+    copy: params.copy,
+    images: params.images,
+    ready: params.ready,
+    q: params.q,
+    brandId: filterBrandId,
+    playbookSlug: params.playbookSlug,
+    templateSlug: params.templateSlug,
+    pipelineType: params.pipelineType,
+    sort: sortField,
+    order: sortOrder,
+  };
+  const where = buildWhere(session.user.id, filters);
+
+  const orderBy: Prisma.ProductOrderByWithRelationInput =
+    sortField === "name"
+      ? { name: sortOrder }
+      : sortField === "status"
+      ? { status: sortOrder }
+      : sortField === "createdAt"
+      ? { createdAt: sortOrder }
+      : { updatedAt: sortOrder };
+
+  const [products, filtered, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      orderBy,
+      skip,
+      take: PAGE_SIZE,
+      include: { assets: { orderBy: { moduleId: "asc" } }, listingCopies: true },
+    }),
+    prisma.product.count({ where }),
+    prisma.product.count({ where: { userId: session.user.id } }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered / PAGE_SIZE));
+  const hasFilters = Boolean(
+    filters.status || filters.copy || filters.images || filters.ready || filters.q?.trim() || filters.brandId ||
+    filters.playbookSlug || filters.templateSlug || filters.pipelineType
+  );
+  const filterBrand = filterBrandId ? brands.find((b) => b.id === filterBrandId) : null;
+  const journey = getProjectsJourney(total);
+
+  return (
+    <StudioPageShell
+      eyebrow="Library"
+      title="Projects"
+      description={
+        filterBrand
+          ? `${filtered} project${filtered === 1 ? "" : "s"} under ${filterBrand.name} — image runs and listing copy.`
+          : `${total} saved project${total === 1 ? "" : "s"} — image runs and listing copy.`
+      }
+      guide={journey}
+    >
+      {total > 0 ? (
+        <Suspense fallback={<FiltersFallback />}>
+          <ProjectsFilterBar
+            total={total}
+            filtered={filtered}
+            brands={brands}
+            activeBrandId={activeBrandId}
+          />
+        </Suspense>
+      ) : null}
+
+      {total === 0 ? (
+        <Card className="overflow-hidden border-dashed">
+          <CardContent className="grid gap-10 py-12 md:grid-cols-[minmax(0,1fr)_minmax(0,280px)] md:items-center md:px-10">
+            <div className="text-center md:text-left">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--accent-soft)] md:mx-0">
+                {/* POLISH-74: empty state illustration */}
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect x="4" y="8" width="24" height="17" rx="2" stroke="var(--accent)" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M4 12h24" stroke="var(--accent)" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <rect x="8" y="15" width="7" height="5" rx="1" fill="var(--accent)" fillOpacity="0.3" stroke="var(--accent)" strokeWidth="1"/>
+                  <rect x="17" y="15" width="7" height="5" rx="1" fill="var(--accent)" fillOpacity="0.15" stroke="var(--accent)" strokeWidth="1"/>
+                  <circle cx="16" cy="5" r="2.5" stroke="var(--accent)" strokeWidth="1.25"/>
+                </svg>
+              </div>
+              <h3 className="mt-6 font-serif text-xl">No projects yet</h3>
+              <p className="mt-2 max-w-sm text-sm text-[var(--muted-fg)] md:max-w-md">
+                Start with an image run or generate listing copy — every run saves as a project you can return to. Or
+                grade an existing listing free before you spend credits.
+              </p>
+              <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
+                <Button asChild size="lg">
+                  <Link href={STUDIO_ROUTES.images}>Open images</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <Link href={STUDIO_ROUTES.copy}>Generate listing copy</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <Link href="/grader">
+                    <ClipboardCheck className="h-4 w-4" />
+                    Grade a listing free
+                  </Link>
+                </Button>
+              </div>
+            </div>
+            <div>
+              <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-[var(--muted-fg)] md:text-left">
+                Example outputs
+              </p>
+              <ShowcaseMosaic />
+            </div>
+          </CardContent>
+        </Card>
+      ) : products.length === 0 ? (
+        (() => {
+          const empty = getFilterEmptyState(filters);
+          return (
+            <Card className="border-dashed">
+              <CardContent className="py-16 text-center">
+                <p className="font-serif text-xl">{empty.title}</p>
+                <p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted-fg)]">{empty.description}</p>
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <Button asChild>
+                    <Link href={empty.primary.href}>{empty.primary.label}</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link href={empty.secondary.href}>{empty.secondary.label}</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()
+      ) : (
+        <>
+          {totalPages > 1 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-6">
+              <p className="text-sm text-[var(--muted-fg)]">
+                Page {page} of {totalPages}
+                {hasFilters ? " (filtered)" : ""}
+              </p>
+              <div className="flex gap-2">
+                {page <= 1 ? (
+                  <Button variant="outline" size="sm" disabled>
+                    Previous
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/projects${buildProjectsQuery({ ...filters, page: String(page - 1) })}`}>
+                      Previous
+                    </Link>
+                  </Button>
+                )}
+                {page >= totalPages ? (
+                  <Button variant="outline" size="sm" disabled>
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/projects${buildProjectsQuery({ ...filters, page: String(page + 1) })}`}>
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : null}
+
+          <ProjectsSelectableGrid
+            products={products.map((p) => {
+              const thumbs = p.assets.filter((a) => a.imageUrl).slice(0, 4);
+              const copy = primaryListingCopy(p.listingCopies, p.marketplace);
+              return {
+                id: p.id,
+                name: p.name,
+                status: p.status,
+                marketplace: p.marketplace,
+                createdAt: p.createdAt,
+                hasCopy: Boolean(copy?.title),
+                hasImages: thumbs.length > 0,
+                thumbs,
+              };
+            })}
+          />
+
+          {totalPages > 1 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-6">
+              <p className="text-sm text-[var(--muted-fg)]">
+                Page {page} of {totalPages}
+                {hasFilters ? " (filtered)" : ""}
+              </p>
+              <div className="flex gap-2">
+                {page <= 1 ? (
+                  <Button variant="outline" size="sm" disabled>
+                    Previous
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/projects${buildProjectsQuery({ ...filters, page: String(page - 1) })}`}>
+                      Previous
+                    </Link>
+                  </Button>
+                )}
+                {page >= totalPages ? (
+                  <Button variant="outline" size="sm" disabled>
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/projects${buildProjectsQuery({ ...filters, page: String(page + 1) })}`}>
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </>
+      )}
+    </StudioPageShell>
+  );
+}
