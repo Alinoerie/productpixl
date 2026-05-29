@@ -1,1 +1,1 @@
-app/
+# app/ is now the App Router directory — don't exclude it
