@@ -58,7 +58,7 @@ export function defaultRulesForProfile(input: {
     {
       id: "default-always-color",
       type: "ALWAYS",
-      text: `Keep hero accents aligned with brand primary color ${input.primaryColor ?? "#6366F1"}.`,
+      text: `Keep hero accents aligned with brand primary color ${input.primaryColor ?? "#F59E0B"}.`,
     },
     {
       id: "default-if-skincare",

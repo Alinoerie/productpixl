@@ -3,6 +3,8 @@ import { DM_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
+import { ThemeInit } from "@/components/ui/theme-toggle";
+import { FadeUp } from "@/components/ui/fade-up";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -33,17 +35,20 @@ export const metadata: Metadata = {
       "Upload one product photo. Get studio-quality listing images for Amazon, eBay, Etsy and EU marketplaces.",
   },
   icons: {
-    icon: "/logo.png",
+    icon: "/favicon.ico",
     apple: "/logo.png",
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${dmSans.variable} ${spaceGrotesk.variable} antialiased`}>
+        <ThemeInit />
         <SiteHeader />
-        <main id="main">{children}</main>
+        <main id="main">
+          <FadeUp>{children}</FadeUp>
+        </main>
         <SiteFooter />
       </body>
     </html>

@@ -19,7 +19,7 @@ export function BrandContextStrip({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const profile = useBrandStore((s) => s.profile);
-  const primary = profile.primaryColor ?? "#6366f1";
+  const primary = profile.primaryColor ?? "#F59E0B";
   const name = profile.brandName ?? profile.displayName ?? "Your brand";
   const lang = profile.language ?? "en";
 

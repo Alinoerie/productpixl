@@ -61,7 +61,7 @@ export function buildWeeklyDigestEmail(digest: WeeklyDigestData, studioUrl: stri
   return `<!DOCTYPE html>
 <html>
   <body style="font-family:system-ui,sans-serif;line-height:1.5;color:#111827;max-width:560px;margin:0 auto;padding:24px;">
-    <p style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6366F1;margin:0 0 4px;">ProductPixl</p>
+    <p style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;margin:0 0 4px;">ProductPixl</p>
     <h1 style="font-size:22px;font-weight:700;margin:0 0 4px;">Your weekly digest</h1>
     <p style="font-size:14px;color:#6b7280;margin:0 0 24px;">${weekStartStr} – ${weekEndStr}</p>
 
@@ -75,14 +75,14 @@ export function buildWeeklyDigestEmail(digest: WeeklyDigestData, studioUrl: stri
       <p style="font-size:14px;color:#374151;margin:0 0 16px;">
         Check out your latest projects and continue where you left off.
       </p>
-      <a href="${studioUrl}" style="display:inline-block;background:#6366F1;color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px;font-weight:600;">
+      <a href="${studioUrl}" style="display:inline-block;background:#F59E0B;color:#000;text-decoration:none;padding:12px 20px;border-radius:12px;font-weight:600;">
         Open ProductPixl
       </a>
     </div>
 
     <p style="margin-top:24px;font-size:12px;color:#9ca3af;">
       You received this because you have weekly digests enabled.
-      <a href="${studioUrl}/account" style="color:#6366F1;">Manage notification preferences</a>.
+      <a href="${studioUrl}/account" style="color:#F59E0B;">Manage notification preferences</a>.
     </p>
   </body>
 </html>`;

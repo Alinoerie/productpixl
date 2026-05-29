@@ -19,7 +19,7 @@ export function ModulePreviewPanel({
   className?: string;
 }) {
   const profile = useBrandStore((s) => s.profile);
-  const primary = profile.primaryColor ?? "#6366f1";
+  const primary = profile.primaryColor ?? "#F59E0B";
   const secondary = profile.secondaryColor ?? "#0891b2";
 
   return (

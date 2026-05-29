@@ -8,7 +8,7 @@ export function buildMagicLinkEmail(url: string) {
     <p style="font-size: 20px; font-weight: 600; margin: 0 0 8px;">Sign in to ProductPixl</p>
     <p style="margin: 0 0 24px; color: #4b5563;">Click the button below to open your listing studio. This link expires in 24 hours.</p>
     <p style="margin: 0 0 24px;">
-      <a href="${url}" style="display: inline-block; background: #6366F1; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 600;">
+      <a href="${url}" style="display: inline-block; background: #F59E0B; color: #000; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 600;">
         Open ProductPixl
       </a>
     </p>

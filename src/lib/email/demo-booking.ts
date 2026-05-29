@@ -9,7 +9,7 @@ export function buildDemoBookingConfirmationEmail(params: {
 <!DOCTYPE html>
 <html>
   <body style="font-family: system-ui, sans-serif; line-height: 1.5; color: #111827; max-width: 520px; margin: 0 auto; padding: 24px;">
-    <p style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6366F1; margin: 0 0 8px;">ProductPixl demo</p>
+    <p style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #F59E0B; margin: 0 0 8px;">ProductPixl demo</p>
     <p style="font-size: 22px; font-weight: 600; margin: 0 0 12px;">You&apos;re booked, ${params.name.split(" ")[0] || "there"}</p>
     <p style="margin: 0 0 16px; color: #4b5563;">
       We received your ${DEMO_DURATION_MINUTES}-minute demo request for <strong>${params.preferredLabel}</strong>.
@@ -19,7 +19,7 @@ export function buildDemoBookingConfirmationEmail(params: {
       Want to explore on your own first? Start with 10 free credits in the studio.
     </p>
     <p style="margin: 0;">
-      <a href="${params.studioUrl}" style="display: inline-block; background: #6366F1; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 600;">
+      <a href="${params.studioUrl}" style="display: inline-block; background: #F59E0B; color: #000; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 600;">
         Open ProductPixl
       </a>
     </p>

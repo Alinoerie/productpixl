@@ -58,7 +58,7 @@ export const VISUAL_STYLE_PRESETS = [
     id: "infographic",
     label: "Bold infographic",
     value: "High-contrast benefit callouts, icons, Amazon main-image style",
-    swatch: ["#6366f1", "#0891b2", "#0f172a"],
+    swatch: ["#F59E0B", "#0891B2", "#0F0E0D"],
   },
   {
     id: "premium",

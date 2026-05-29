@@ -92,7 +92,7 @@ export default async function HowItWorksPage() {
                           Sample coming soon — available in the full L1–L12 library
                         </div>
                       )}
-                      <span className="absolute left-3 top-3 rounded-full bg-[var(--ink)]/80 px-2.5 py-1 font-serif text-sm text-white">
+                      <span className="absolute left-3 top-3 rounded-full bg-[var(--ink)]/80 px-2.5 py-1 font-serif text-sm text-[var(--text)]">
                         {m.id}
                       </span>
                     </div>

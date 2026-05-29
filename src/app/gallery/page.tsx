@@ -62,7 +62,7 @@ function GalleryCard({ item, index }: { item: GalleryItem; index: number }) {
         </div>
         {/* Disclaimer */}
         <div className="absolute bottom-3 right-3">
-          <span className="text-[10px] text-white/40">Sample output</span>
+          <span className="text-[10px] text-[var(--text)]/40">Sample output</span>
         </div>
       </div>
     </div>

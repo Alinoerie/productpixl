@@ -1,25 +1,100 @@
 @import "tailwindcss";
 
+/* ─── Light mode (default) ─────────────────────────────── */
 :root {
-  --accent: #F59E0B;
-  --accent-hover: #D97706;
-  --bg: #FFFFFF;
-  --bg-subtle: #F9FAFB;
-  --text: #111827;
-  --text-muted: #6B7280;
-  --border: #E5E7EB;
-  --radius: 8px;
-  --radius-pill: 9999px;
+  --amber:         #F59E0B;
+  --amber-light:   #FCD34D;
+  --amber-dark:    #D97706;
+  --amber-soft:    rgba(245, 158, 11, 0.12);
+
+  --bg:            #FAFAF9;
+  --bg-2:          #F5F5F4;
+  --bg-3:          #E7E5E4;
+  --surface:       #FFFFFF;
+  --text:          #1C1917;
+  --text-muted:    #57534E;
+  --text-subtle:   #A8A29E;
+
+  --border:        #E7E5E4;
+  --border-strong: #D6D3D1;
+
+  --accent:        var(--amber);
+  --accent-hover:  var(--amber-dark);
+  --accent-fg:     #000000;
+  --accent-soft:    var(--amber-soft);
+
+  --card:          #FFFFFF;
+  --ink:           #1C1917;
+  --muted:         #F5F5F4;
+  --muted-fg:       #57534E;
+
+  --shadow-sm:     0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md:     0 4px 6px rgba(0,0,0,0.07);
+
+  --radius:         8px;
+  --radius-pill:    9999px;
+
+  /* Semantic */
+  --success:        #059669;
+  --warning:        #D97706;
+  --error:          #DC2626;
+}
+
+/* ─── Dark mode ────────────────────────────────────────── */
+.dark {
+  --amber:         #F59E0B;
+  --amber-light:   #FCD34D;
+  --amber-dark:    #D97706;
+  --amber-soft:    rgba(245, 158, 11, 0.15);
+
+  --bg:            #0F0E0D;
+  --bg-2:          #1C1917;
+  --bg-3:          #292524;
+  --surface:       #1C1917;
+  --text:          #FFFFFF;
+  --text-muted:    #A8A29E;
+  --text-subtle:   #78716C;
+
+  --border:        #292524;
+  --border-strong: #3C3734;
+
+  --accent:        var(--amber);
+  --accent-hover:  var(--amber-dark);
+  --accent-fg:     #000000;
+  --accent-soft:    var(--amber-soft);
+
+  --card:          #1C1917;
+  --ink:           #FFFFFF;
+  --muted:         #1C1917;
+  --muted-fg:      #A8A29E;
+
+  --shadow-sm:     0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:     0 4px 12px rgba(0,0,0,0.5);
+
+  --radius:         8px;
+  --radius-pill:    9999px;
+
+  /* Semantic */
+  --success:        #059669;
+  --warning:        #D97706;
+  --error:          #DC2626;
 }
 
 @theme inline {
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-background: var(--bg);
-  --color-background-subtle: var(--bg-subtle);
-  --color-foreground: var(--text);
-  --color-muted: var(--text-muted);
-  --color-border: var(--border);
+  --color-amber:        var(--amber);
+  --color-amber-light:  var(--amber-light);
+  --color-amber-dark:   var(--amber-dark);
+  --color-background:    var(--bg);
+  --color-background-2:  var(--bg-2);
+  --color-background-3:  var(--bg-3);
+  --color-foreground:    var(--text);
+  --color-muted:         var(--text-muted);
+  --color-subtle:        var(--text-subtle);
+  --color-border:        var(--border);
+  --color-surface:       var(--surface);
+  --color-success:       var(--success);
+  --color-warning:       var(--warning);
+  --color-error:         var(--error);
 }
 
 html {
@@ -34,14 +109,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── Text selection ───────────────────────────────────── */
 ::selection {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(245, 158, 11, 0.2);
   color: var(--text);
 }
 
-/* ─── Focus states ───────────────────────────────────── */
+/* ─── Focus states ─────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--amber);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* ─── Scrollbar ────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-2);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-subtle);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ─── Cursor ───────────────────────────────────────────── */
+a, button, [role="button"] {
+  cursor: pointer;
 }

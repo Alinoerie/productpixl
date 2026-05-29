@@ -4,7 +4,7 @@
 
 **Category:** AI listing studio — images + copy for marketplace sellers.
 
-**ICP:** Solo and small-team sellers (10–200 SKUs) on Amazon and European marketplaces (Bol.com, Amazon DE/UK), launching or refreshing listings without agencies or $207/mo suites.
+**ICP:** Solo and small-team sellers (10–200 SKUs) on Amazon and European marketplaces (Bol.com, Amazon DE/UK), launching or refreshing listings without agencies or €207/mo suites.
 
 **Tagline:** Launch before you list.
 
@@ -14,29 +14,49 @@
 
 **Canonical copy:** `src/lib/marketing-usp.ts`
 
-## Why this palette: Studio Iris
+## Why Amber #F59E0B on Near-Black #0F0E0D
 
-Research-backed direction for 2026 SaaS and creative tools: move away from overused startup blue *and* warm copper/orange commerce clichés. **Studio Iris** uses cool slate neutrals (precision, long-session comfort) with **indigo** as the primary action color (premium, creative, memorable) and **cyan** as the secondary (EU marketplaces, Bol.com, RUFUS/COSMO intelligence).
+Research-backed direction for 2026: move away from overused startup blue *and* warm copper/orange commerce clichés. **Amber on dark** is distinctive, premium, and warm — it signals craft and attention without the cold precision of blue or the aggressive energy of orange. Amber reads as a creative studio, not a marketplace clone. The near-black background communicates focus and quality.
 
-| Color | Hex | Role | Rationale |
-|-------|-----|------|-----------|
-| **Iris** | `#6366F1` | Primary CTA, links, focus rings | Premium indigo — distinct from Amazon orange and generic `#2563EB` SaaS blue. Reads as a creative studio, not a marketplace clone. |
-| **Ink** | `#0F172A` | Text, dark UI | Cool slate-900 — crisp editorial contrast on light backgrounds. |
-| **Mist** | `#F8FAFC` | Page background | Cool tinted neutral; reduces eye strain vs stark white without the dated “warm linen” look. |
-| **Cyan** | `#0891B2` | EU / trust / RUFUS-ready | Secondary accent for Europe, Bol.com, grader tips, and algorithm-intelligence story. |
-| **Slate** | `#E2E8F0` | Borders | Clean separation; works across marketing and dense studio UI. |
+## Color System
 
-**Semantic colors (separate from brand):**
+### Brand Palette
 
 | Token | Hex | Use |
-|-------|-----|-----|
+|---|---|---|
+| **Amber** | `#F59E0B` | All CTAs, links, focus rings, brand accents |
+| **Amber Light** | `#FCD34D` | Hover states, highlights |
+| **Amber Dark** | `#D97706` | Active/pressed states |
+| **Background** | `#0F0E0D` | Primary dark background |
+| **Surface 2** | `#1C1917` | Cards, elevated dark surfaces |
+| **Surface 3** | `#292524` | Inputs, tertiary surfaces |
+
+### Light Mode
+
+| Token | Hex | Use |
+|---|---|---|
+| **Background** | `#FAFAF9` | Page background (warm off-white) |
+| **Surface** | `#FFFFFF` | Cards, modals |
+| **Surface 2** | `#F5F5F4` | Muted backgrounds |
+| **Text** | `#1C1917` | Primary text |
+| **Text Muted** | `#57534E` | Secondary text |
+| **Border** | `#E7E5E4` | Borders, dividers |
+
+Amber `#F59E0B` remains the accent in both modes.
+
+### Semantic Tokens
+
+| Token | Hex | Use |
+|---|---|---|
 | Success | `#059669` | Grades A, completed states |
-| Warning | `#D97706` | Paywall, low credits (amber — not brand accent) |
+| Warning | `#D97706` | Paywall, low credits |
 | Error | `#DC2626` | Failures, grade F |
 
-**Avoid:** Pure Amazon orange, warm copper/linen palettes, Inter-only purple-blue gradients, neon-on-black “AI slop” aesthetics.
+### Avoid
 
-## Brand pillars
+Pure Amazon orange, warm copper/linen palettes, Inter-only purple-blue gradients, neon-on-black "AI slop" aesthetics, indigo/iris purple.
+
+## Brand Pillars
 
 1. **Photo-first** — No ASIN required. Launch SKUs before they exist on Amazon.
 2. **Pay when you generate** — Credits, not subscriptions. Early sellers hate lock-in.
@@ -47,21 +67,32 @@ Research-backed direction for 2026 SaaS and creative tools: move away from overu
 ## Voice
 
 - **Clear** over clever. Sellers are busy.
-- **Confident** not hype. No “revolutionary AI”.
-- **Specific** — modules (L1, L3), credits, minutes — not vague “magic”.
+- **Confident** not hype. No "revolutionary AI".
+- **Specific** — modules (L1, L3), credits, minutes — not vague "magic".
 - **Honest** — MVP scope visible; trust beats overclaiming.
 
-## Competitor contrast (messaging)
+## Competitor Contrast (messaging)
 
 | Them | Us |
-|------|-----|
+|---|---|
 | Pixii: ASIN in | Photo in |
-| Pixii: $207/mo | Credits from €0 |
+| Pixii: €207/mo | Credits from €0 |
 | Perci: text only | Images + copy |
 | Amazon AI: free generic | Research-backed generation + QA |
 
 ## Implementation
 
-All UI colors flow from CSS custom properties in `src/app/globals.css`. Components reference `var(--accent)`, `var(--teal)` (secondary cyan), `var(--ink)`, etc. — never hardcode brand hex in TSX except user-editable brand profile defaults.
+All UI colors flow from CSS custom properties in `src/app/globals.css`. Components reference `var(--amber)`, `var(--bg)`, `var(--text)`, etc. — never hardcode brand hex in TSX except user-editable brand profile defaults.
 
-Default brand profile colors for new users: primary `#6366F1`, secondary `#0891B2`.
+Default brand profile colors for new users: primary `#F59E0B`, secondary `#0891B2`.
+
+## Animation
+
+- Page load: single fade-up, opacity 0→1 + translateY 20→0, 600ms, ease power2.out
+- GSAP free tier — no license concerns
+
+## Credit System
+
+- 1 credit = 1 image generation
+- Exports are free after generation
+- Starter: 10 credits, one-time, no card required

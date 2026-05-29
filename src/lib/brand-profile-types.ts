@@ -21,7 +21,7 @@ export const DEFAULT_BRAND_PROFILE: BrandProfileData = {
   companyDescription: null,
   targetAudience: null,
   displayName: null,
-  primaryColor: "#6366F1",
+  primaryColor: "#F59E0B",
   secondaryColor: "#0891B2",
   tone: "premium, trustworthy, conversion-focused, no hype",
   logoUrl: null,

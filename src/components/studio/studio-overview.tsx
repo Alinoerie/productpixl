@@ -71,7 +71,7 @@ export function StudioOverview({
             title="Images"
             description="Hero, lifestyle, and detail gallery modules from one upload."
             credits={imageCredits}
-            gradient="from-[#6366f1]/20 via-[#818cf8]/10 to-[#0891b2]/20"
+            gradient="from-[#F59E0B]/20 via-[#FCD34D]/10 to-[#0891B2]/20"
             mockup={<ImagesMockup />}
             stagger
           />
@@ -81,7 +81,7 @@ export function StudioOverview({
             title="A+ Content"
             description="Amazon A+ modules M1–M15 at exact pixel dimensions — premium modules for Brand Registered."
             credits={imageCredits + 12}
-            gradient="from-[#0d9488]/20 via-[#14b8a6]/10 to-[#6366f1]/15"
+            gradient="from-[#0891B2]/20 via-[#14B8A6]/10 to-[#F59E0B]/15"
             mockup={<ImagesMockup />}
             variant="outline"
             stagger
@@ -92,7 +92,7 @@ export function StudioOverview({
             title="Copy"
             description="Title, bullets, description, and backend keywords — RUFUS-ready."
             credits={copyCredits}
-            gradient="from-[#0891b2]/20 via-[#06b6d4]/10 to-[#6366f1]/15"
+            gradient="from-[#0891B2]/20 via-[#06B6D4]/10 to-[#F59E0B]/15"
             mockup={<CopyMockup />}
             variant="outline"
             stagger
@@ -103,7 +103,7 @@ export function StudioOverview({
             title="Video"
             description="Shoppable reels for TikTok, Amazon video, and Reels."
             credits={85}
-            gradient="from-[#7c3aed]/20 via-[#a855f7]/10 to-[#6366f1]/15"
+            gradient="from-[#7C3AED]/20 via-[#A855F7]/10 to-[#F59E0B]/15"
             mockup={<VideoMockup />}
             badge="Beta"
             variant="outline"
@@ -365,7 +365,7 @@ function VideoMockup() {
   return (
     <svg viewBox="0 0 200 80" className="h-full w-full opacity-80" aria-hidden>
       <rect x="70" y="8" width="60" height="64" rx="8" fill="#fff" opacity="0.85" />
-      <polygon points="92,28 92,52 112,40" fill="#6366f1" opacity="0.8" />
+      <polygon points="92,28 92,52 112,40" fill="#F59E0B" opacity="0.8" />
     </svg>
   );
 }
