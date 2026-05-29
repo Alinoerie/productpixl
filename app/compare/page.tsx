@@ -281,7 +281,7 @@ export default function ComparePage() {
             ProductPixl vs the competition
           </h1>
           <p style={{ fontSize: "16px", color: "var(--text-muted)", fontFamily: "'DM Sans', sans-serif", maxWidth: 560, margin: "0 auto", lineHeight: 1.6 }}>
-            Here's where we win, where we tie, and where we're honest about the trade-offs. No marketing fluff — just the features that matter for Amazon sellers.
+            Here's where we win, where we tie, and where we&apos;re honest about the trade-offs. No marketing fluff — just the features that matter for Amazon sellers.
           </p>
         </div>
 
@@ -340,7 +340,7 @@ export default function ComparePage() {
             <ul style={{ fontSize: "13px", color: "var(--text-muted)", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, paddingLeft: "1.1rem", listStyle: "none" }}>
               <li style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                 <span style={{ color: "#22C55E", flexShrink: 0 }}>✓</span>
-                <span><strong style={{ color: "var(--text-primary)" }}>Product fidelity</strong> — QA scoring + fidelity model means every module preserves your product's exact look. No AI hallucinations changing your bag's colour or shape.</span>
+                <span><strong style={{ color: "var(--text-primary)" }}>Product fidelity</strong> — QA scoring + fidelity model means every module preserves your product\&apos;s exact look. No AI hallucinations changing your bag\&apos;s colour or shape.</span>
               </li>
               <li style={{ display: "flex", gap: "8px", alignItems: "flex-start", marginTop: "8px" }}>
                 <span style={{ color: "#22C55E", flexShrink: 0 }}>✓</span>

@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npx prisma generate && next build",
+  "buildCommand": "npx prisma generate && npx next build",
   "installCommand": "pnpm install",
   "functions": {
     "src/app/api/inngest/route.ts": {
