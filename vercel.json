@@ -1,5 +1,7 @@
 {
-  "buildCommand": "bash scripts/deploy-hook.sh",
+  "framework": "nextjs",
+  "buildCommand": "npx prisma generate && next build",
+  "installCommand": "pnpm install",
   "functions": {
     "src/app/api/inngest/route.ts": {
       "maxDuration": 300
